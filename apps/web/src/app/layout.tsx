@@ -16,8 +16,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Batman",
-  description: "Batman",
+  title: "Batman — The Dark Knight Boilerplate",
+  description:
+    "A production-ready full-stack boilerplate forged in the shadows of Gotham. Next.js, Prisma, Better Auth, and more.",
 };
 
 export default function RootLayout({

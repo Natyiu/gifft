@@ -7,14 +7,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 export default function SignUpPage() {
   return (
-    <Card>
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl">Create an account</CardTitle>
-        <CardDescription>Get started with your free account</CardDescription>
+    <Card className="border-border/30 bg-card/50 backdrop-blur">
+      <CardHeader className="text-center pb-4">
+        <CardTitle className="text-lg font-semibold tracking-tight">Create account</CardTitle>
+        <CardDescription className="text-xs">Get started with your free account</CardDescription>
       </CardHeader>
       <CardContent>
         <SignUpForm />
-        <div className="mt-4 text-center text-sm">
+        <div className="mt-5 text-center text-xs">
           <span className="text-muted-foreground">Already have an account? </span>
           <Link href="/login" className="text-primary hover:underline font-medium">
             Sign in

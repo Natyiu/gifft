@@ -7,15 +7,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 export default function LoginPage() {
   return (
-    <Card>
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl">Welcome back</CardTitle>
-        <CardDescription>Enter your credentials to access your account</CardDescription>
+    <Card className="border-border/30 bg-card/50 backdrop-blur">
+      <CardHeader className="text-center pb-4">
+        <CardTitle className="text-lg font-semibold tracking-tight">Welcome back</CardTitle>
+        <CardDescription className="text-xs">Enter your credentials to continue</CardDescription>
       </CardHeader>
       <CardContent>
         <SignInForm />
-        <div className="mt-4 text-center text-sm">
-          <span className="text-muted-foreground">Don&apos;t have an account? </span>
+        <div className="mt-5 text-center text-xs">
+          <span className="text-muted-foreground">No account? </span>
           <Link href="/signup" className="text-primary hover:underline font-medium">
             Sign up
           </Link>
