@@ -1,0 +1,25 @@
+{
+  "name": "@Batman/auth",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {},
+  "dependencies": {
+    "@Batman/db": "workspace:*",
+    "@Batman/env": "workspace:*",
+    "@better-auth/prisma-adapter": "^1.5.1",
+    "better-auth": "catalog:",
+    "dotenv": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@Batman/config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}
