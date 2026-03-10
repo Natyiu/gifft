@@ -30,7 +30,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import Loader from "@/components/loader";
+import { OrganizationsSkeleton } from "@/components/skeletons";
 
 type Org = {
   id: string;
@@ -165,7 +165,7 @@ export default function OrganizationsPage() {
     });
   }
 
-  if (loading) return <Loader />;
+  if (loading) return <OrganizationsSkeleton />;
 
   if (!config?.organizationsEnabled) {
     return (

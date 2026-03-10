@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { worldMapPaths } from "./world-map-paths";
 
 type CountryData = {
@@ -259,5 +259,33 @@ export function WorldMap({ countries }: { countries: CountryData[] }) {
         </p>
       )}
     </div>
+  );
+}
+
+export function MiniWorldMap({
+  countries,
+}: {
+  countries: { code: string; name: string; count: number }[];
+}) {
+  const countrySet = useMemo(
+    () => new Set(countries.map((c) => c.code)),
+    [countries]
+  );
+
+  return (
+    <svg viewBox="0 0 1000 500" className="w-full h-auto">
+      {worldMapPaths.map((path) => (
+        <path
+          key={path.id}
+          d={path.d}
+          className={
+            countrySet.has(path.id)
+              ? "fill-foreground/80 stroke-foreground/40"
+              : "fill-muted-foreground/10 stroke-muted-foreground/15"
+          }
+          strokeWidth={0.5}
+        />
+      ))}
+    </svg>
   );
 }

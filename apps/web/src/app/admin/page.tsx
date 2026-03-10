@@ -1,599 +1,502 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { toast } from "sonner";
-
-import { authClient } from "@/lib/auth-client";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { useState, useEffect } from "react";
+import Link from "next/link";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Label } from "@/components/ui/label";
-import {
-  Search,
-  ChevronLeft,
-  ChevronRight,
-  Shield,
-  Ban,
-  UserX,
-  UserCheck,
-  Pencil,
+  Users,
+  Activity,
+  UserPlus,
+  CheckCircle,
+  Building2,
+  Bell,
+  BarChart3,
+  ArrowRight,
+  Send,
+  Globe,
+  MessageSquare,
 } from "lucide-react";
+import { getOverview } from "@/lib/actions/admin";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { MiniWorldMap } from "@/components/world-map";
+import { FEEDBACK_CATEGORIES } from "@/lib/feedback-categories";
+import { OverviewSkeleton } from "@/components/skeletons";
 
-type User = {
-  id: string;
-  name: string;
-  email: string;
-  role: string | null;
-  banned: boolean | null;
-  banReason: string | null;
-  image: string | null;
-  createdAt: Date;
-};
+type Overview = Awaited<ReturnType<typeof getOverview>>;
 
-const PAGE_SIZE = 10;
+function Sparkline({ data }: { data: number[] }) {
+  if (data.length < 2) return null;
+  const max = Math.max(...data, 1);
+  const h = 20;
+  const w = 48;
+  const step = w / (data.length - 1);
+  const pts = data.map((v, i) => ({
+    x: i * step,
+    y: h - (v / max) * (h - 2) - 1,
+  }));
+  const line = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ");
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
+      <path
+        d={line}
+        fill="none"
+        className="stroke-foreground/40"
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle
+        cx={pts[pts.length - 1].x}
+        cy={pts[pts.length - 1].y}
+        r={2}
+        className="fill-foreground"
+      />
+    </svg>
+  );
+}
 
-export default function AdminUsersPage() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(0);
-  const [search, setSearch] = useState("");
+function RingGauge({ value, size = 40 }: { value: number; size?: number }) {
+  const r = (size - 6) / 2;
+  const circ = 2 * Math.PI * r;
+  const filled = (value / 100) * circ;
+  return (
+    <svg width={size} height={size} className="-rotate-90">
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
+        fill="none"
+        className="stroke-border/40"
+        strokeWidth={3}
+      />
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
+        fill="none"
+        className="stroke-foreground transition-all duration-500"
+        strokeWidth={3}
+        strokeDasharray={circ}
+        strokeDashoffset={circ - filled}
+        strokeLinecap="butt"
+      />
+    </svg>
+  );
+}
+
+function SectionHeader({
+  title,
+  href,
+  icon: Icon,
+}: {
+  title: string;
+  href: string;
+  icon: React.ElementType;
+}) {
+  return (
+    <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center gap-1.5">
+        <Icon className="h-3 w-3 text-muted-foreground/50" />
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+          {title}
+        </p>
+      </div>
+      <Link
+        href={href as never}
+        className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+      >
+        View all
+        <ArrowRight className="h-2.5 w-2.5" />
+      </Link>
+    </div>
+  );
+}
+
+function timeAgo(date: Date): string {
+  const now = new Date();
+  const diff = now.getTime() - new Date(date).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ago`;
+}
+
+export default function AdminOverviewPage() {
+  const [data, setData] = useState<Overview | null>(null);
   const [loading, setLoading] = useState(true);
-  const [roleDialogUser, setRoleDialogUser] = useState<User | null>(null);
-  const [selectedRole, setSelectedRole] = useState("");
-  const [editUser, setEditUser] = useState<User | null>(null);
-  const [editName, setEditName] = useState("");
-  const [editEmail, setEditEmail] = useState("");
-  const [editPassword, setEditPassword] = useState("");
-  const [editSaving, setEditSaving] = useState(false);
-
-  const fetchUsers = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await authClient.admin.listUsers({
-        query: {
-          limit: PAGE_SIZE,
-          offset: page * PAGE_SIZE,
-          ...(search
-            ? {
-                searchValue: search,
-                searchField: "email" as const,
-                searchOperator: "contains" as const,
-              }
-            : {}),
-        },
-      });
-      if (res.data) {
-        setUsers(res.data.users as User[]);
-        setTotal(res.data.total);
-      }
-    } catch {
-      toast.error("Failed to fetch users");
-    } finally {
-      setLoading(false);
-    }
-  }, [page, search]);
 
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+    getOverview()
+      .then(setData)
+      .finally(() => setLoading(false));
+  }, []);
 
-  async function handleSetRole(userId: string, role: string) {
-    try {
-      await authClient.admin.setRole({ userId, role: role as "admin" | "user" });
-      toast.success(`Role updated to ${role}`);
-      setRoleDialogUser(null);
-      fetchUsers();
-    } catch {
-      toast.error("Failed to update role");
-    }
-  }
+  if (loading || !data) return <OverviewSkeleton />;
 
-  async function handleBan(userId: string) {
-    try {
-      await authClient.admin.banUser({
-        userId,
-        banReason: "Banned by admin",
-      });
-      toast.success("User banned");
-      fetchUsers();
-    } catch {
-      toast.error("Failed to ban user");
-    }
-  }
-
-  async function handleUnban(userId: string) {
-    try {
-      await authClient.admin.unbanUser({ userId });
-      toast.success("User unbanned");
-      fetchUsers();
-    } catch {
-      toast.error("Failed to unban user");
-    }
-  }
-
-  async function handleRemove(userId: string) {
-    try {
-      await authClient.admin.removeUser({ userId });
-      toast.success("User removed");
-      fetchUsers();
-    } catch {
-      toast.error("Failed to remove user");
-    }
-  }
-
-  async function handleEditSave() {
-    if (!editUser) return;
-    setEditSaving(true);
-    try {
-      const updates: Record<string, string> = {};
-      if (editName && editName !== editUser.name) updates.name = editName;
-      if (editEmail && editEmail !== editUser.email) updates.email = editEmail;
-
-      if (Object.keys(updates).length > 0) {
-        const { error } = await authClient.admin.updateUser({
-          userId: editUser.id,
-          data: updates,
-        });
-        if (error) throw error;
-      }
-
-      if (editPassword) {
-        const { error } = await authClient.admin.setUserPassword({
-          userId: editUser.id,
-          newPassword: editPassword,
-        });
-        if (error) throw error;
-      }
-
-      toast.success("User updated");
-      setEditUser(null);
-      fetchUsers();
-    } catch {
-      toast.error("Failed to update user");
-    } finally {
-      setEditSaving(false);
-    }
-  }
-
-  const totalPages = Math.ceil(total / PAGE_SIZE);
+  const { stats, sparkline, recentUsers, recentNotifications, recentFeedback, countries } = data;
+  const signupSpark = sparkline.map((s) => s.signups);
+  const activeSpark = sparkline.map((s) => s.active);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h1 className="text-lg font-semibold tracking-tight">Users</h1>
+        <h1 className="text-lg font-semibold tracking-tight">Overview</h1>
         <p className="text-xs text-muted-foreground mt-0.5">
-          Manage users, roles, and access.
+          A snapshot of your product, right now.
         </p>
       </div>
 
-      <Card className="border-border/30 bg-card/50">
-        <CardHeader>
-          <div className="flex items-center justify-between">
+      {/* Row 1: Key metrics */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="border border-border/40 bg-card/50 p-4">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+              Total Users
+            </p>
+            <Users className="h-3.5 w-3.5 text-muted-foreground/40" />
+          </div>
+          <div className="flex items-end justify-between">
+            <p className="text-2xl font-bold tracking-tight">
+              {stats.totalUsers}
+            </p>
+            <Sparkline data={signupSpark} />
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-1">
+            +{stats.usersLast7d} this week
+          </p>
+        </div>
+
+        <div className="border border-border/40 bg-card/50 p-4">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+              Active Today
+            </p>
+            <Activity className="h-3.5 w-3.5 text-muted-foreground/40" />
+          </div>
+          <div className="flex items-end justify-between">
+            <p className="text-2xl font-bold tracking-tight">
+              {stats.dailyActiveUsers}
+            </p>
+            <Sparkline data={activeSpark} />
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-1">
+            {stats.weeklyActiveUsers} this week
+          </p>
+        </div>
+
+        <div className="border border-border/40 bg-card/50 p-4">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+              Onboarding
+            </p>
+            <CheckCircle className="h-3.5 w-3.5 text-muted-foreground/40" />
+          </div>
+          <div className="flex items-center gap-3">
+            <RingGauge value={stats.onboardingRate} />
             <div>
-              <CardTitle className="text-sm">{total} user{total !== 1 ? "s" : ""}</CardTitle>
-              <CardDescription className="text-xs">
-                Search, update roles, ban or remove users.
-              </CardDescription>
+              <p className="text-lg font-bold tracking-tight">
+                {stats.onboardingRate}%
+              </p>
+              <p className="text-[10px] text-muted-foreground">
+                {stats.onboardedUsers}/{stats.totalUsers}
+              </p>
             </div>
           </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-            <Input
-              placeholder="Search by email..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(0);
-              }}
-              className="pl-9 h-9 text-xs"
+        </div>
+
+        <div className="border border-border/40 bg-card/50 p-4">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+              Notifications
+            </p>
+            <Bell className="h-3.5 w-3.5 text-muted-foreground/40" />
+          </div>
+          <div className="flex items-center gap-3">
+            <RingGauge value={stats.notificationReadRate} />
+            <div>
+              <p className="text-lg font-bold tracking-tight">
+                {stats.notificationReadRate}%
+              </p>
+              <p className="text-[10px] text-muted-foreground">read rate</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Row 2: Secondary stats */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="border border-border/40 bg-card/50 p-3 flex items-center gap-3">
+          <UserPlus className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0" />
+          <div>
+            <p className="text-sm font-bold tracking-tight">
+              +{stats.usersLast30d}
+            </p>
+            <p className="text-[10px] text-muted-foreground">signups (30d)</p>
+          </div>
+        </div>
+        <div className="border border-border/40 bg-card/50 p-3 flex items-center gap-3">
+          <Building2 className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0" />
+          <div>
+            <p className="text-sm font-bold tracking-tight">
+              {stats.totalOrgs}
+            </p>
+            <p className="text-[10px] text-muted-foreground">
+              orgs · {stats.totalMembers} members
+            </p>
+          </div>
+        </div>
+        <div className="border border-border/40 bg-card/50 p-3 flex items-center gap-3">
+          <Send className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0" />
+          <div>
+            <p className="text-sm font-bold tracking-tight">
+              {stats.totalNotifications}
+            </p>
+            <p className="text-[10px] text-muted-foreground">
+              notifications sent
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Row 3: Recent users + Recent notifications side by side */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {/* Recent users */}
+        <div className="border border-border/40 bg-card/50">
+          <div className="px-4 py-3 border-b border-border/30">
+            <SectionHeader
+              title="Recent Users"
+              href="/admin/users"
+              icon={Users}
             />
           </div>
-
-          <div className="border border-border/30 overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="hover:bg-transparent">
-                  <TableHead className="text-[10px] font-semibold uppercase tracking-wider">
-                    User
-                  </TableHead>
-                  <TableHead className="text-[10px] font-semibold uppercase tracking-wider">
-                    Role
-                  </TableHead>
-                  <TableHead className="text-[10px] font-semibold uppercase tracking-wider">
-                    Status
-                  </TableHead>
-                  <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-right">
-                    Actions
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8">
-                      <p className="text-xs text-muted-foreground">
-                        Loading...
-                      </p>
-                    </TableCell>
-                  </TableRow>
-                ) : users.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8">
-                      <p className="text-xs text-muted-foreground">
-                        No users found
-                      </p>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  users.map((u) => (
-                    <TableRow key={u.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-2.5">
-                          <Avatar className="h-7 w-7">
-                            <AvatarImage src={u.image ?? ""} />
-                            <AvatarFallback className="text-[10px] font-bold bg-primary/10 text-primary">
-                              {u.name?.charAt(0).toUpperCase() ?? "?"}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="text-xs font-medium">{u.name}</p>
-                            <p className="text-[10px] text-muted-foreground">
-                              {u.email}
-                            </p>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            u.role === "admin" ? "default" : "secondary"
-                          }
-                          className="text-[10px]"
-                        >
-                          {u.role ?? "user"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {u.banned ? (
-                          <Badge variant="destructive" className="text-[10px]">
-                            Banned
-                          </Badge>
-                        ) : (
-                          <Badge
-                            variant="secondary"
-                            className="text-[10px] text-green-600 dark:text-green-400"
-                          >
-                            Active
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            title="Edit user"
-                            onClick={() => {
-                              setEditUser(u);
-                              setEditName(u.name);
-                              setEditEmail(u.email);
-                              setEditPassword("");
-                            }}
-                          >
-                            <Pencil className="h-3 w-3" />
-                          </Button>
-
-                          <Dialog
-                            open={roleDialogUser?.id === u.id}
-                            onOpenChange={(open) => {
-                              if (open) {
-                                setRoleDialogUser(u);
-                                setSelectedRole(u.role ?? "user");
-                              } else {
-                                setRoleDialogUser(null);
-                              }
-                            }}
-                          >
-                            <DialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7"
-                                title="Change role"
-                              >
-                                <Shield className="h-3 w-3" />
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Change Role</DialogTitle>
-                                <DialogDescription>
-                                  Set the role for {u.name} ({u.email})
-                                </DialogDescription>
-                              </DialogHeader>
-                              <Select
-                                value={selectedRole}
-                                onValueChange={setSelectedRole}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="user">User</SelectItem>
-                                  <SelectItem value="admin">Admin</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <DialogFooter>
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <Button size="sm">
-                                      Save
-                                    </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>Change Role</AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        Are you sure you want to change {u.name}&apos;s role to <strong>{selectedRole}</strong>?
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                      <AlertDialogAction
-                                        onClick={() =>
-                                          handleSetRole(u.id, selectedRole)
-                                        }
-                                      >
-                                        Confirm
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                              </DialogFooter>
-                            </DialogContent>
-                          </Dialog>
-
-                          {u.banned ? (
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7"
-                                  title="Unban user"
-                                >
-                                  <UserCheck className="h-3 w-3" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Unban User</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Are you sure you want to unban {u.name} ({u.email})? They will be able to sign in again.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleUnban(u.id)}
-                                  >
-                                    Unban
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          ) : (
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7"
-                                  title="Ban user"
-                                >
-                                  <Ban className="h-3 w-3" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Ban User</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Are you sure you want to ban {u.name} ({u.email})? They will be signed out and unable to log in.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleBan(u.id)}
-                                  >
-                                    Ban
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          )}
-
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 text-destructive hover:text-destructive"
-                                title="Remove user"
-                              >
-                                <UserX className="h-3 w-3" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>
-                                  Remove User
-                                </AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to permanently delete {u.name} ({u.email}) and all their data? This cannot be undone.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleRemove(u.id)}
-                                >
-                                  Remove
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between">
-              <p className="text-[10px] text-muted-foreground">
-                Page {page + 1} of {totalPages}
+          <div className="divide-y divide-border/30">
+            {recentUsers.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-6">
+                No users yet
               </p>
-              <div className="flex gap-1">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-7 w-7"
-                  disabled={page === 0}
-                  onClick={() => setPage((p) => p - 1)}
+            ) : (
+              recentUsers.map((u) => (
+                <div
+                  key={u.id}
+                  className="px-4 py-2.5 flex items-center gap-3"
                 >
-                  <ChevronLeft className="h-3 w-3" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-7 w-7"
-                  disabled={page >= totalPages - 1}
-                  onClick={() => setPage((p) => p + 1)}
-                >
-                  <ChevronRight className="h-3 w-3" />
-                </Button>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Dialog
-        open={!!editUser}
-        onOpenChange={(open) => {
-          if (!open) setEditUser(null);
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit User</DialogTitle>
-            <DialogDescription>
-              Update details for {editUser?.name} ({editUser?.email})
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="edit-name" className="text-xs">Name</Label>
-              <Input
-                id="edit-name"
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                placeholder="Full name"
-                className="h-9 text-xs"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-email" className="text-xs">Email</Label>
-              <Input
-                id="edit-email"
-                type="email"
-                value={editEmail}
-                onChange={(e) => setEditEmail(e.target.value)}
-                placeholder="user@example.com"
-                className="h-9 text-xs"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-password" className="text-xs">New Password</Label>
-              <Input
-                id="edit-password"
-                type="password"
-                value={editPassword}
-                onChange={(e) => setEditPassword(e.target.value)}
-                placeholder="Leave blank to keep current"
-                className="h-9 text-xs"
-              />
-            </div>
+                  <Avatar className="h-6 w-6">
+                    <AvatarImage src={u.image ?? ""} />
+                    <AvatarFallback className="text-[9px] font-bold bg-primary/10 text-primary">
+                      {u.name?.charAt(0).toUpperCase() ?? "?"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-medium truncate">
+                      {u.name}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground truncate">
+                      {u.email}
+                    </p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    {u.role === "admin" && (
+                      <Badge variant="default" className="text-[9px] mb-0.5">
+                        admin
+                      </Badge>
+                    )}
+                    <p className="text-[9px] text-muted-foreground/50">
+                      {timeAgo(u.createdAt)}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setEditUser(null)}
-            >
-              Cancel
-            </Button>
-            <Button
-              size="sm"
-              onClick={handleEditSave}
-              disabled={editSaving}
-            >
-              {editSaving ? "Saving..." : "Save Changes"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
+
+        {/* Recent notifications */}
+        <div className="border border-border/40 bg-card/50">
+          <div className="px-4 py-3 border-b border-border/30">
+            <SectionHeader
+              title="Recent Notifications"
+              href="/admin/notifications"
+              icon={Bell}
+            />
+          </div>
+          <div className="divide-y divide-border/30">
+            {recentNotifications.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-6">
+                No notifications sent yet
+              </p>
+            ) : (
+              recentNotifications.map((n) => (
+                <div key={n.id} className="px-4 py-2.5 flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-medium truncate">
+                      {n.title}
+                    </p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <Badge
+                        variant="secondary"
+                        className="text-[9px] px-1.5 py-0"
+                      >
+                        {n.tag}
+                      </Badge>
+                      <span className="text-[9px] text-muted-foreground/50">
+                        → {n.recipientCount} recipient
+                        {n.recipientCount !== 1 ? "s" : ""}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-[9px] text-muted-foreground/50 shrink-0">
+                    {timeAgo(n.createdAt)}
+                  </p>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Row 4: Feedback glimpse */}
+   
+
+      {/* Row 5: Mini map + Quick links */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <Link
+          href={"/admin/analytics" as never}
+          className="border border-border/40 bg-card/50 p-3 block hover:bg-muted/20 transition-colors group"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5">
+              <Globe className="h-3 w-3 text-muted-foreground/50" />
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+                User Locations
+              </p>
+            </div>
+            <ArrowRight className="h-2.5 w-2.5 text-muted-foreground/40 group-hover:text-foreground transition-colors" />
+          </div>
+          <MiniWorldMap countries={countries} />
+        </Link>
+
+        <div className="md:col-span-2">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 mb-3">
+            Quick Links
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              {
+                href: "/admin/users",
+                label: "Users",
+                icon: Users,
+                desc: "Manage roles & access",
+              },
+              {
+                href: "/admin/analytics",
+                label: "Analytics",
+                icon: BarChart3,
+                desc: "Growth & engagement",
+              },
+              {
+                href: "/admin/notifications",
+                label: "Notifications",
+                icon: Bell,
+                desc: "Send messages",
+              },
+              {
+                href: "/admin/general",
+                label: "Settings",
+                icon: CheckCircle,
+                desc: "App config & features",
+              },
+            ].map((item) => (
+              <Link
+                key={item.href}
+                href={item.href as never}
+                className="flex items-start gap-2.5 p-3 border border-border/40 hover:bg-muted/30 transition-colors group"
+              >
+                <item.icon className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-[11px] font-medium group-hover:text-foreground transition-colors">
+                    {item.label}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {item.desc}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="border border-border/40 bg-card/50">
+        <div className="px-4 py-3 border-b border-border/30">
+          <SectionHeader
+            title="Feedback"
+            href="/admin/feedback"
+            icon={MessageSquare}
+          />
+        </div>
+        {recentFeedback.length === 0 ? (
+          <p className="text-xs text-muted-foreground text-center py-6">
+            No feedback yet
+          </p>
+        ) : (
+          <>
+            <div className="flex items-center gap-3 px-4 py-2 border-b border-border/20">
+              <span className="text-[10px] text-muted-foreground">
+                {stats.totalFeedback} total
+              </span>
+              <span className="text-[10px] text-muted-foreground">&middot;</span>
+              <span className="text-[10px] font-medium">
+                {stats.openFeedback} open
+              </span>
+            </div>
+            <div className="divide-y divide-border/30">
+              {recentFeedback.map((f) => {
+                const catLabel =
+                  FEEDBACK_CATEGORIES.find((c) => c.value === f.category)
+                    ?.label ?? f.category;
+                return (
+                  <div key={f.id} className="px-4 py-2.5 flex items-center gap-3">
+                    <Avatar className="h-5 w-5 shrink-0">
+                      <AvatarImage src={f.user?.image ?? ""} />
+                      <AvatarFallback className="text-[8px] font-bold bg-primary/10 text-primary">
+                        {f.user?.name?.charAt(0).toUpperCase() ?? "?"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-medium truncate">
+                          {f.user?.name ?? "Unknown"}
+                        </span>
+                        <span className="text-[9px] bg-foreground/10 text-foreground px-1.5 py-px font-semibold uppercase tracking-wider shrink-0">
+                          {catLabel}
+                        </span>
+                        <span
+                          className={`text-[9px] px-1.5 py-px font-semibold uppercase tracking-wider shrink-0 ${
+                            f.status === "open"
+                              ? "bg-foreground text-background"
+                              : "bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          {f.status}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground truncate mt-0.5">
+                        {f.message}
+                      </p>
+                    </div>
+                    <p className="text-[9px] text-muted-foreground/50 shrink-0">
+                      {timeAgo(f.createdAt)}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

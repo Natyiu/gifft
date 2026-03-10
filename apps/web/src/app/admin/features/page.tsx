@@ -8,7 +8,7 @@ import { updateAppSettings } from "@/lib/actions/admin";
 
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import Loader from "@/components/loader";
+import { FeatureTogglesSkeleton } from "@/components/skeletons";
 
 type AppSettings = {
   onboardingEnabled: boolean;
@@ -72,7 +72,7 @@ export default function AdminFeaturesPage() {
     }
   }
 
-  if (loading) return <Loader />;
+  if (loading) return <FeatureTogglesSkeleton />;
 
   return (
     <div className="max-w-xl">

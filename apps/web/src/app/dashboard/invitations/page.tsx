@@ -7,7 +7,7 @@ import { Mail, Check, X } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 
 import { Button } from "@/components/ui/button";
-import Loader from "@/components/loader";
+import { InvitationsSkeleton } from "@/components/skeletons";
 
 type Invitation = {
   id: string;
@@ -67,7 +67,7 @@ export default function InvitationsPage() {
     });
   }
 
-  if (loading) return <Loader />;
+  if (loading) return <InvitationsSkeleton />;
 
   return (
     <div className="space-y-6">

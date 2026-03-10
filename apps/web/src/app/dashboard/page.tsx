@@ -1,4 +1,5 @@
 import { auth } from "@Batman/auth";
+import prisma from "@Batman/db";
 import { headers } from "next/headers";
 
 import { DashboardHome } from "./dashboard-shell";
@@ -8,5 +9,15 @@ export default async function DashboardPage() {
     headers: await headers(),
   });
 
-  return <DashboardHome userName={session?.user?.name ?? undefined} />;
+  const settings = await prisma.appSettings.findUnique({
+    where: { id: "default" },
+    select: { organizationsEnabled: true },
+  });
+
+  return (
+    <DashboardHome
+      userName={session?.user?.name ?? undefined}
+      organizationsEnabled={settings?.organizationsEnabled ?? false}
+    />
+  );
 }

@@ -225,3 +225,27 @@ export async function getAllUsers() {
     orderBy: { name: "asc" },
   });
 }
+
+export async function searchUsers(query: string, limit = 20) {
+  await requireAdmin();
+
+  if (!query.trim()) {
+    return prisma.user.findMany({
+      select: { id: true, name: true, email: true },
+      orderBy: { createdAt: "desc" },
+      take: limit,
+    });
+  }
+
+  return prisma.user.findMany({
+    where: {
+      OR: [
+        { name: { contains: query, mode: "insensitive" } },
+        { email: { contains: query, mode: "insensitive" } },
+      ],
+    },
+    select: { id: true, name: true, email: true },
+    orderBy: { name: "asc" },
+    take: limit,
+  });
+}

@@ -2,11 +2,27 @@ model AppSettings {
   id                      String   @id @default("default")
   onboardingEnabled       Boolean  @default(true)
   appName                 String   @default("Batman")
+  appDescription          String   @default("")
+  appUrl                  String   @default("")
   appTheme                String   @default("default")
   emailVerificationEnabled Boolean @default(false)
   socialLoginEnabled      Boolean  @default(false)
   organizationsEnabled    Boolean  @default(false)
   invitesEnabled          Boolean  @default(false)
+
+  maintenanceMode         Boolean  @default(false)
+  maintenanceMessage      String   @default("We're performing scheduled maintenance. We'll be back shortly.")
+
+  defaultUserRole         String   @default("user")
+  maxUsersEnabled         Boolean  @default(false)
+  maxUsers                Int      @default(0)
+
+  supportEmail            String   @default("")
+  privacyUrl              String   @default("")
+  termsUrl                String   @default("")
+
+  signupsEnabled          Boolean  @default(true)
+  sessionTimeout          Int      @default(30)
 
   supabaseUrl             String?
   supabaseAnonKey         String?

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useTransition, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,12 +22,14 @@ import {
   Eye,
   ChevronLeft,
   ChevronRight,
+  Search,
+  Loader2,
 } from "lucide-react";
 import {
   sendNotification,
   sendNotificationToAll,
   getAdminNotificationHistory,
-  getAllUsers,
+  searchUsers,
 } from "@/lib/actions/notifications";
 import { NOTIFICATION_TAGS } from "@/lib/notification-tags";
 import { uploadFile } from "@/lib/supabase";
@@ -67,6 +69,8 @@ export default function AdminNotificationsPage() {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [users, setUsers] = useState<UserOption[]>([]);
   const [userSearch, setUserSearch] = useState("");
+  const [userSearching, setUserSearching] = useState(false);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [attachment, setAttachment] = useState<File | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [historyPage, setHistoryPage] = useState(1);
@@ -74,14 +78,31 @@ export default function AdminNotificationsPage() {
   const [historyTotal, setHistoryTotal] = useState(0);
 
   useEffect(() => {
-    loadUsers();
     loadHistory(1);
   }, []);
 
-  async function loadUsers() {
-    const result = await getAllUsers();
-    setUsers(result);
-  }
+  const doUserSearch = useCallback(async (query: string) => {
+    setUserSearching(true);
+    try {
+      const result = await searchUsers(query);
+      setUsers(result);
+    } catch {
+      // ignore
+    } finally {
+      setUserSearching(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (sendToAll) return;
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => {
+      doUserSearch(userSearch);
+    }, 300);
+    return () => {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    };
+  }, [userSearch, sendToAll, doUserSearch]);
 
   async function loadHistory(page: number) {
     const result = await getAdminNotificationHistory({ page, limit: 10 });
@@ -99,11 +120,7 @@ export default function AdminNotificationsPage() {
     );
   }
 
-  const filteredUsers = users.filter(
-    (u) =>
-      (u.name?.toLowerCase() ?? "").includes(userSearch.toLowerCase()) ||
-      u.email.toLowerCase().includes(userSearch.toLowerCase()),
-  );
+  const filteredUsers = users;
 
   async function handleSend() {
     if (!title.trim()) return toast.error("Title is required");
@@ -284,13 +301,17 @@ export default function AdminNotificationsPage() {
 
             {!sendToAll && (
               <div className="border border-border">
-                <div className="p-2 border-b border-border">
+                <div className="p-2 border-b border-border relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
                   <Input
                     value={userSearch}
                     onChange={(e) => setUserSearch(e.target.value)}
-                    placeholder="Search users..."
-                    className="h-7 text-xs"
+                    placeholder="Search users by name or email..."
+                    className="h-7 text-xs pl-7 pr-7"
                   />
+                  {userSearching && (
+                    <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground animate-spin" />
+                  )}
                 </div>
                 <div className="max-h-48 overflow-y-auto divide-y divide-border">
                   {filteredUsers.map((u) => (
@@ -312,9 +333,9 @@ export default function AdminNotificationsPage() {
                       </div>
                     </label>
                   ))}
-                  {filteredUsers.length === 0 && (
+                  {filteredUsers.length === 0 && !userSearching && (
                     <p className="p-3 text-xs text-muted-foreground text-center">
-                      No users found
+                      {userSearch ? "No users found" : "Type to search users..."}
                     </p>
                   )}
                 </div>

@@ -3,19 +3,23 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  LayoutDashboard,
   Users,
   Bell,
   Settings2,
   ToggleRight,
   Key,
   BarChart3,
+  MessageSquare,
   ArrowLeft,
 } from "lucide-react";
 
 const adminNav = [
-  { name: "Users", href: "/admin", icon: Users, exact: true },
+  { name: "Overview", href: "/admin", icon: LayoutDashboard, exact: true },
+  { name: "Users", href: "/admin/users", icon: Users },
   { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
   { name: "Notifications", href: "/admin/notifications", icon: Bell },
+  { name: "Feedback", href: "/admin/feedback", icon: MessageSquare },
   { name: "General", href: "/admin/general", icon: Settings2 },
   { name: "Features", href: "/admin/features", icon: ToggleRight },
   { name: "API Keys", href: "/admin/api-keys", icon: Key },

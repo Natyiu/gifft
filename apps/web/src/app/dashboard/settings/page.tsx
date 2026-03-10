@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import Loader from "@/components/loader";
+import { ProfileSettingsSkeleton } from "@/components/skeletons";
 
 export default function ProfileSettings() {
   const { data: session, isPending } = authClient.useSession();
@@ -32,7 +32,7 @@ export default function ProfileSettings() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [initialized, setInitialized] = useState(false);
 
-  if (isPending) return <Loader />;
+  if (isPending) return <ProfileSettingsSkeleton />;
   if (!session) return null;
 
   if (!initialized) {

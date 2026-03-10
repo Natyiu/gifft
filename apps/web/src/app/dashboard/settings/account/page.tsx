@@ -28,7 +28,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Separator } from "@/components/ui/separator";
-import Loader from "@/components/loader";
+import { AccountSettingsSkeleton } from "@/components/skeletons";
 
 export default function AccountSettings() {
   const { data: session, isPending } = authClient.useSession();
@@ -38,7 +38,7 @@ export default function AccountSettings() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
 
-  if (isPending) return <Loader />;
+  if (isPending) return <AccountSettingsSkeleton />;
   if (!session) return null;
 
   async function handleChangePassword() {

@@ -27,7 +27,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import Loader from "@/components/loader";
+import { FilesSkeleton } from "@/components/skeletons";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 type UploadedFile = {
@@ -62,7 +63,7 @@ export default function FilesPage() {
     }
   }, [session?.user]);
 
-  if (isPending) return <Loader />;
+  if (isPending) return <FilesSkeleton />;
   if (!session) return null;
 
   if (!initialized) {
@@ -190,8 +191,16 @@ export default function FilesPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8">
-              <Loader />
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="border border-border">
+                  <Skeleton className="h-24 w-full" />
+                  <div className="p-3 space-y-1.5">
+                    <Skeleton className="h-3 w-24" />
+                    <Skeleton className="h-2 w-14" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : files.length === 0 ? (
             <div className="text-center py-8">

@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import Loader from "@/components/loader";
+import { ApiKeysSkeleton } from "@/components/skeletons";
 
 type ApiKeysData = {
   supabaseUrl: string;
@@ -75,7 +75,7 @@ export default function AdminApiKeysPage() {
     setShowSecrets((prev) => ({ ...prev, [field]: !prev[field] }));
   }
 
-  if (loading) return <Loader />;
+  if (loading) return <ApiKeysSkeleton />;
 
   const changed = keys && JSON.stringify(form) !== JSON.stringify(keys);
 

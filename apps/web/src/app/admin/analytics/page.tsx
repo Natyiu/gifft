@@ -4,14 +4,13 @@ import { useState, useEffect } from "react";
 import {
   AreaChart,
   Area,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
 } from "recharts";
 import {
   Users,
@@ -25,7 +24,7 @@ import {
   Minus,
 } from "lucide-react";
 import { getAnalytics } from "@/lib/actions/admin";
-import Loader from "@/components/loader";
+import { AnalyticsSkeleton } from "@/components/skeletons";
 import { WorldMap } from "@/components/world-map";
 
 type Analytics = Awaited<ReturnType<typeof getAnalytics>>;
@@ -37,54 +36,7 @@ const MONO = {
   faint: "color-mix(in oklch, var(--foreground) 15%, transparent)",
 };
 
-const PIE_SHADES = [
-  "var(--foreground)",
-  "color-mix(in oklch, var(--foreground) 65%, transparent)",
-  "color-mix(in oklch, var(--foreground) 40%, transparent)",
-  "color-mix(in oklch, var(--foreground) 25%, transparent)",
-  "color-mix(in oklch, var(--foreground) 12%, transparent)",
-];
-
-function StatCard({
-  label,
-  value,
-  sub,
-  icon: Icon,
-  trend,
-}: {
-  label: string;
-  value: string | number;
-  sub?: string;
-  icon: React.ElementType;
-  trend?: "up" | "down" | "flat";
-}) {
-  const TrendIcon =
-    trend === "up" ? TrendingUp : trend === "down" ? TrendingDown : Minus;
-  const trendColor =
-    trend === "up"
-      ? "text-foreground"
-      : trend === "down"
-        ? "text-muted-foreground/60"
-        : "text-muted-foreground/30";
-
-  return (
-    <div className="border border-border/40 bg-card/50 p-4">
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
-          {label}
-        </p>
-        <Icon className="h-3.5 w-3.5 text-muted-foreground/40" />
-      </div>
-      <div className="flex items-end gap-2">
-        <p className="text-2xl font-bold tracking-tight">{value}</p>
-        {trend && <TrendIcon className={`h-3.5 w-3.5 mb-1 ${trendColor}`} />}
-      </div>
-      {sub && (
-        <p className="text-[10px] text-muted-foreground mt-1">{sub}</p>
-      )}
-    </div>
-  );
-}
+/* ─── Reusable components ─────────────────────────────────── */
 
 function ChartCard({
   title,
@@ -139,6 +91,190 @@ function CustomTooltip({
   );
 }
 
+function RingGauge({
+  value,
+  label,
+  sub,
+  icon: Icon,
+}: {
+  value: number;
+  label: string;
+  sub: string;
+  icon: React.ElementType;
+}) {
+  const radius = 36;
+  const stroke = 5;
+  const circumference = 2 * Math.PI * radius;
+  const filled = (value / 100) * circumference;
+  const size = (radius + stroke) * 2;
+
+  return (
+    <div className="border border-border/40 bg-card/50 p-4 flex items-center gap-4">
+      <div className="shrink-0" style={{ width: size, height: size }}>
+        <svg width={size} height={size} className="-rotate-90">
+          <circle
+            cx={radius + stroke}
+            cy={radius + stroke}
+            r={radius}
+            fill="none"
+            className="stroke-border/40"
+            strokeWidth={stroke}
+          />
+          <circle
+            cx={radius + stroke}
+            cy={radius + stroke}
+            r={radius}
+            fill="none"
+            className="stroke-foreground transition-all duration-700"
+            strokeWidth={stroke}
+            strokeDasharray={circumference}
+            strokeDashoffset={circumference - filled}
+            strokeLinecap="butt"
+          />
+        </svg>
+        <div
+          className="flex items-center justify-center -mt-[100%]"
+          style={{ width: size, height: size }}
+        >
+          <span className="text-sm font-bold">{value}%</span>
+        </div>
+      </div>
+      <div className="min-w-0">
+        <div className="flex items-center gap-1.5 mb-0.5">
+          <Icon className="h-3 w-3 text-muted-foreground/50" />
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+            {label}
+          </p>
+        </div>
+        <p className="text-[10px] text-muted-foreground">{sub}</p>
+      </div>
+    </div>
+  );
+}
+
+function Sparkline({ data, className }: { data: number[]; className?: string }) {
+  if (!data.length) return null;
+  const max = Math.max(...data, 1);
+  const h = 24;
+  const w = 56;
+  const step = w / Math.max(data.length - 1, 1);
+
+  const points = data.map((v, i) => ({
+    x: i * step,
+    y: h - (v / max) * (h - 2) - 1,
+  }));
+
+  const line = points.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ");
+
+  return (
+    <svg
+      width={w}
+      height={h}
+      className={className}
+      viewBox={`0 0 ${w} ${h}`}
+    >
+      <path
+        d={line}
+        fill="none"
+        className="stroke-foreground/50"
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {points.length > 0 && (
+        <circle
+          cx={points[points.length - 1].x}
+          cy={points[points.length - 1].y}
+          r={2}
+          className="fill-foreground"
+        />
+      )}
+    </svg>
+  );
+}
+
+function StatCard({
+  label,
+  value,
+  sub,
+  icon: Icon,
+  trend,
+  sparkData,
+}: {
+  label: string;
+  value: string | number;
+  sub?: string;
+  icon: React.ElementType;
+  trend?: "up" | "down" | "flat";
+  sparkData?: number[];
+}) {
+  const TrendIcon =
+    trend === "up" ? TrendingUp : trend === "down" ? TrendingDown : Minus;
+  const trendColor =
+    trend === "up"
+      ? "text-foreground"
+      : trend === "down"
+        ? "text-muted-foreground/60"
+        : "text-muted-foreground/30";
+
+  return (
+    <div className="border border-border/40 bg-card/50 p-4">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+          {label}
+        </p>
+        <Icon className="h-3.5 w-3.5 text-muted-foreground/40" />
+      </div>
+      <div className="flex items-end justify-between">
+        <div className="flex items-end gap-2">
+          <p className="text-2xl font-bold tracking-tight">{value}</p>
+          {trend && (
+            <TrendIcon className={`h-3.5 w-3.5 mb-1 ${trendColor}`} />
+          )}
+        </div>
+        {sparkData && sparkData.length > 1 && (
+          <Sparkline data={sparkData} className="mb-1" />
+        )}
+      </div>
+      {sub && (
+        <p className="text-[10px] text-muted-foreground mt-1">{sub}</p>
+      )}
+    </div>
+  );
+}
+
+function HorizontalBar({
+  label,
+  count,
+  total,
+  shade,
+}: {
+  label: string;
+  count: number;
+  total: number;
+  shade: string;
+}) {
+  const pct = total > 0 ? (count / total) * 100 : 0;
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-medium">{label}</span>
+        <span className="text-[10px] text-muted-foreground">
+          {count} · {Math.round(pct)}%
+        </span>
+      </div>
+      <div className="h-2 bg-border/30 w-full">
+        <div
+          className="h-full transition-all duration-500"
+          style={{ width: `${pct}%`, backgroundColor: shade }}
+        />
+      </div>
+    </div>
+  );
+}
+
+/* ─── Page ────────────────────────────────────────────────── */
+
 export default function AdminAnalyticsPage() {
   const [data, setData] = useState<Analytics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -149,9 +285,17 @@ export default function AdminAnalyticsPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading || !data) return <Loader />;
+  if (loading || !data) return <AnalyticsSkeleton />;
 
-  const { overview, dailyData, authProviders, countries, organizations } = data;
+  const {
+    overview,
+    dailyData,
+    weeklySignups,
+    weeklyActive,
+    authProviders,
+    countries,
+    organizations,
+  } = data;
 
   const signupTrend: "up" | "down" | "flat" =
     overview.usersLast7d > overview.usersLast30d / 4
@@ -159,6 +303,16 @@ export default function AdminAnalyticsPage() {
       : overview.usersLast7d < overview.usersLast30d / 4
         ? "down"
         : "flat";
+
+  const authTotal = authProviders.reduce((sum, p) => sum + p.count, 0);
+
+  const barShades = [
+    MONO.solid,
+    MONO.medium,
+    MONO.light,
+    MONO.faint,
+    "color-mix(in oklch, var(--foreground) 8%, transparent)",
+  ];
 
   return (
     <div className="space-y-8">
@@ -169,19 +323,20 @@ export default function AdminAnalyticsPage() {
         </p>
       </div>
 
-      {/* Core stat cards — the 6 questions a founder needs answered */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+      {/* Row 1: Key numbers with sparklines */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard
           label="Total Users"
           value={overview.totalUsers}
-          sub={`+${overview.usersLast30d} in 30d · +${overview.usersLast7d} this week`}
+          sub={`+${overview.usersLast30d} in 30d`}
           icon={Users}
           trend={signupTrend}
+          sparkData={weeklySignups}
         />
         <StatCard
           label="Active Today"
           value={overview.dailyActiveUsers}
-          sub={`${overview.weeklyActiveUsers} active this week`}
+          sub={`${overview.weeklyActiveUsers} this week`}
           icon={Activity}
           trend={
             overview.dailyActiveUsers > 0
@@ -190,64 +345,59 @@ export default function AdminAnalyticsPage() {
                 ? "down"
                 : "flat"
           }
-        />
-        <StatCard
-          label="Onboarding Rate"
-          value={`${overview.onboardingRate}%`}
-          sub={`${overview.onboardedUsers} of ${overview.totalUsers} completed`}
-          icon={CheckCircle}
-          trend={
-            overview.onboardingRate >= 70
-              ? "up"
-              : overview.onboardingRate >= 40
-                ? "flat"
-                : "down"
-          }
-        />
-        <StatCard
-          label="Notification Read Rate"
-          value={`${overview.notificationReadRate}%`}
-          sub="Are your messages landing?"
-          icon={Bell}
-          trend={
-            overview.notificationReadRate >= 60
-              ? "up"
-              : overview.notificationReadRate >= 30
-                ? "flat"
-                : "down"
-          }
-        />
-        <StatCard
-          label="Organizations"
-          value={organizations.totalOrgs}
-          sub={`${organizations.avgMembersPerOrg} avg members per org`}
-          icon={Building2}
+          sparkData={weeklyActive}
         />
         <StatCard
           label="New This Week"
           value={`+${overview.usersLast7d}`}
-          sub={`${overview.usersLast30d} in the last 30 days`}
+          sub={`${overview.usersLast30d} in 30 days`}
           icon={UserPlus}
           trend={signupTrend}
         />
+        <StatCard
+          label="Organizations"
+          value={organizations.totalOrgs}
+          sub={`${organizations.avgMembersPerOrg} avg per org`}
+          icon={Building2}
+        />
       </div>
 
-      {/* Growth chart — signups + active users over time */}
+      {/* Row 2: Ring gauges for rates */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <RingGauge
+          value={overview.onboardingRate}
+          label="Onboarding"
+          sub={`${overview.onboardedUsers} of ${overview.totalUsers} users completed onboarding`}
+          icon={CheckCircle}
+        />
+        <RingGauge
+          value={overview.notificationReadRate}
+          label="Notification Read Rate"
+          sub="Percentage of delivered notifications that were read"
+          icon={Bell}
+        />
+      </div>
+
+      {/* Row 3: Growth & engagement area chart with cumulative line */}
       <ChartCard
         title="Growth & Engagement"
-        description="Daily signups and unique active users over 30 days"
+        description="Daily signups, active users, and cumulative total over 30 days"
       >
         <div className="h-72">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={dailyData}>
               <defs>
                 <linearGradient id="signupGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="currentColor" stopOpacity={0.15} />
-                  <stop offset="100%" stopColor="currentColor" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="activeGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="currentColor" stopOpacity={0.06} />
-                  <stop offset="100%" stopColor="currentColor" stopOpacity={0} />
+                  <stop
+                    offset="0%"
+                    stopColor="currentColor"
+                    stopOpacity={0.12}
+                  />
+                  <stop
+                    offset="100%"
+                    stopColor="currentColor"
+                    stopOpacity={0}
+                  />
                 </linearGradient>
               </defs>
               <CartesianGrid
@@ -265,6 +415,16 @@ export default function AdminAnalyticsPage() {
                 interval={Math.floor(dailyData.length / 7)}
               />
               <YAxis
+                yAxisId="daily"
+                tick={{ fontSize: 9, fill: "currentColor" }}
+                className="text-muted-foreground"
+                tickLine={false}
+                axisLine={false}
+                allowDecimals={false}
+              />
+              <YAxis
+                yAxisId="cumulative"
+                orientation="right"
                 tick={{ fontSize: 9, fill: "currentColor" }}
                 className="text-muted-foreground"
                 tickLine={false}
@@ -273,6 +433,7 @@ export default function AdminAnalyticsPage() {
               />
               <Tooltip content={<CustomTooltip />} />
               <Area
+                yAxisId="daily"
                 type="monotone"
                 dataKey="signups"
                 stroke={MONO.solid}
@@ -281,13 +442,24 @@ export default function AdminAnalyticsPage() {
                 name="Signups"
               />
               <Area
+                yAxisId="daily"
                 type="monotone"
                 dataKey="activeUsers"
                 stroke={MONO.medium}
-                fill="url(#activeGrad)"
+                fill="none"
                 strokeWidth={1.5}
                 strokeDasharray="4 3"
                 name="Active Users"
+              />
+              <Area
+                yAxisId="cumulative"
+                type="monotone"
+                dataKey="totalUsers"
+                stroke={MONO.light}
+                fill="none"
+                strokeWidth={1}
+                strokeDasharray="2 2"
+                name="Total Users"
               />
             </AreaChart>
           </ResponsiveContainer>
@@ -303,86 +475,94 @@ export default function AdminAnalyticsPage() {
               Active Users
             </span>
           </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-5 h-px bg-foreground/30 border-t border-dotted border-foreground/30" />
+            <span className="text-[10px] text-muted-foreground">
+              Total (right axis)
+            </span>
+          </div>
         </div>
       </ChartCard>
 
-      {/* World map — where are your users */}
+      {/* Row 4: Weekly signups bar chart + Signup methods side by side */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <ChartCard
+          title="Weekly Signups"
+          description="New user registrations per week"
+        >
+          <div className="h-44">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={weeklySignups.map((v, i) => ({
+                  week: `W${i + 1}`,
+                  signups: v,
+                }))}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="currentColor"
+                  className="text-border"
+                  opacity={0.3}
+                  horizontal
+                  vertical={false}
+                />
+                <XAxis
+                  dataKey="week"
+                  tick={{ fontSize: 9, fill: "currentColor" }}
+                  className="text-muted-foreground"
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis
+                  tick={{ fontSize: 9, fill: "currentColor" }}
+                  className="text-muted-foreground"
+                  tickLine={false}
+                  axisLine={false}
+                  allowDecimals={false}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Bar
+                  dataKey="signups"
+                  fill={MONO.solid}
+                  name="Signups"
+                  radius={[0, 0, 0, 0]}
+                  maxBarSize={40}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </ChartCard>
+
+        <ChartCard
+          title="Signup Methods"
+          description="How users create their accounts"
+        >
+          {authProviders.length === 0 ? (
+            <p className="text-xs text-muted-foreground text-center py-8">
+              No account data yet
+            </p>
+          ) : (
+            <div className="space-y-3 py-2">
+              {authProviders.map((p, i) => (
+                <HorizontalBar
+                  key={p.provider}
+                  label={p.provider}
+                  count={p.count}
+                  total={authTotal}
+                  shade={barShades[i % barShades.length]}
+                />
+              ))}
+            </div>
+          )}
+        </ChartCard>
+      </div>
+
+      {/* Row 5: World map */}
       <ChartCard
         title="Where Your Users Are"
         description="Geographic distribution based on session IP addresses (last 30 days)"
       >
         <WorldMap countries={countries} />
-      </ChartCard>
-
-      {/* Auth providers — where are users coming from */}
-      <ChartCard
-        title="Signup Methods"
-        description="Which auth providers your users choose"
-      >
-        {authProviders.length === 0 ? (
-          <p className="text-xs text-muted-foreground text-center py-8">
-            No account data yet
-          </p>
-        ) : (
-          <div className="flex items-center gap-8">
-            <div className="h-48 w-48 shrink-0">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={authProviders}
-                    dataKey="count"
-                    nameKey="provider"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={72}
-                    innerRadius={40}
-                    paddingAngle={2}
-                    strokeWidth={0}
-                  >
-                    {authProviders.map((_, i) => (
-                      <Cell
-                        key={i}
-                        fill={PIE_SHADES[i % PIE_SHADES.length]}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(value, name) => [value, name]}
-                    contentStyle={{
-                      fontSize: 11,
-                    }}
-                    wrapperClassName="!bg-popover !border-border !rounded-none !shadow-lg"
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="space-y-2.5">
-              {authProviders.map((p, i) => {
-                const total = authProviders.reduce(
-                  (sum, item) => sum + item.count,
-                  0
-                );
-                const pct = total > 0 ? Math.round((p.count / total) * 100) : 0;
-                return (
-                  <div key={p.provider} className="flex items-center gap-3">
-                    <div
-                      className="w-2.5 h-2.5 rounded-full shrink-0"
-                      style={{
-                        backgroundColor: PIE_SHADES[i % PIE_SHADES.length],
-                      }}
-                    />
-                    <div>
-                      <p className="text-xs font-medium">{p.provider}</p>
-                      <p className="text-[10px] text-muted-foreground">
-                        {p.count} users · {pct}%
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
       </ChartCard>
     </div>
   );
