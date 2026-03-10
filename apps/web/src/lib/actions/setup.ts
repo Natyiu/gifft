@@ -3,7 +3,10 @@
 import { readFile, writeFile } from "fs/promises";
 import { resolve } from "path";
 
+import { createClient } from "@supabase/supabase-js";
 import prisma from "@Batman/db";
+
+const STORAGE_BUCKETS = ["avatars", "uploads", "attachments"] as const;
 
 const ENV_PATH = resolve(process.cwd(), ".env");
 
@@ -124,6 +127,20 @@ export async function saveSetup(data: SetupData) {
   lines.push("");
 
   await writeFile(ENV_PATH, lines.join("\n"), "utf-8");
+
+  if (data.supabaseUrl && data.supabaseServiceRoleKey) {
+    try {
+      const supabase = createClient(data.supabaseUrl, data.supabaseServiceRoleKey);
+      for (const bucket of STORAGE_BUCKETS) {
+        const { error } = await supabase.storage.createBucket(bucket, { public: true });
+        if (error && !error.message?.toLowerCase().includes("already exists")) {
+          console.warn(`Supabase storage: could not create bucket "${bucket}":`, error.message);
+        }
+      }
+    } catch (e) {
+      console.warn("Supabase storage: could not create buckets:", e);
+    }
+  }
 
   if (data.polarAccessToken || data.polarWebhookSecret) {
     try {

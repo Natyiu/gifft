@@ -113,7 +113,7 @@ Open [http://localhost:3001](http://localhost:3001).
 
 After signing up and promoting yourself to admin, go to **Admin > API Keys** to configure:
 
-- **Supabase** — Project URL, Anon Key, and Service Role Key (for file uploads, avatars, attachments). Also create three **public** buckets in Supabase Storage: `avatars`, `uploads`, `attachments`.
+- **Supabase** — Project URL, Anon Key, and Service Role Key (for file uploads, avatars, attachments). Buckets (`avatars`, `uploads`, `attachments`) are created automatically.
 - **Resend** — API Key and From Email (for password reset, email verification, invitations)
 - **Google OAuth** — Client ID and Secret (for social login)
 - **GitHub OAuth** — Client ID and Secret (for social login)

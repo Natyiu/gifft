@@ -22,8 +22,8 @@ interface StepDef {
 const ALL_STEPS: StepDef[] = [
   { id: "database", label: "Database", description: "Supabase PostgreSQL connection", required: true },
   { id: "auth", label: "Authentication", description: "Auth secret & app URL", required: true },
-  { id: "storage", label: "Storage", description: "Supabase storage for uploads & avatars", required: true },
-  { id: "features", label: "Features", description: "Choose what to enable" },
+  { id: "features", label: "Features", description: "What does your app need?" },
+  { id: "storage", label: "Storage", description: "Supabase storage for uploads & avatars", conditional: true },
   { id: "email", label: "Email", description: "Resend for transactional emails", conditional: true },
   { id: "social", label: "Social Login", description: "Google & GitHub OAuth", conditional: true },
   { id: "payment", label: "Payments", description: "Polar for subscriptions & checkout", conditional: true },
@@ -82,6 +82,7 @@ type FormData = {
   wantEmail: boolean;
   wantSocial: boolean;
   wantPayment: boolean;
+  wantStorage: boolean;
   supabaseUrl: string;
   supabaseAnonKey: string;
   supabaseServiceRoleKey: string;
@@ -107,6 +108,7 @@ const defaultForm: FormData = {
   wantEmail: false,
   wantSocial: false,
   wantPayment: false,
+  wantStorage: false,
   supabaseUrl: "",
   supabaseAnonKey: "",
   supabaseServiceRoleKey: "",
@@ -135,6 +137,7 @@ export function SetupWizard({ onComplete }: { onComplete: () => void }) {
     if (s.id === "email") return form.wantEmail;
     if (s.id === "social") return form.wantSocial;
     if (s.id === "payment") return form.wantPayment;
+    if (s.id === "storage") return form.wantStorage;
     return true;
   });
 
@@ -220,9 +223,9 @@ export function SetupWizard({ onComplete }: { onComplete: () => void }) {
         betterAuthSecret: form.betterAuthSecret.trim(),
         betterAuthUrl: form.betterAuthUrl.trim(),
         corsOrigin: form.corsOrigin.trim(),
-        supabaseUrl: form.supabaseUrl.trim() || undefined,
-        supabaseAnonKey: form.supabaseAnonKey.trim() || undefined,
-        supabaseServiceRoleKey: form.supabaseServiceRoleKey.trim() || undefined,
+        supabaseUrl: form.wantStorage ? (form.supabaseUrl.trim() || undefined) : undefined,
+        supabaseAnonKey: form.wantStorage ? (form.supabaseAnonKey.trim() || undefined) : undefined,
+        supabaseServiceRoleKey: form.wantStorage ? (form.supabaseServiceRoleKey.trim() || undefined) : undefined,
         resendApiKey: form.resendApiKey.trim() || undefined,
         googleClientId: form.googleClientId.trim() || undefined,
         googleClientSecret: form.googleClientSecret.trim() || undefined,
@@ -516,37 +519,35 @@ function AuthStep({ form, update, errors, showSecrets, toggleSecret, onGenerateS
 
 function FeaturesStep({ form, update }: Pick<StepProps, "form" | "update">) {
   return (
-    <div className="space-y-3">
-      <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
-        These are optional. You can skip them now and configure later from the admin dashboard. 
-        Select what your project needs — we&apos;ll guide you through each one.
+    <div className="space-y-6">
+      <p className="text-xs text-muted-foreground leading-relaxed">
+        A few quick questions. Say yes to set it up now, or skip and add it later from the admin dashboard.
       </p>
 
-      <FeatureToggle
-        title="Transactional Email"
-        description="Password resets, email verification, org invitations via Resend"
+      <FeatureQuestion
+        question="Will users upload stuff?"
+        detail="Photos, videos, profile pictures — anything they can upload. We&apos;ll set this up for you."
+        checked={form.wantStorage}
+        onChange={(v) => update("wantStorage", v)}
+      />
+      <FeatureQuestion
+        question="Do you want to send emails to users?"
+        detail="Like when someone signs up — verify their email, or let them reset their password."
         checked={form.wantEmail}
         onChange={(v) => update("wantEmail", v)}
       />
-      <FeatureToggle
-        title="Social Login"
-        description="Let users sign in with Google or GitHub"
+      <FeatureQuestion
+        question="Sign in with Google?"
+        detail="Let people use their Google account instead of creating a password."
         checked={form.wantSocial}
         onChange={(v) => update("wantSocial", v)}
       />
-      <FeatureToggle
-        title="Payments"
-        description="Subscriptions, pricing, checkout via Polar"
+      <FeatureQuestion
+        question="Will you charge for your app?"
+        detail="Subscriptions, one-time payments — we&apos;ll help you set that up."
         checked={form.wantPayment}
         onChange={(v) => update("wantPayment", v)}
       />
-
-      <div className="border border-dashed border-border/40 px-3 py-2.5 mt-4">
-        <p className="text-[10px] text-muted-foreground/50 leading-relaxed">
-          All optional features can also be configured later from{" "}
-          <strong>Admin → API Keys</strong> without touching .env.
-        </p>
-      </div>
     </div>
   );
 }
@@ -555,13 +556,9 @@ function StorageStep({ form, update, errors, showSecrets, toggleSecret }: StepPr
   return (
     <div className="space-y-5">
       <Hint>
-        Supabase Storage is used for user avatars, file uploads, and notification attachments.
-        In your Supabase project, go to{" "}
-        <HintLink href="https://supabase.com/dashboard">Dashboard</HintLink> → <strong>Settings → API</strong> to find these keys.
-        Also create three <strong>public</strong> storage buckets:{" "}
-        <code className="bg-muted/50 px-1 text-[9px]">avatars</code>,{" "}
-        <code className="bg-muted/50 px-1 text-[9px]">uploads</code>,{" "}
-        <code className="bg-muted/50 px-1 text-[9px]">attachments</code>.
+        We&apos;ll use these keys for avatars, file uploads, and attachments. In your Supabase project, go to{" "}
+        <HintLink href="https://supabase.com/dashboard">Dashboard</HintLink> → <strong>Settings → API</strong> to find them.
+        We&apos;ll create the storage buckets for you automatically.
       </Hint>
 
       <FieldGroup>
@@ -828,13 +825,15 @@ function ReviewStep({ form }: { form: FormData }) {
     },
   ];
 
-  sections.push({
-    title: "File Storage",
-    items: [
-      { label: "Supabase URL", value: form.supabaseUrl },
-      { label: "Service Role Key", value: form.supabaseServiceRoleKey, masked: true },
-    ],
-  });
+  if (form.wantStorage) {
+    sections.push({
+      title: "File Storage",
+      items: [
+        { label: "Supabase URL", value: form.supabaseUrl },
+        { label: "Service Role Key", value: form.supabaseServiceRoleKey, masked: true },
+      ],
+    });
+  }
   if (form.wantEmail) {
     sections.push({
       title: "Email",
@@ -895,6 +894,51 @@ function ReviewStep({ form }: { form: FormData }) {
 }
 
 // -- Shared UI Primitives --
+
+function FeatureQuestion({
+  question,
+  detail,
+  checked,
+  onChange,
+}: {
+  question: string;
+  detail: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <div className="border border-border/40 rounded-md overflow-hidden">
+      <div className="px-3 py-3 bg-muted/20">
+        <p className="text-xs font-medium text-foreground">{question}</p>
+        <p className="text-[10px] text-muted-foreground mt-0.5 leading-relaxed">{detail}</p>
+      </div>
+      <div className="flex border-t border-border/30">
+        <button
+          type="button"
+          onClick={() => onChange(true)}
+          className={`flex-1 px-3 py-2.5 text-[11px] font-medium transition-colors ${
+            checked
+              ? "bg-foreground text-background"
+              : "text-muted-foreground hover:bg-muted/30 hover:text-foreground"
+          }`}
+        >
+          Yes, configure
+        </button>
+        <button
+          type="button"
+          onClick={() => onChange(false)}
+          className={`flex-1 px-3 py-2.5 text-[11px] font-medium transition-colors border-l border-border/30 ${
+            !checked
+              ? "bg-foreground text-background"
+              : "text-muted-foreground hover:bg-muted/30 hover:text-foreground"
+          }`}
+        >
+          Skip for now
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function FeatureToggle({
   title,
