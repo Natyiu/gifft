@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { Suspense } from "react";
 import { useTheme } from "next-themes";
 import { useState, useEffect } from "react";
 import { ArrowRight, Wrench } from "lucide-react";
@@ -16,7 +17,12 @@ const MarketingPage = dynamic(() => import("./marketing-page"), {
 });
 
 export default function Page() {
-  if (isMarketing) return <MarketingPage />;
+  if (isMarketing)
+    return (
+      <Suspense fallback={null}>
+        <MarketingPage />
+      </Suspense>
+    );
   return <StarterPage />;
 }
 
