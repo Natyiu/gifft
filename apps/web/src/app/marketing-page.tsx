@@ -34,7 +34,7 @@ const techStack = [
 
 const builtInFeatures = [
   { title: "Admin Dashboard", desc: "One place to control everything. Users, analytics, products, blog, notifications, feedback. Your startup's command center.", icon: "⚡" },
-  { title: "Auth", desc: "Sign up, login, OAuth. Production-grade. Scales to thousands. No auth headaches.", icon: "🔐" },
+  { title: "Auth", desc: "Sign up, login, OAuth. Production-grade. Scales to millions. No auth headaches.", icon: "🔐" },
   { title: "Payments", desc: "Polar subscriptions wired. Create products, checkout, webhooks. Monetize from day one.", icon: "💳" },
   { title: "User Dashboard", desc: "Settings, organizations, invitations. Pro tier ready. Built for SaaS.", icon: "👤" },
   { title: "File Storage", desc: "Supabase storage. Uploads, avatars. S3-compatible. Production-ready.", icon: "📁" },
@@ -355,7 +355,7 @@ export default function MarketingPage() {
             </h1>
 
             <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-md mb-4 sm:mb-5">
-              A production-grade codebase with everything built in: auth, payments, admin dashboard, user management. All-in-one control panel. Scale to thousands of users. Technical or non-technical — describe what you want to Cursor or Claude and ship your product.
+      A startup boilerplate with everything built in: auth, payments, admin dashboard, user management. All-in-one control panel. Scale to millions of users.
             </p>
 
             {/* Mini tech list */}
@@ -512,7 +512,7 @@ export default function MarketingPage() {
               <div className="space-y-1.5 sm:space-y-2">
                 <p className="text-sm font-medium">Production code</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Solid codebase. Scales to thousands. Not a hacky prototype. Everything crafted for real startups.
+                  Solid codebase. Scales to millions. Not a hacky prototype. Everything crafted for real startups.
                 </p>
               </div>
               <div className="space-y-1.5 sm:space-y-2">
