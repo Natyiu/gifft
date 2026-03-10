@@ -25,6 +25,7 @@
   "devDependencies": {
     "@Batman/config": "workspace:*",
     "@types/node": "^22.13.14",
+    "puppeteer": "^24.38.0",
     "turbo": "^2.6.3",
     "typescript": "catalog:"
   },

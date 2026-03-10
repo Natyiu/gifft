@@ -1,4 +1,5 @@
 import { auth } from "@Batman/auth";
+import prisma from "@Batman/db";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -17,5 +18,35 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
-  return <DashboardShell session={session}>{children}</DashboardShell>;
+  let settings = await prisma.appSettings.findUnique({
+    where: { id: "default" },
+  });
+  if (!settings) {
+    settings = await prisma.appSettings.create({
+      data: { id: "default" },
+    });
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { onboardingCompleted: true },
+  });
+
+  if (user && !user.onboardingCompleted && settings.onboardingEnabled) {
+    redirect("/onboarding" as never);
+  }
+
+  const unreadCount = await prisma.notificationRecipient.count({
+    where: { userId: session.user.id, read: false },
+  });
+
+  return (
+    <DashboardShell
+      session={session}
+      unreadNotifications={unreadCount}
+      organizationsEnabled={settings.organizationsEnabled}
+    >
+      {children}
+    </DashboardShell>
+  );
 }

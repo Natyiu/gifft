@@ -1,0 +1,25 @@
+model AppSettings {
+  id                      String   @id @default("default")
+  onboardingEnabled       Boolean  @default(true)
+  appName                 String   @default("Batman")
+  appTheme                String   @default("default")
+  emailVerificationEnabled Boolean @default(false)
+  socialLoginEnabled      Boolean  @default(false)
+  organizationsEnabled    Boolean  @default(false)
+  invitesEnabled          Boolean  @default(false)
+
+  supabaseUrl             String?
+  supabaseAnonKey         String?
+  supabaseServiceRoleKey  String?
+
+  resendApiKey            String?
+  resendFromEmail         String?  @default("noreply@updates.yourdomain.com")
+  googleClientId          String?
+  googleClientSecret      String?
+  githubClientId          String?
+  githubClientSecret      String?
+
+  updatedAt               DateTime @updatedAt
+
+  @@map("app_settings")
+}
