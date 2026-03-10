@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { Upload, FileIcon, Trash2, ExternalLink } from "lucide-react";
 
@@ -63,14 +63,15 @@ export default function FilesPage() {
     }
   }, [session?.user]);
 
-  if (isPending) return <FilesSkeleton />;
-  if (!session) return null;
-
-  if (!initialized) {
+  useEffect(() => {
+    if (!session?.user || initialized) return;
     setInitialized(true);
     fetchFiles();
     getStorageUrl().then(setStorageUrl);
-  }
+  }, [session?.user, initialized, fetchFiles]);
+
+  if (isPending) return <FilesSkeleton />;
+  if (!session) return null;
 
   async function handleUpload(fileList: FileList | null) {
     if (!fileList || fileList.length === 0) return;

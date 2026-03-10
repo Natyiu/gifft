@@ -1,21 +1,35 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTheme } from "next-themes";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   LogOut,
   ShieldCheck,
-  ArrowUpRight,
   Upload,
   Bell,
   Settings,
   Building2,
   Code,
   ChevronRight,
-  Puzzle,
   MessageSquarePlus,
+  Sun,
+  Moon,
+  Monitor,
+  User,
 } from "lucide-react";
 import { FeedbackDialog } from "@/components/feedback-dialog";
 
@@ -29,6 +43,33 @@ function BatLogo({ className }: { className?: string }) {
     >
       <path d="M50 0C50 0 42 14 30 18C18 22 0 18 0 18C0 18 12 28 20 32C28 36 50 40 50 40C50 40 72 36 80 32C88 28 100 18 100 18C100 18 82 22 70 18C58 14 50 0 50 0Z" />
     </svg>
+  );
+}
+
+function ThemeToggle() {
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+
+  function cycle() {
+    if (theme === "light") setTheme("dark");
+    else if (theme === "dark") setTheme("system");
+    else setTheme("light");
+  }
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="h-7 w-7 text-muted-foreground hover:text-foreground"
+      onClick={cycle}
+      title={mounted ? `Theme: ${theme}` : undefined}
+    >
+      <Sun className="h-3.5 w-3.5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+      <Moon className="absolute h-3.5 w-3.5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+      <span className="sr-only">Toggle theme</span>
+    </Button>
   );
 }
 
@@ -46,6 +87,10 @@ export function DashboardShell({
   const pathname = usePathname();
   const isAdmin = session.user.role === "admin";
   const isHome = pathname === "/dashboard";
+  const userImage = session.user.image;
+  const userName = session.user.name ?? "";
+  const userEmail = session.user.email ?? "";
+  const initial = userName.charAt(0).toUpperCase() || "?";
 
   return (
     <div className="min-h-screen bg-background">
@@ -67,7 +112,7 @@ export function DashboardShell({
             )}
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             <Link href={"/dashboard/notifications" as never} className="relative">
               <Button
                 variant="ghost"
@@ -82,43 +127,93 @@ export function DashboardShell({
                 </span>
               )}
             </Link>
-            <Link href={"/dashboard/settings" as never}>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 text-muted-foreground hover:text-foreground"
-              >
-                <Settings className="h-3.5 w-3.5" />
-              </Button>
-            </Link>
-            {isAdmin && (
-              <Link href={"/admin" as never}>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                  title="Admin"
-                >
-                  <ShieldCheck className="h-3.5 w-3.5" />
-                </Button>
-              </Link>
-            )}
+
+            <ThemeToggle />
+
             <div className="w-px h-4 bg-border mx-1" />
-            <button
-              className="flex items-center gap-1.5 px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
-              onClick={() =>
-                authClient.signOut({
-                  fetchOptions: {
-                    onSuccess: () => {
-                      window.location.href = "/";
-                    },
-                  },
-                })
-              }
-            >
-              <LogOut className="h-3 w-3" />
-              <span className="hidden sm:inline">Sign out</span>
-            </button>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <button className="flex items-center gap-1.5 py-1 px-1 hover:bg-muted/50 transition-colors rounded-sm cursor-pointer outline-none">
+                    <Avatar className="h-6 w-6">
+                      <AvatarImage src={userImage ?? undefined} />
+                      <AvatarFallback className="text-[9px] font-bold bg-primary/10 text-primary">
+                        {initial}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="hidden sm:inline text-[11px] font-medium max-w-[100px] truncate">
+                      {userName}
+                    </span>
+                  </button>
+                }
+              />
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col gap-0.5">
+                      <p className="text-xs font-medium truncate">{userName}</p>
+                      <p className="text-[10px] text-muted-foreground truncate">
+                        {userEmail}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => {
+                    window.location.href = "/dashboard/settings";
+                  }}
+                >
+                  <Settings className="h-3.5 w-3.5" />
+                  Settings
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    window.location.href = "/dashboard/settings/account";
+                  }}
+                >
+                  <User className="h-3.5 w-3.5" />
+                  Account
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    window.location.href = "/dashboard/settings/appearance";
+                  }}
+                >
+                  <Sun className="h-3.5 w-3.5" />
+                  Appearance
+                </DropdownMenuItem>
+                {isAdmin && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => {
+                        window.location.href = "/admin";
+                      }}
+                    >
+                      <ShieldCheck className="h-3.5 w-3.5" />
+                      Admin Dashboard
+                    </DropdownMenuItem>
+                  </>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() =>
+                    authClient.signOut({
+                      fetchOptions: {
+                        onSuccess: () => {
+                          window.location.href = "/";
+                        },
+                      },
+                    })
+                  }
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                  Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>
@@ -185,7 +280,6 @@ export function DashboardHome({
         </p>
       </div>
 
-      {/* Built-in features */}
       <div className="mb-8">
         <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50 mb-2">
           Features included
@@ -214,7 +308,6 @@ export function DashboardHome({
         </div>
       </div>
 
-      {/* Feedback */}
       <div className="mb-8">
         <div className="flex items-center gap-2">
           <MessageSquarePlus className="h-3 w-3 text-muted-foreground/40" />
@@ -222,7 +315,6 @@ export function DashboardHome({
         </div>
       </div>
 
-      {/* Developer hint */}
       <div className="border border-dashed border-border/40 px-4 py-5">
         <div className="flex items-start gap-2.5">
           <Code className="h-3.5 w-3.5 text-muted-foreground/30 mt-0.5 shrink-0" />
