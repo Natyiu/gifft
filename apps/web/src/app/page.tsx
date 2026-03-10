@@ -108,32 +108,35 @@ function ExpandableSection({
   label,
   title,
   number,
-  defaultOpen = false,
+  open,
+  onToggle,
   children,
 }: {
   label: string;
   title: string;
   number: string;
-  defaultOpen?: boolean;
+  open: boolean;
+  onToggle: () => void;
   children: React.ReactNode;
 }) {
-  const [open, setOpen] = useState(defaultOpen);
   const contentRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState<number | undefined>(
-    defaultOpen ? undefined : 0
+    open ? undefined : 0
   );
+  const prevOpen = useRef(open);
 
-  const toggle = useCallback(() => {
+  useEffect(() => {
+    if (prevOpen.current === open) return;
+    prevOpen.current = open;
     if (!contentRef.current) return;
     if (open) {
+      setHeight(contentRef.current.scrollHeight);
+    } else {
       setHeight(contentRef.current.scrollHeight);
       requestAnimationFrame(() => {
         requestAnimationFrame(() => setHeight(0));
       });
-    } else {
-      setHeight(contentRef.current.scrollHeight);
     }
-    setOpen((prev) => !prev);
   }, [open]);
 
   const onTransitionEnd = useCallback(() => {
@@ -143,7 +146,7 @@ function ExpandableSection({
   return (
     <div className="border-b border-border/50">
       <button
-        onClick={toggle}
+        onClick={onToggle}
         className="w-full group cursor-pointer"
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-5 flex items-center gap-4 sm:gap-6">
@@ -229,6 +232,7 @@ function ThemeToggle() {
 
 export default function LandingPage() {
   const scrollRef = useScrollReveal();
+  const [openSection, setOpenSection] = useState<string | null>("01");
 
   return (
     <div ref={scrollRef} className="min-h-screen flex flex-col">
@@ -383,7 +387,7 @@ export default function LandingPage() {
 
       {/* Expandable Sections */}
       <div className=" mt-[10vh] border-t border-border/50">
-        <ExpandableSection number="01" label="Vibe Coding" title="You talk. Your AI builds." defaultOpen>
+        <ExpandableSection number="01" label="Vibe Coding" title="You talk. Your AI builds." open={openSection === "01"} onToggle={() => setOpenSection(openSection === "01" ? null : "01")}>
           <div className="max-w-2xl">
             <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mb-6 sm:mb-8">
               Vibe coding is building software by describing what you want to an AI — and letting it write the code. No boilerplate wiring. No config files. Just intent and iteration. Batman gives you the perfect starting point: auth, database, UI, and a full-stack architecture that AI IDEs like Cursor, Claude Code, and Codex already understand.
@@ -411,7 +415,7 @@ export default function LandingPage() {
           </div>
         </ExpandableSection>
 
-        <ExpandableSection number="02" label="Suit Up" title="Five commands. Before the sun rises.">
+        <ExpandableSection number="02" label="Suit Up" title="Five commands. Before the sun rises." open={openSection === "02"} onToggle={() => setOpenSection(openSection === "02" ? null : "02")}>
           <div className="grid md:grid-cols-[1fr,1.5fr] gap-10 md:gap-16 items-start">
             <div>
               <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mb-5 sm:mb-6">
@@ -473,7 +477,7 @@ export default function LandingPage() {
           </div>
         </ExpandableSection>
 
-        <ExpandableSection number="03" label="Config" title="The Bat-Signal Config">
+        <ExpandableSection number="03" label="Config" title="The Bat-Signal Config" open={openSection === "03"} onToggle={() => setOpenSection(openSection === "03" ? null : "03")}>
           <div className="max-w-2xl">
             <p className="text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-6">Every vigilante needs their secrets. Here&apos;s what goes in <span className="font-mono text-foreground/80">apps/web/.env</span></p>
             <div className="font-mono text-[10px] sm:text-xs bg-secondary/30 border border-border/30 rounded-lg p-3 sm:p-5 leading-relaxed overflow-x-auto">

@@ -188,8 +188,15 @@ export async function getAdminNotificationHistory(params?: {
   const limit = params?.limit ?? 20;
   const skip = (page - 1) * limit;
 
+  const adminIds = await prisma.user
+    .findMany({ where: { role: "admin" }, select: { id: true } })
+    .then((users) => users.map((u) => u.id));
+
+  const where = { senderId: { in: adminIds } };
+
   const [notifications, total] = await Promise.all([
     prisma.notification.findMany({
+      where,
       include: {
         recipients: { select: { id: true, read: true } },
       },
@@ -197,7 +204,7 @@ export async function getAdminNotificationHistory(params?: {
       skip,
       take: limit,
     }),
-    prisma.notification.count(),
+    prisma.notification.count({ where }),
   ]);
 
   return {

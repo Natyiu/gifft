@@ -18,23 +18,29 @@ const Toaster = ({ ...props }: ToasterProps) => {
       theme={theme as ToasterProps["theme"]}
       className="toaster group"
       icons={{
-        success: <CircleCheckIcon className="size-4" />,
-        info: <InfoIcon className="size-4" />,
-        warning: <TriangleAlertIcon className="size-4" />,
-        error: <OctagonXIcon className="size-4" />,
-        loading: <Loader2Icon className="size-4 animate-spin" />,
+        success: <CircleCheckIcon className="size-3.5" />,
+        info: <InfoIcon className="size-3.5" />,
+        warning: <TriangleAlertIcon className="size-3.5" />,
+        error: <OctagonXIcon className="size-3.5" />,
+        loading: <Loader2Icon className="size-3.5 animate-spin" />,
       }}
-      style={
-        {
-          "--normal-bg": "var(--popover)",
-          "--normal-text": "var(--popover-foreground)",
-          "--normal-border": "var(--border)",
-          "--border-radius": "var(--radius)",
-        } as React.CSSProperties
-      }
       toastOptions={{
         classNames: {
-          toast: "cn-toast",
+          toast:
+            "!bg-card !text-card-foreground !border-border !rounded-none !shadow-sm !font-sans",
+          title: "!text-xs !font-semibold !tracking-tight",
+          description: "!text-[10px] !text-muted-foreground",
+          icon: "!text-foreground",
+          actionButton:
+            "!bg-foreground !text-background !rounded-none !text-[10px] !font-semibold !h-7 !px-2.5",
+          cancelButton:
+            "!bg-transparent !text-muted-foreground !border !border-border !rounded-none !text-[10px] !font-semibold !h-7 !px-2.5",
+          closeButton:
+            "!bg-transparent !text-muted-foreground !border-border !rounded-none",
+          success: "!border-foreground/20",
+          error: "!border-foreground/20",
+          warning: "!border-foreground/20",
+          info: "!border-foreground/20",
         },
       }}
       {...props}

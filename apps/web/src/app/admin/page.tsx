@@ -51,6 +51,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Label } from "@/components/ui/label";
 import {
   Search,
   ChevronLeft,
@@ -59,6 +60,7 @@ import {
   Ban,
   UserX,
   UserCheck,
+  Pencil,
 } from "lucide-react";
 
 type User = {
@@ -82,6 +84,11 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [roleDialogUser, setRoleDialogUser] = useState<User | null>(null);
   const [selectedRole, setSelectedRole] = useState("");
+  const [editUser, setEditUser] = useState<User | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editPassword, setEditPassword] = useState("");
+  const [editSaving, setEditSaving] = useState(false);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -155,6 +162,40 @@ export default function AdminUsersPage() {
       fetchUsers();
     } catch {
       toast.error("Failed to remove user");
+    }
+  }
+
+  async function handleEditSave() {
+    if (!editUser) return;
+    setEditSaving(true);
+    try {
+      const updates: Record<string, string> = {};
+      if (editName && editName !== editUser.name) updates.name = editName;
+      if (editEmail && editEmail !== editUser.email) updates.email = editEmail;
+
+      if (Object.keys(updates).length > 0) {
+        const { error } = await authClient.admin.updateUser({
+          userId: editUser.id,
+          data: updates,
+        });
+        if (error) throw error;
+      }
+
+      if (editPassword) {
+        const { error } = await authClient.admin.setUserPassword({
+          userId: editUser.id,
+          newPassword: editPassword,
+        });
+        if (error) throw error;
+      }
+
+      toast.success("User updated");
+      setEditUser(null);
+      fetchUsers();
+    } catch {
+      toast.error("Failed to update user");
+    } finally {
+      setEditSaving(false);
     }
   }
 
@@ -274,6 +315,21 @@ export default function AdminUsersPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            title="Edit user"
+                            onClick={() => {
+                              setEditUser(u);
+                              setEditName(u.name);
+                              setEditEmail(u.email);
+                              setEditPassword("");
+                            }}
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+
                           <Dialog
                             open={roleDialogUser?.id === u.id}
                             onOpenChange={(open) => {
@@ -315,38 +371,93 @@ export default function AdminUsersPage() {
                                 </SelectContent>
                               </Select>
                               <DialogFooter>
-                                <Button
-                                  size="sm"
-                                  onClick={() =>
-                                    handleSetRole(u.id, selectedRole)
-                                  }
-                                >
-                                  Save
-                                </Button>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button size="sm">
+                                      Save
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Change Role</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Are you sure you want to change {u.name}&apos;s role to <strong>{selectedRole}</strong>?
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() =>
+                                          handleSetRole(u.id, selectedRole)
+                                        }
+                                      >
+                                        Confirm
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
                               </DialogFooter>
                             </DialogContent>
                           </Dialog>
 
                           {u.banned ? (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              title="Unban user"
-                              onClick={() => handleUnban(u.id)}
-                            >
-                              <UserCheck className="h-3 w-3" />
-                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                  title="Unban user"
+                                >
+                                  <UserCheck className="h-3 w-3" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Unban User</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to unban {u.name} ({u.email})? They will be able to sign in again.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleUnban(u.id)}
+                                  >
+                                    Unban
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           ) : (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              title="Ban user"
-                              onClick={() => handleBan(u.id)}
-                            >
-                              <Ban className="h-3 w-3" />
-                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                  title="Ban user"
+                                >
+                                  <Ban className="h-3 w-3" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Ban User</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to ban {u.name} ({u.email})? They will be signed out and unable to log in.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleBan(u.id)}
+                                  >
+                                    Ban
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           )}
 
                           <AlertDialog>
@@ -366,9 +477,7 @@ export default function AdminUsersPage() {
                                   Remove User
                                 </AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  This will permanently delete {u.name} (
-                                  {u.email}) and all their data. This cannot be
-                                  undone.
+                                  Are you sure you want to permanently delete {u.name} ({u.email}) and all their data? This cannot be undone.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
@@ -419,6 +528,72 @@ export default function AdminUsersPage() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog
+        open={!!editUser}
+        onOpenChange={(open) => {
+          if (!open) setEditUser(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+            <DialogDescription>
+              Update details for {editUser?.name} ({editUser?.email})
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="edit-name" className="text-xs">Name</Label>
+              <Input
+                id="edit-name"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder="Full name"
+                className="h-9 text-xs"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-email" className="text-xs">Email</Label>
+              <Input
+                id="edit-email"
+                type="email"
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
+                placeholder="user@example.com"
+                className="h-9 text-xs"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-password" className="text-xs">New Password</Label>
+              <Input
+                id="edit-password"
+                type="password"
+                value={editPassword}
+                onChange={(e) => setEditPassword(e.target.value)}
+                placeholder="Leave blank to keep current"
+                className="h-9 text-xs"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setEditUser(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleEditSave}
+              disabled={editSaving}
+            >
+              {editSaving ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

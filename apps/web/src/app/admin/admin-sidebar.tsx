@@ -8,11 +8,13 @@ import {
   Settings2,
   ToggleRight,
   Key,
+  BarChart3,
   ArrowLeft,
 } from "lucide-react";
 
 const adminNav = [
   { name: "Users", href: "/admin", icon: Users, exact: true },
+  { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
   { name: "Notifications", href: "/admin/notifications", icon: Bell },
   { name: "General", href: "/admin/general", icon: Settings2 },
   { name: "Features", href: "/admin/features", icon: ToggleRight },
