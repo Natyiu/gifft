@@ -59,6 +59,11 @@ function ReadyPage({ onRerunSetup }: { onRerunSetup: () => void }) {
                 Blog
               </Button>
             </Link>
+            <Link href="/pricing">
+              <Button variant="ghost" size="sm" className="text-[11px] h-7 text-muted-foreground">
+                Pricing
+              </Button>
+            </Link>
             <Link href="/login">
               <Button variant="ghost" size="sm" className="text-[11px] h-7 text-muted-foreground">
                 Sign in

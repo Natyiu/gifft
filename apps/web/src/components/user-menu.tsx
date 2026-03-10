@@ -1,5 +1,9 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { MessageSquarePlus } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -14,9 +18,11 @@ import { authClient } from "@/lib/auth-client";
 
 import { Button } from "./ui/button";
 import { Skeleton } from "./ui/skeleton";
+import { FeedbackDialog } from "./feedback-dialog";
 
 export default function UserMenu() {
   const router = useRouter();
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const { data: session, isPending } = authClient.useSession();
 
   if (isPending) {
@@ -41,6 +47,11 @@ export default function UserMenu() {
           <DropdownMenuLabel>My Account</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem>{session.user.email}</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setFeedbackOpen(true)}>
+            <MessageSquarePlus className="h-3.5 w-3.5" />
+            Send Feedback
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem
             variant="destructive"
             onClick={() => {
@@ -57,6 +68,7 @@ export default function UserMenu() {
           </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>
+      <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </DropdownMenu>
   );
 }

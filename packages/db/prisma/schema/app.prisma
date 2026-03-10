@@ -35,6 +35,11 @@ model AppSettings {
   githubClientId          String?
   githubClientSecret      String?
 
+  polarAccessToken        String?
+  polarOrganizationId     String?
+  polarWebhookSecret      String?
+  polarSandboxMode        Boolean  @default(false)
+
   updatedAt               DateTime @updatedAt
 
   @@map("app_settings")

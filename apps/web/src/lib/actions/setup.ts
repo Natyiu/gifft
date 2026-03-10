@@ -3,6 +3,8 @@
 import { readFile, writeFile } from "fs/promises";
 import { resolve } from "path";
 
+import prisma from "@Batman/db";
+
 const ENV_PATH = resolve(process.cwd(), ".env");
 
 export async function getSetupStatus() {
@@ -68,6 +70,10 @@ type SetupData = {
   googleClientSecret?: string;
   githubClientId?: string;
   githubClientSecret?: string;
+  polarAccessToken?: string;
+  polarOrganizationId?: string;
+  polarWebhookSecret?: string;
+  polarSandboxMode?: boolean;
 };
 
 export async function saveSetup(data: SetupData) {
@@ -118,6 +124,30 @@ export async function saveSetup(data: SetupData) {
   lines.push("");
 
   await writeFile(ENV_PATH, lines.join("\n"), "utf-8");
+
+  if (data.polarAccessToken || data.polarWebhookSecret) {
+    try {
+      await prisma.appSettings.upsert({
+        where: { id: "default" },
+        update: {
+          polarAccessToken: data.polarAccessToken || null,
+          polarOrganizationId: data.polarOrganizationId || null,
+          polarWebhookSecret: data.polarWebhookSecret || null,
+          polarSandboxMode: data.polarSandboxMode ?? undefined,
+        },
+        create: {
+          id: "default",
+          polarAccessToken: data.polarAccessToken || null,
+          polarOrganizationId: data.polarOrganizationId || null,
+          polarWebhookSecret: data.polarWebhookSecret || null,
+          polarSandboxMode: data.polarSandboxMode ?? false,
+        },
+      });
+    } catch {
+      // DB may not be migrated yet; user can add Polar config later in Admin → API Keys
+    }
+  }
+
   return { success: true };
 }
 

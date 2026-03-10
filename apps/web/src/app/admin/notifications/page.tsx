@@ -3,6 +3,7 @@
 import { useState, useEffect, useTransition, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -24,7 +25,15 @@ import {
   ChevronRight,
   Search,
   Loader2,
+  Plus,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   sendNotification,
   sendNotificationToAll,
@@ -76,6 +85,7 @@ export default function AdminNotificationsPage() {
   const [historyPage, setHistoryPage] = useState(1);
   const [historyPages, setHistoryPages] = useState(1);
   const [historyTotal, setHistoryTotal] = useState(0);
+  const [createOpen, setCreateOpen] = useState(false);
 
   useEffect(() => {
     loadHistory(1);
@@ -171,6 +181,7 @@ export default function AdminNotificationsPage() {
         setAttachment(null);
         setSelectedUsers([]);
         setSendToAll(true);
+        setCreateOpen(false);
         loadHistory(1);
       } catch {
         toast.error("Failed to send notification");
@@ -179,202 +190,211 @@ export default function AdminNotificationsPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-lg font-semibold tracking-tight">Notifications</h1>
-        <p className="text-xs text-muted-foreground mt-0.5">
-          Compose and send messages to your users.
-        </p>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-base font-semibold tracking-tight">Notifications</h1>
+          <p className="text-[11px] text-muted-foreground mt-0.5">
+            Compose and send messages to your users.
+          </p>
+        </div>
+        <Button
+          size="sm"
+          className="h-8 text-xs gap-1.5"
+          onClick={() => setCreateOpen(true)}
+        >
+          <Plus className="h-3 w-3" />
+          Create message
+        </Button>
       </div>
 
-      {/* Compose section */}
-      <div className="border border-border">
-        <div className="border-b border-border px-5 py-3 flex items-center justify-between">
-          <div>
-            <h2 className="text-sm font-semibold">Compose Notification</h2>
-            <p className="text-[10px] text-muted-foreground mt-0.5">
-              Send messages to users with tags and optional attachments.
-            </p>
-          </div>
-          <Send className="h-4 w-4 text-muted-foreground" />
-        </div>
+      {/* Create message dialog */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-sm">Create message</DialogTitle>
+          </DialogHeader>
 
-        <div className="p-5 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-                Title
-              </label>
-              <Input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Notification title..."
-                className="h-9 text-sm"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-                Tag
-              </label>
-              <Select value={tag} onValueChange={setTag}>
-                <SelectTrigger className="h-9 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {NOTIFICATION_TAGS.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      <span className="capitalize">{t}</span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-              Description
-            </label>
-            <Textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Write the notification body..."
-              rows={4}
-              className="text-sm resize-none"
-            />
-          </div>
-
-          {/* Attachment */}
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-              Attachment (optional)
-            </label>
-            {attachment ? (
-              <div className="flex items-center gap-2 border border-border p-2.5">
-                <Paperclip className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                <span className="text-xs truncate flex-1">
-                  {attachment.name}
-                </span>
-                <span className="text-[10px] text-muted-foreground">
-                  {(attachment.size / 1024).toFixed(1)} KB
-                </span>
-                <button
-                  onClick={() => setAttachment(null)}
-                  className="p-0.5 hover:bg-muted text-muted-foreground hover:text-foreground"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </div>
-            ) : (
-              <label className="flex items-center gap-2 border border-dashed border-border p-3 cursor-pointer hover:bg-muted/30 transition-colors">
-                <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">
-                  Click to attach a file
-                </span>
-                <input
-                  type="file"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) setAttachment(file);
-                  }}
+          <div className="space-y-4 py-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="notif-title" className="text-[11px] font-medium">
+                  Title
+                </Label>
+                <Input
+                  id="notif-title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Notification title..."
+                  className="h-8 text-xs"
                 />
-              </label>
-            )}
-          </div>
-
-          {/* Recipients */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="send-to-all"
-                checked={sendToAll}
-                onCheckedChange={(c) => setSendToAll(!!c)}
-              />
-              <label
-                htmlFor="send-to-all"
-                className="text-xs font-medium cursor-pointer"
-              >
-                Send to all users
-              </label>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="notif-tag" className="text-[11px] font-medium">
+                  Tag
+                </Label>
+                <Select value={tag} onValueChange={setTag}>
+                  <SelectTrigger id="notif-tag" className="h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {NOTIFICATION_TAGS.map((t) => (
+                      <SelectItem key={t} value={t} className="text-xs">
+                        <span className="capitalize">{t}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            {!sendToAll && (
-              <div className="border border-border">
-                <div className="p-2 border-b border-border relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
-                  <Input
-                    value={userSearch}
-                    onChange={(e) => setUserSearch(e.target.value)}
-                    placeholder="Search users by name or email..."
-                    className="h-7 text-xs pl-7 pr-7"
-                  />
-                  {userSearching && (
-                    <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground animate-spin" />
-                  )}
-                </div>
-                <div className="max-h-48 overflow-y-auto divide-y divide-border">
-                  {filteredUsers.map((u) => (
-                    <label
-                      key={u.id}
-                      className="flex items-center gap-2 p-2 hover:bg-muted/30 cursor-pointer"
-                    >
-                      <Checkbox
-                        checked={selectedUsers.includes(u.id)}
-                        onCheckedChange={() => toggleUser(u.id)}
-                      />
-                      <div className="min-w-0">
-                        <p className="text-xs font-medium truncate">
-                          {u.name ?? "Unnamed"}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground truncate">
-                          {u.email}
-                        </p>
-                      </div>
-                    </label>
-                  ))}
-                  {filteredUsers.length === 0 && !userSearching && (
-                    <p className="p-3 text-xs text-muted-foreground text-center">
-                      {userSearch ? "No users found" : "Type to search users..."}
-                    </p>
-                  )}
-                </div>
-                {selectedUsers.length > 0 && (
-                  <div className="p-2 border-t border-border bg-muted/30">
-                    <p className="text-[10px] text-muted-foreground">
-                      {selectedUsers.length} user
-                      {selectedUsers.length !== 1 ? "s" : ""} selected
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="notif-desc" className="text-[11px] font-medium">
+                Description
+              </Label>
+              <Textarea
+                id="notif-desc"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Write the notification body..."
+                rows={4}
+                className="text-xs resize-none"
+              />
+            </div>
 
-        <div className="border-t border-border px-5 py-3 flex justify-end">
-          <Button
-            onClick={handleSend}
-            disabled={isPending}
-            size="sm"
-            className="text-xs gap-1.5"
-          >
-            <Send className="h-3 w-3" />
-            {isPending ? "Sending..." : "Send Notification"}
-          </Button>
-        </div>
-      </div>
+            {/* Attachment */}
+            <div className="space-y-1.5">
+              <Label className="text-[11px] font-medium">
+                Attachment (optional)
+              </Label>
+              {attachment ? (
+                <div className="flex items-center gap-2 border border-input rounded-md p-2.5 bg-muted/20">
+                  <Paperclip className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  <span className="text-xs truncate flex-1">
+                    {attachment.name}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">
+                    {(attachment.size / 1024).toFixed(1)} KB
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setAttachment(null)}
+                    className="p-0.5 hover:bg-muted text-muted-foreground hover:text-foreground rounded"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ) : (
+                <label className="flex items-center gap-2 border border-dashed border-input rounded-md p-3 cursor-pointer hover:bg-muted/30 transition-colors">
+                  <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">
+                    Click to attach a file
+                  </span>
+                  <input
+                    type="file"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) setAttachment(file);
+                    }}
+                  />
+                </label>
+              )}
+            </div>
+
+            {/* Recipients */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="send-to-all"
+                  checked={sendToAll}
+                  onCheckedChange={(c) => setSendToAll(!!c)}
+                />
+                <Label
+                  htmlFor="send-to-all"
+                  className="text-[11px] font-medium cursor-pointer"
+                >
+                  Send to all users
+                </Label>
+              </div>
+
+              {!sendToAll && (
+                <div className="border border-border/40 rounded-md overflow-hidden">
+                  <div className="p-2 border-b border-border/30 relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                    <Input
+                      value={userSearch}
+                      onChange={(e) => setUserSearch(e.target.value)}
+                      placeholder="Search users by name or email..."
+                      className="h-8 text-xs pl-8"
+                    />
+                    {userSearching && (
+                      <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground animate-spin" />
+                    )}
+                  </div>
+                  <div className="max-h-48 overflow-y-auto divide-y divide-border/30">
+                    {filteredUsers.map((u) => (
+                      <label
+                        key={u.id}
+                        className="flex items-center gap-2 p-2 hover:bg-muted/30 cursor-pointer"
+                      >
+                        <Checkbox
+                          checked={selectedUsers.includes(u.id)}
+                          onCheckedChange={() => toggleUser(u.id)}
+                        />
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium truncate">
+                            {u.name ?? "Unnamed"}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground truncate">
+                            {u.email}
+                          </p>
+                        </div>
+                      </label>
+                    ))}
+                    {filteredUsers.length === 0 && !userSearching && (
+                      <p className="p-3 text-xs text-muted-foreground text-center">
+                        {userSearch ? "No users found" : "Type to search users..."}
+                      </p>
+                    )}
+                  </div>
+                  {selectedUsers.length > 0 && (
+                    <div className="p-2 border-t border-border/30 bg-muted/30">
+                      <p className="text-[10px] text-muted-foreground">
+                        {selectedUsers.length} user
+                        {selectedUsers.length !== 1 ? "s" : ""} selected
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              onClick={handleSend}
+              disabled={isPending}
+              size="sm"
+              className="h-8 text-xs gap-1.5"
+            >
+              <Send className="h-3 w-3" />
+              {isPending ? "Sending..." : "Send Notification"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* History section */}
-      <div className="border border-border">
-        <div className="border-b border-border px-5 py-3 flex items-center justify-between">
+      <div className="border border-border/40 bg-card/50">
+        <div className="px-4 py-3 border-b border-border/30 flex items-center gap-2">
+          <Clock className="h-3.5 w-3.5 text-muted-foreground/50" />
           <div>
-            <h2 className="text-sm font-semibold">Sent History</h2>
-            <p className="text-[10px] text-muted-foreground mt-0.5">
+            <p className="text-xs font-semibold">Sent History</p>
+            <p className="text-[10px] text-muted-foreground">
               {historyTotal} notification{historyTotal !== 1 ? "s" : ""} sent
             </p>
           </div>
-          <Clock className="h-4 w-4 text-muted-foreground" />
         </div>
 
         {history.length === 0 ? (
@@ -386,7 +406,7 @@ export default function AdminNotificationsPage() {
           </div>
         ) : (
           <>
-            <div className="divide-y divide-border">
+            <div className="divide-y divide-border/30">
               {history.map((item) => (
                 <div key={item.id} className="p-4 hover:bg-muted/20 transition-colors">
                   <div className="flex items-start justify-between gap-3">
@@ -434,7 +454,7 @@ export default function AdminNotificationsPage() {
             </div>
 
             {historyPages > 1 && (
-              <div className="border-t border-border px-4 py-2.5 flex items-center justify-between">
+              <div className="border-t border-border/30 px-4 py-2.5 flex items-center justify-between">
                 <p className="text-[10px] text-muted-foreground">
                   Page {historyPage} of {historyPages}
                 </p>

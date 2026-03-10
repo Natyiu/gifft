@@ -24,8 +24,17 @@ import {
 import { submitFeedback } from "@/lib/actions/feedback";
 import { FEEDBACK_CATEGORIES } from "@/lib/feedback-categories";
 
-export function FeedbackDialog() {
-  const [open, setOpen] = useState(false);
+type FeedbackDialogProps = {
+  /** When provided, dialog is controlled and no trigger is rendered (e.g. for dropdown use) */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+};
+
+export function FeedbackDialog({ open: controlledOpen, onOpenChange: controlledOnOpenChange }: FeedbackDialogProps = {}) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined && controlledOnOpenChange !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = isControlled ? controlledOnOpenChange : setInternalOpen;
   const [category, setCategory] = useState<string>("feature-request");
   const [message, setMessage] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -51,12 +60,14 @@ export function FeedbackDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <button className="w-full flex items-center gap-2 px-2.5 py-1.5 text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted transition-colors font-medium">
-          <MessageSquarePlus className="h-3 w-3" />
-          Send Feedback
-        </button>
-      </DialogTrigger>
+      {!isControlled && (
+        <DialogTrigger asChild>
+          <button className="w-full flex items-center gap-2 px-2.5 py-1.5 text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted transition-colors font-medium">
+            <MessageSquarePlus className="h-3 w-3" />
+            Send Feedback
+          </button>
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-md rounded-none!">
         <DialogHeader>
           <DialogTitle className="text-sm">Send Feedback</DialogTitle>

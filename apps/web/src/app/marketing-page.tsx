@@ -259,6 +259,11 @@ export default function MarketingPage() {
                   Blog
                 </Button>
               </Link>
+              <Link href="/pricing">
+                <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground hover:bg-secondary h-8 px-2 sm:px-3">
+                  Pricing
+                </Button>
+              </Link>
               <Link href="/login">
                 <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground hover:bg-secondary h-8 px-2 sm:px-3">
                   Sign In

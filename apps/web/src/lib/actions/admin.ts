@@ -70,6 +70,10 @@ export async function getApiKeys() {
       googleClientSecret: true,
       githubClientId: true,
       githubClientSecret: true,
+      polarAccessToken: true,
+      polarOrganizationId: true,
+      polarWebhookSecret: true,
+      polarSandboxMode: true,
     },
   });
 
@@ -84,6 +88,10 @@ export async function getApiKeys() {
       googleClientSecret: "",
       githubClientId: "",
       githubClientSecret: "",
+      polarAccessToken: "",
+      polarOrganizationId: "",
+      polarWebhookSecret: "",
+      polarSandboxMode: false,
     };
   }
 
@@ -97,6 +105,10 @@ export async function getApiKeys() {
     googleClientSecret: mask(settings.googleClientSecret),
     githubClientId: settings.githubClientId ?? "",
     githubClientSecret: mask(settings.githubClientSecret),
+    polarAccessToken: mask(settings.polarAccessToken),
+    polarOrganizationId: settings.polarOrganizationId ?? "",
+    polarWebhookSecret: mask(settings.polarWebhookSecret),
+    polarSandboxMode: settings.polarSandboxMode ?? false,
   };
 }
 
@@ -110,6 +122,10 @@ export async function saveApiKeys(data: {
   googleClientSecret?: string;
   githubClientId?: string;
   githubClientSecret?: string;
+  polarAccessToken?: string;
+  polarOrganizationId?: string;
+  polarWebhookSecret?: string;
+  polarSandboxMode?: boolean;
 }) {
   await requireAdmin();
 
@@ -121,10 +137,12 @@ export async function saveApiKeys(data: {
       resendApiKey: true,
       googleClientSecret: true,
       githubClientSecret: true,
+      polarAccessToken: true,
+      polarWebhookSecret: true,
     },
   });
 
-  const update: Record<string, string | null> = {};
+  const update: Record<string, string | null | boolean> = {};
 
   if (data.supabaseUrl !== undefined) {
     update.supabaseUrl = data.supabaseUrl || null;
@@ -162,6 +180,22 @@ export async function saveApiKeys(data: {
     update.githubClientSecret = unmasked(data.githubClientSecret)
       ? data.githubClientSecret || null
       : current?.githubClientSecret ?? null;
+  }
+  if (data.polarAccessToken !== undefined) {
+    update.polarAccessToken = unmasked(data.polarAccessToken)
+      ? data.polarAccessToken || null
+      : current?.polarAccessToken ?? null;
+  }
+  if (data.polarOrganizationId !== undefined) {
+    update.polarOrganizationId = data.polarOrganizationId || null;
+  }
+  if (data.polarWebhookSecret !== undefined) {
+    update.polarWebhookSecret = unmasked(data.polarWebhookSecret)
+      ? data.polarWebhookSecret || null
+      : current?.polarWebhookSecret ?? null;
+  }
+  if (data.polarSandboxMode !== undefined) {
+    update.polarSandboxMode = data.polarSandboxMode;
   }
 
   await prisma.appSettings.upsert({

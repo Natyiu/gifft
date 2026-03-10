@@ -315,28 +315,6 @@ export function AccountSettingsSkeleton() {
   );
 }
 
-export function FilesSkeleton() {
-  return (
-    <div className="space-y-6 animate-in fade-in-0 duration-300">
-      <div className="space-y-2">
-        <Skeleton className="h-5 w-12" />
-        <Skeleton className="h-3 w-40" />
-      </div>
-      <Skeleton className="h-28 w-full border-2 border-dashed border-border/40" />
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="border border-border/40">
-            <Skeleton className="h-28 w-full" />
-            <div className="p-2.5 space-y-1.5">
-              <Skeleton className="h-3 w-24" />
-              <Skeleton className="h-2 w-14" />
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 export function InvitationsSkeleton() {
   return (

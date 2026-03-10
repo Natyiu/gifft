@@ -136,7 +136,6 @@ Batman/
 │           │   ├── onboarding/             # New user onboarding wizard
 │           │   └── dashboard/
 │           │       ├── page.tsx            # Dashboard home
-│           │       ├── files/              # File upload & management
 │           │       ├── organizations/      # Org management (create, members, roles)
 │           │       ├── invitations/        # Pending org invitations
 │           │       ├── notifications/      # Notification inbox (filter, read/unread)

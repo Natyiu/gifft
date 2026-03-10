@@ -16,6 +16,7 @@ model User {
   accounts            Account[]
   members             Member[]
   posts               Post[]
+  subscription        Subscription?
 
   @@unique([email])
   @@map("user")

@@ -19,7 +19,6 @@ import {
 import {
   LogOut,
   ShieldCheck,
-  Upload,
   Bell,
   Settings,
   Building2,
@@ -30,6 +29,7 @@ import {
   Moon,
   Monitor,
   User,
+  CreditCard,
 } from "lucide-react";
 import { FeedbackDialog } from "@/components/feedback-dialog";
 
@@ -85,6 +85,7 @@ export function DashboardShell({
   organizationsEnabled?: boolean;
 }) {
   const pathname = usePathname();
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const isAdmin = session.user.role === "admin";
   const isHome = pathname === "/dashboard";
   const userImage = session.user.image;
@@ -113,6 +114,15 @@ export function DashboardShell({
           </div>
 
           <div className="flex items-center gap-0.5">
+            <Link href={"/pricing" as never}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-[11px] text-muted-foreground hover:text-foreground"
+              >
+                Pricing
+              </Button>
+            </Link>
             <Link href={"/dashboard/notifications" as never} className="relative">
               <Button
                 variant="ghost"
@@ -184,6 +194,10 @@ export function DashboardShell({
                   <Sun className="h-3.5 w-3.5" />
                   Appearance
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setFeedbackOpen(true)}>
+                  <MessageSquarePlus className="h-3.5 w-3.5" />
+                  Send Feedback
+                </DropdownMenuItem>
                 {isAdmin && (
                   <>
                     <DropdownMenuSeparator />
@@ -214,6 +228,7 @@ export function DashboardShell({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
           </div>
         </div>
       </header>
@@ -242,16 +257,16 @@ export function DashboardHome({
       desc: "In-app messaging with tags, filters, and read tracking",
     },
     {
-      label: "File Storage",
-      href: "/dashboard/files",
-      icon: Upload,
-      desc: "Upload and manage files via Supabase storage",
-    },
-    {
       label: "Settings",
       href: "/dashboard/settings",
       icon: Settings,
       desc: "Profile, account, appearance, and password",
+    },
+    {
+      label: "Pro",
+      href: "/dashboard/pro",
+      icon: CreditCard,
+      desc: "Subscription-protected premium features",
     },
     ...(organizationsEnabled
       ? [

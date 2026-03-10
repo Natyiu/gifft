@@ -6,9 +6,10 @@ import { Check, ChevronRight, ExternalLink, Eye, EyeOff, Loader2, RefreshCw, Arr
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { saveSetup, generateAuthSecret } from "@/lib/actions/setup";
 
-type StepId = "database" | "auth" | "features" | "storage" | "email" | "social" | "review";
+type StepId = "database" | "auth" | "features" | "storage" | "email" | "social" | "payment" | "review";
 
 interface StepDef {
   id: StepId;
@@ -25,6 +26,7 @@ const ALL_STEPS: StepDef[] = [
   { id: "features", label: "Features", description: "Choose what to enable" },
   { id: "email", label: "Email", description: "Resend for transactional emails", conditional: true },
   { id: "social", label: "Social Login", description: "Google & GitHub OAuth", conditional: true },
+  { id: "payment", label: "Payments", description: "Polar for subscriptions & checkout", conditional: true },
   { id: "review", label: "Launch", description: "Review & generate .env" },
 ];
 
@@ -44,6 +46,11 @@ const STEP_TUTORIALS: Partial<Record<StepId, { title: string; duration: string; 
     duration: "2:00",
     videoUrl: "",
   },
+  features: {
+    title: "Choosing Features",
+    duration: "1:00",
+    videoUrl: "",
+  },
   email: {
     title: "Configuring Resend for Email",
     duration: "1:30",
@@ -52,6 +59,16 @@ const STEP_TUTORIALS: Partial<Record<StepId, { title: string; duration: string; 
   social: {
     title: "Setting up OAuth Providers",
     duration: "3:00",
+    videoUrl: "",
+  },
+  payment: {
+    title: "Configuring Polar for Payments",
+    duration: "2:30",
+    videoUrl: "",
+  },
+  review: {
+    title: "Review & Launch",
+    duration: "1:00",
     videoUrl: "",
   },
 };
@@ -64,6 +81,7 @@ type FormData = {
   corsOrigin: string;
   wantEmail: boolean;
   wantSocial: boolean;
+  wantPayment: boolean;
   supabaseUrl: string;
   supabaseAnonKey: string;
   supabaseServiceRoleKey: string;
@@ -72,6 +90,10 @@ type FormData = {
   googleClientSecret: string;
   githubClientId: string;
   githubClientSecret: string;
+  polarAccessToken: string;
+  polarOrganizationId: string;
+  polarWebhookSecret: string;
+  polarSandboxMode: boolean;
   wantGoogle: boolean;
   wantGithub: boolean;
 };
@@ -84,6 +106,7 @@ const defaultForm: FormData = {
   corsOrigin: "http://localhost:3001",
   wantEmail: false,
   wantSocial: false,
+  wantPayment: false,
   supabaseUrl: "",
   supabaseAnonKey: "",
   supabaseServiceRoleKey: "",
@@ -92,6 +115,10 @@ const defaultForm: FormData = {
   googleClientSecret: "",
   githubClientId: "",
   githubClientSecret: "",
+  polarAccessToken: "",
+  polarOrganizationId: "",
+  polarWebhookSecret: "",
+  polarSandboxMode: false,
   wantGoogle: false,
   wantGithub: false,
 };
@@ -107,6 +134,7 @@ export function SetupWizard({ onComplete }: { onComplete: () => void }) {
   const visibleSteps = ALL_STEPS.filter((s) => {
     if (s.id === "email") return form.wantEmail;
     if (s.id === "social") return form.wantSocial;
+    if (s.id === "payment") return form.wantPayment;
     return true;
   });
 
@@ -162,6 +190,10 @@ export function SetupWizard({ onComplete }: { onComplete: () => void }) {
       }
     }
 
+    if (currentStep === "payment") {
+      if (!form.polarAccessToken.trim()) errs.polarAccessToken = "Required";
+    }
+
     setErrors(errs);
     return Object.keys(errs).length === 0;
   }
@@ -196,6 +228,10 @@ export function SetupWizard({ onComplete }: { onComplete: () => void }) {
         googleClientSecret: form.googleClientSecret.trim() || undefined,
         githubClientId: form.githubClientId.trim() || undefined,
         githubClientSecret: form.githubClientSecret.trim() || undefined,
+        polarAccessToken: form.wantPayment ? form.polarAccessToken.trim() || undefined : undefined,
+        polarOrganizationId: form.wantPayment ? form.polarOrganizationId.trim() || undefined : undefined,
+        polarWebhookSecret: form.wantPayment ? form.polarWebhookSecret.trim() || undefined : undefined,
+        polarSandboxMode: form.wantPayment ? form.polarSandboxMode : undefined,
       });
       onComplete();
     } catch {
@@ -300,6 +336,9 @@ export function SetupWizard({ onComplete }: { onComplete: () => void }) {
           )}
           {currentStep === "social" && (
             <SocialStep form={form} update={update} errors={errors} showSecrets={showSecrets} toggleSecret={toggleSecret} />
+          )}
+          {currentStep === "payment" && (
+            <PaymentStep form={form} update={update} errors={errors} showSecrets={showSecrets} toggleSecret={toggleSecret} />
           )}
           {currentStep === "review" && (
             <ReviewStep form={form} />
@@ -494,6 +533,12 @@ function FeaturesStep({ form, update }: Pick<StepProps, "form" | "update">) {
         description="Let users sign in with Google or GitHub"
         checked={form.wantSocial}
         onChange={(v) => update("wantSocial", v)}
+      />
+      <FeatureToggle
+        title="Payments"
+        description="Subscriptions, pricing, checkout via Polar"
+        checked={form.wantPayment}
+        onChange={(v) => update("wantPayment", v)}
       />
 
       <div className="border border-dashed border-border/40 px-3 py-2.5 mt-4">
@@ -690,6 +735,81 @@ function SocialStep({ form, update, errors, showSecrets, toggleSecret }: StepPro
   );
 }
 
+function PaymentStep({ form, update, errors, showSecrets, toggleSecret }: StepProps) {
+  return (
+    <div className="space-y-5">
+      <Hint>
+        <HintLink href={form.polarSandboxMode ? "https://sandbox.polar.sh" : "https://polar.sh/dashboard"}>
+          {form.polarSandboxMode ? "Sandbox Dashboard" : "Polar Dashboard"}
+        </HintLink>{" "}
+        → Settings → Access Tokens. Create an <strong>Organization Access Token</strong> with{" "}
+        <code className="bg-muted/50 px-1 text-[9px]">products:read</code> and{" "}
+        <code className="bg-muted/50 px-1 text-[9px]">products:write</code>.
+        Use sandbox for testing.
+      </Hint>
+
+      <div className="flex items-center justify-between rounded-md border border-border/40 px-3 py-2">
+        <Label htmlFor="polarSandboxMode" className="text-xs font-medium">
+          Sandbox mode
+        </Label>
+        <Switch
+          id="polarSandboxMode"
+          checked={form.polarSandboxMode}
+          onCheckedChange={(v) => update("polarSandboxMode", v)}
+        />
+      </div>
+
+      <FieldGroup>
+        <FieldLabel htmlFor="polarAccessToken">
+          Access Token <Required />
+        </FieldLabel>
+        <SecretField
+          id="polarAccessToken"
+          value={form.polarAccessToken}
+          onChange={(v) => update("polarAccessToken", v)}
+          show={showSecrets.polarAccessToken}
+          onToggle={() => toggleSecret("polarAccessToken")}
+          placeholder="polar_at_xxxxxxxxxx"
+          error={errors.polarAccessToken}
+        />
+      </FieldGroup>
+
+      <FieldGroup>
+        <FieldLabel htmlFor="polarOrganizationId">Organization ID</FieldLabel>
+        <FieldHint>Optional when using an Organization Access Token.</FieldHint>
+        <PlainField
+          id="polarOrganizationId"
+          value={form.polarOrganizationId}
+          onChange={(v) => update("polarOrganizationId", v)}
+          placeholder="UUID from Polar dashboard"
+          error={errors.polarOrganizationId}
+        />
+      </FieldGroup>
+
+      <FieldGroup>
+        <FieldLabel htmlFor="polarWebhookSecret">Webhook Secret</FieldLabel>
+        <FieldHint>From Polar → Webhooks. Required for subscription sync.</FieldHint>
+        <SecretField
+          id="polarWebhookSecret"
+          value={form.polarWebhookSecret}
+          onChange={(v) => update("polarWebhookSecret", v)}
+          show={showSecrets.polarWebhookSecret}
+          onToggle={() => toggleSecret("polarWebhookSecret")}
+          placeholder="From Polar Dashboard → Webhooks"
+          error={errors.polarWebhookSecret}
+        />
+      </FieldGroup>
+
+      <div className="border border-dashed border-border/40 px-3 py-2.5">
+        <p className="text-[10px] text-muted-foreground/50 leading-relaxed">
+          Webhook URL: <code className="bg-muted/50 px-1 text-[9px]">{form.betterAuthUrl}/api/webhooks/polar</code>.
+          For local dev, use ngrok. Configure in Polar → Webhooks.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function ReviewStep({ form }: { form: FormData }) {
   const sections = [
     {
@@ -726,6 +846,15 @@ function ReviewStep({ form }: { form: FormData }) {
     if (form.wantGoogle) items.push({ label: "Google Client ID", value: form.googleClientId });
     if (form.wantGithub) items.push({ label: "GitHub Client ID", value: form.githubClientId });
     sections.push({ title: "Social Login", items });
+  }
+  if (form.wantPayment && form.polarAccessToken) {
+    sections.push({
+      title: "Payments",
+      items: [
+        { label: "Polar Access Token", value: form.polarAccessToken, masked: true },
+        { label: "Sandbox Mode", value: form.polarSandboxMode ? "Yes" : "No" },
+      ],
+    });
   }
 
   return (

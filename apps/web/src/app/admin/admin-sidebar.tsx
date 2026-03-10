@@ -1,7 +1,9 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTheme } from "next-themes";
 import {
   LayoutDashboard,
   Users,
@@ -13,7 +15,11 @@ import {
   MessageSquare,
   ArrowLeft,
   FileText,
+  Sun,
+  Moon,
+  CreditCard,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const adminNav = [
   { name: "Overview", href: "/admin", icon: LayoutDashboard, exact: true },
@@ -21,11 +27,39 @@ const adminNav = [
   { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
   { name: "Blog", href: "/admin/blog", icon: FileText },
   { name: "Notifications", href: "/admin/notifications", icon: Bell },
+  { name: "Products", href: "/admin/products", icon: CreditCard },
   { name: "Feedback", href: "/admin/feedback", icon: MessageSquare },
   { name: "General", href: "/admin/general", icon: Settings2 },
   { name: "Features", href: "/admin/features", icon: ToggleRight },
   { name: "API Keys", href: "/admin/api-keys", icon: Key },
 ];
+
+function ThemeToggle() {
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+
+  function cycle() {
+    if (theme === "light") setTheme("dark");
+    else if (theme === "dark") setTheme("system");
+    else setTheme("light");
+  }
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="h-7 w-7 text-muted-foreground hover:text-foreground"
+      onClick={cycle}
+      title={mounted ? `Theme: ${theme}` : undefined}
+    >
+      <Sun className="h-3.5 w-3.5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+      <Moon className="absolute h-3.5 w-3.5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+      <span className="sr-only">Toggle theme</span>
+    </Button>
+  );
+}
 
 export function AdminSidebar() {
   const pathname = usePathname();
@@ -72,6 +106,10 @@ export function AdminSidebar() {
           );
         })}
       </nav>
+
+      <div className="p-2 border-t border-border">
+        <ThemeToggle />
+      </div>
     </aside>
   );
 }
@@ -80,8 +118,9 @@ export function AdminMobileNav() {
   const pathname = usePathname();
 
   return (
-    <div className="md:hidden flex gap-1 overflow-x-auto border-b border-border/30 pb-px mb-4 -mx-1 px-1">
-      {adminNav.map((item) => {
+    <div className="md:hidden flex items-center gap-2 border-b border-border/30 pb-px mb-4 -mx-1 px-1">
+      <div className="flex gap-1 overflow-x-auto flex-1 min-w-0">
+        {adminNav.map((item) => {
         const isActive = item.exact
           ? pathname === item.href
           : pathname.startsWith(item.href);
@@ -102,6 +141,8 @@ export function AdminMobileNav() {
           </Link>
         );
       })}
+      </div>
+      <ThemeToggle />
     </div>
   );
 }

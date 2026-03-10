@@ -75,6 +75,9 @@ importers:
       '@hugeicons/react':
         specifier: ^0.3.0
         version: 0.3.4(react@19.2.4)
+      '@polar-sh/sdk':
+        specifier: ^0.46.3
+        version: 0.46.3
       '@prisma/client':
         specifier: 'catalog:'
         version: 7.4.2(prisma@7.4.2(@types/react@19.2.14)(magicast@0.3.5)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3)
@@ -1135,6 +1138,9 @@ packages:
   '@pkgjs/parseargs@0.11.0':
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
     engines: {node: '>=14'}
+
+  '@polar-sh/sdk@0.46.3':
+    resolution: {integrity: sha512-o7e1TOJ6xMIS/cFflmAKzuczmaZDGddUP1uQNGDYb9d3ktigDXj88CP6ITTy3AEenhACRp65Ks/hVZ/rsQyI4Q==}
 
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
@@ -6155,6 +6161,11 @@ snapshots:
 
   '@pkgjs/parseargs@0.11.0':
     optional: true
+
+  '@polar-sh/sdk@0.46.3':
+    dependencies:
+      standardwebhooks: 1.0.0
+      zod: 4.3.6
 
   '@polka/url@1.0.0-next.29': {}
 
