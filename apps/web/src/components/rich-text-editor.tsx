@@ -107,7 +107,7 @@ export function RichTextEditor({
     if (!editor) return;
     const current = editor.getHTML();
     if (value !== current && (value || "") !== (current === "<p></p>" ? "" : current)) {
-      editor.commands.setContent(value || "", false);
+      editor.commands.setContent(value || "", { emitUpdate: false });
     }
   }, [editor, value]);
 
@@ -118,7 +118,9 @@ export function RichTextEditor({
   useEffect(() => {
     if (!editor) return;
     editor.on("update", updateOnChange);
-    return () => editor.off("update", updateOnChange);
+    return () => {
+      editor.off("update", updateOnChange);
+    };
   }, [editor, updateOnChange]);
 
   if (!editor) {
