@@ -43,7 +43,7 @@ const baseNavigation = [
 ];
 
 const adminNavigation = [
-  { name: "Admin", href: "/dashboard/admin", icon: ShieldCheck },
+  { name: "Admin", href: "/admin", icon: ShieldCheck },
 ];
 
 export function DashboardShell({

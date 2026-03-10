@@ -10,16 +10,22 @@ export default async function AdminLayout({
 }) {
   const session = await auth.api.getSession({ headers: await headers() });
 
-  if (!session?.user || session.user.role !== "admin") {
+  if (!session?.user) {
+    redirect("/login");
+  }
+
+  if (session.user.role !== "admin") {
     redirect("/dashboard");
   }
 
   return (
-    <div className="flex gap-0 -m-5 md:-m-8 min-h-[calc(100vh-3rem)]">
-      <AdminSidebar />
-      <div className="flex-1 p-5 md:p-8 min-w-0">
-        <AdminMobileNav />
-        {children}
+    <div className="min-h-screen bg-background">
+      <div className="flex min-h-screen">
+        <AdminSidebar />
+        <div className="flex-1 p-5 md:p-8 min-w-0 md:ml-48">
+          <AdminMobileNav />
+          {children}
+        </div>
       </div>
     </div>
   );

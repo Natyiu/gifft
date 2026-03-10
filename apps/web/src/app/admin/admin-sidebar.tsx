@@ -12,18 +12,18 @@ import {
 } from "lucide-react";
 
 const adminNav = [
-  { name: "Users", href: "/dashboard/admin", icon: Users, exact: true },
-  { name: "Notifications", href: "/dashboard/admin/notifications", icon: Bell },
-  { name: "General", href: "/dashboard/admin/general", icon: Settings2 },
-  { name: "Features", href: "/dashboard/admin/features", icon: ToggleRight },
-  { name: "API Keys", href: "/dashboard/admin/api-keys", icon: Key },
+  { name: "Users", href: "/admin", icon: Users, exact: true },
+  { name: "Notifications", href: "/admin/notifications", icon: Bell },
+  { name: "General", href: "/admin/general", icon: Settings2 },
+  { name: "Features", href: "/admin/features", icon: ToggleRight },
+  { name: "API Keys", href: "/admin/api-keys", icon: Key },
 ];
 
 export function AdminSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-48 shrink-0 border-r border-border bg-card/30 hidden md:flex flex-col">
+    <aside className="w-48 shrink-0 border-r border-border bg-card/30 hidden md:flex flex-col fixed inset-y-0 left-0 z-40">
       <div className="p-3 border-b border-border">
         <Link
           href={"/dashboard" as never}
