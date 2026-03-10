@@ -9,8 +9,7 @@ import { ArrowRight, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SetupWizard } from "@/components/setup-wizard";
 import { getSetupStatus } from "@/lib/actions/setup";
-
-const isMarketing = process.env.NEXT_PUBLIC_MARKETING === "true";
+import { isMarketing } from "@/lib/marketing";
 
 const MarketingPage = dynamic(() => import("./marketing-page"), {
   ssr: true,

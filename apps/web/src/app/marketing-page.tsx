@@ -20,7 +20,7 @@ function BatLogo({ className }: { className?: string }) {
   );
 }
 
-const features = [
+const techStack = [
   { label: "Next.js", desc: "Full-stack React" },
   { label: "Prisma", desc: "Type-safe ORM" },
   { label: "Better Auth", desc: "Authentication" },
@@ -31,38 +31,60 @@ const features = [
   { label: "Turborepo", desc: "Monorepo" },
 ];
 
+const builtInFeatures = [
+  { title: "Admin Dashboard", desc: "One place to control everything. Users, analytics, products, blog, notifications, feedback. Your startup's command center.", icon: "⚡" },
+  { title: "Auth", desc: "Sign up, login, OAuth. Production-grade. Scales to thousands. No auth headaches.", icon: "🔐" },
+  { title: "Payments", desc: "Polar subscriptions wired. Create products, checkout, webhooks. Monetize from day one.", icon: "💳" },
+  { title: "User Dashboard", desc: "Settings, organizations, invitations. Pro tier ready. Built for SaaS.", icon: "👤" },
+  { title: "File Storage", desc: "Supabase storage. Uploads, avatars. S3-compatible. Production-ready.", icon: "📁" },
+  { title: "Blog & CMS", desc: "Rich text, authors, SEO. Ship content without building a CMS.", icon: "✍️" },
+  { title: "Notifications", desc: "In-app notifications, tags. Keep users engaged. Out of the box.", icon: "🔔" },
+  { title: "Setup Wizard", desc: "Guided setup. Database, auth, storage, OAuth, payments. Non-technical founders can get live.", icon: "🧙" },
+];
+
+const outOfTheBox = [
+  { title: "Auth", detail: "Sign up, login, password reset. Google and GitHub OAuth. Sessions and email verification included." },
+  { title: "Admin dashboard", detail: "Users, analytics, blog CMS, notifications( send message to users), pricing, receive feedback, manage API keys. One control panel for everything." },
+  { title: "Payments", detail: "Polar subscriptions wired. Create products, checkout flow, webhooks. Connect your account and start accepting payments." },
+  { title: "User dashboard", detail: "Settings, organizations, invitations, notifications. Pro tier structure ready." },
+  { title: "Storage & blog", detail: "Supabase storage for any upload feature for your app and avatars. Rich text blog with authors and SEO." },
+  { title: "Setup Wizard", detail: "Out of the box setup Guide to help you get started: database, auth, features (storage, email, OAuth, payments). Generates .env for you — no manual config." },
+];
+
 const nightQuotes = [
   "The night is darkest just before the deploy.",
   "It's not who you are underneath, it's what you ship that defines you.",
-  "Why do we fall? So we can learn to build again.",
+  "Founders ship. Batman gives you the codebase.",
 ];
 
-const steps = [
+const setupSteps = [
   {
     number: "01",
-    title: "Summon the repo",
-    command: "git clone <repo-url> && cd Batman",
+    title: "Clone & install",
+    command: "git clone <repo-url> && cd Batman && pnpm install",
   },
   {
     number: "02",
-    title: "Gear up",
-    command: "pnpm install",
+    title: "Run dev",
+    command: "pnpm dev",
+    detail: "Visit localhost:3001 — the Setup Wizard appears automatically",
   },
   {
     number: "03",
-    title: "Load your secrets",
-    command: "cp .env.example apps/web/.env",
-    detail: "Add your Supabase credentials",
+    title: "Complete the wizard",
+    detail: "Guided steps: Database (Supabase) → Auth → Features (storage, email, OAuth, payments) → Review. No manual .env editing. The wizard generates everything.",
   },
   {
     number: "04",
-    title: "Forge the database",
-    command: "pnpm run db:generate && pnpm run db:push",
+    title: "Push the database",
+    command: "pnpm db:generate && pnpm db:push",
+    detail: "One-time setup. Creates your tables.",
   },
   {
     number: "05",
-    title: "Into the night",
-    command: "pnpm run dev",
+    title: "Launch",
+    command: "pnpm dev",
+    detail: "Your startup is live. Open Cursor or Claude and build.",
   },
 ];
 
@@ -244,11 +266,16 @@ export default function MarketingPage() {
               <BatLogo className="h-4 sm:h-5 w-auto text-foreground" />
               <div className="flex flex-col leading-none">
                 <span className="font-semibold text-xs sm:text-sm tracking-widest uppercase">Batman</span>
-                <span className="hidden sm:block text-[9px] tracking-[0.25em] uppercase text-muted-foreground">The Dark Knight</span>
+                <span className="hidden sm:block text-[9px] tracking-[0.25em] uppercase text-muted-foreground">Production boilerplate for founders</span>
               </div>
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2">
               <ThemeToggle />
+              <a href="#features">
+                <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground hover:bg-secondary h-8 px-2 sm:px-3">
+                  Features
+                </Button>
+              </a>
               <Link href="/about">
                 <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground hover:bg-secondary h-8 px-2 sm:px-3">
                   About
@@ -257,21 +284,6 @@ export default function MarketingPage() {
               <Link href="/blog">
                 <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground hover:bg-secondary h-8 px-2 sm:px-3">
                   Blog
-                </Button>
-              </Link>
-              <Link href="/pricing">
-                <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground hover:bg-secondary h-8 px-2 sm:px-3">
-                  Pricing
-                </Button>
-              </Link>
-              <Link href="/login">
-                <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground hover:bg-secondary h-8 px-2 sm:px-3">
-                  Sign In
-                </Button>
-              </Link>
-              <Link href="/signup">
-                <Button size="sm" className="text-xs h-8 px-3 sm:px-4 bg-foreground text-background hover:bg-foreground/90">
-                  Get Started
                 </Button>
               </Link>
             </div>
@@ -290,11 +302,11 @@ export default function MarketingPage() {
               </span>
               <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                 <span className="text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-muted-foreground/50">
-                  A Vibe Coding Boilerplate
+                  For Founders Who Ship
                 </span>
                 <div className="h-px flex-1 bg-border/30" />
                 <span className="text-sm sm:text-base font-semibold tracking-tight text-foreground">
-                  Batman: The Dark Knight
+                  Production codebase. One admin. Ship in hours.
                 </span>
               </div>
             </div>
@@ -328,22 +340,22 @@ export default function MarketingPage() {
             <div className="flex items-center gap-2 mb-3 sm:mb-4">
               <div className="h-px w-6 sm:w-8 bg-foreground" />
               <span className="text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-muted-foreground/50">
-                Ship before sunrise
+                For founders
               </span>
             </div>
 
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight leading-[1.15] mb-3 sm:mb-4">
-              Your best ideas<br />
-              <span className="text-muted-foreground/50">hit at 3 AM.</span>
+              Ship your startup<br />
+              <span className="text-muted-foreground/50">in hours, not months.</span>
             </h1>
 
             <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-md mb-4 sm:mb-5">
-              A production-ready Next.js boilerplate built for vibe coding. Auth, database, and UI — already wired. Clone it, open your AI IDE, and ship that 3 AM idea before sunrise.
+              A production-grade codebase with everything built in: auth, payments, admin dashboard, user management. All-in-one control panel. Scale to thousands of users. Technical or non-technical — describe what you want to Cursor or Claude and ship your product.
             </p>
 
-            {/* Mini feature list */}
+            {/* Mini tech list */}
             <div className="grid grid-cols-2 gap-x-5 gap-y-1.5 mb-4 sm:mb-5">
-              {features.slice(0, 4).map((f) => (
+              {techStack.slice(0, 4).map((f) => (
                 <div key={f.label} className="flex items-center gap-2">
                   <div className="w-1 h-1 rounded-full bg-foreground/40 shrink-0" />
                   <span className="text-[10px] sm:text-xs font-mono text-foreground/70">{f.label}</span>
@@ -354,11 +366,6 @@ export default function MarketingPage() {
 
             {/* CTA */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
-              <Link href="/signup">
-                <Button className="h-9 w-full sm:w-auto px-5 text-sm font-medium bg-foreground text-background hover:bg-foreground/90">
-                  Enter the Batcave
-                </Button>
-              </Link>
               <Link href="#setup">
                 <Button variant="ghost" className="h-9 w-full sm:w-auto px-5 text-sm text-muted-foreground hover:text-foreground">
                   View Setup
@@ -384,7 +391,7 @@ export default function MarketingPage() {
               key={dup}
               className="flex shrink-0 animate-marquee items-center gap-8 sm:gap-12 px-4 sm:px-6"
             >
-              {features.map((f) => (
+              {techStack.map((f) => (
                 <div key={`${dup}-${f.label}`} className="flex items-center gap-2 shrink-0">
                   <span className="text-xs sm:text-sm font-medium text-foreground whitespace-nowrap">{f.label}</span>
                   <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">{f.desc}</span>
@@ -395,55 +402,99 @@ export default function MarketingPage() {
         </div>
       </section>
 
+      {/* Out of the box */}
+      <section id="why" className="border-t border-border/50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="h-px w-6 sm:w-8 bg-foreground" />
+            <span className="text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-muted-foreground/50">
+              Out of the box
+            </span>
+          </div>
+          <h2 className="text-lg sm:text-xl font-semibold tracking-tight mb-6">
+            Everything included.
+          </h2>
+          <ul className="space-y-2">
+            {outOfTheBox.map((item, i) => (
+              <li key={i} className="text-[11px] sm:text-xs text-muted-foreground">
+                <span className="font-medium text-foreground">{item.title}</span>
+                <span className="text-muted-foreground/80"> — {item.detail}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* What's included */}
+      <section id="features" className="border-t border-border/50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+          <div className="flex items-center gap-2 mb-8 sm:mb-10">
+            <div className="h-px w-6 sm:w-8 bg-foreground" />
+            <span className="text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-muted-foreground/50">
+              What&apos;s included
+            </span>
+          </div>
+          <h2 className="text-xl sm:text-2xl font-semibold tracking-tight mb-6 sm:mb-8">
+            Everything your startup needs. Crafted out of the box.
+          </h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {builtInFeatures.map((f, i) => (
+              <div
+                key={i}
+                className="border border-border/40 rounded-lg p-4 sm:p-5 hover:border-border/70 transition-colors"
+              >
+                <span className="text-base sm:text-lg mb-2 block">{f.icon}</span>
+                <p className="text-sm font-medium text-foreground mb-1.5">{f.title}</p>
+                <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed">{f.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Expandable Sections */}
-      <div className=" mt-[10vh] border-t border-border/50">
-        <ExpandableSection number="01" label="Vibe Coding" title="You talk. Your AI builds." open={openSection === "01"} onToggle={() => setOpenSection(openSection === "01" ? null : "01")}>
+      <div id="setup" className="mt-[6vh] border-t border-border/50">
+        <ExpandableSection number="01" label="Vibe Coding" title="Describe your product. Your AI builds it." open={openSection === "01"} onToggle={() => setOpenSection(openSection === "01" ? null : "01")}>
           <div className="max-w-2xl">
             <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mb-6 sm:mb-8">
-              Vibe coding is building software by describing what you want to an AI — and letting it write the code. No boilerplate wiring. No config files. Just intent and iteration. Batman gives you the perfect starting point: auth, database, UI, and a full-stack architecture that AI IDEs like Cursor, Claude Code, and Codex already understand.
+              You don&apos;t need to be technical. Open Cursor or Claude, describe what you want — the AI writes the code. Batman gives you a solid, production-grade foundation. Not a random vibe-coded prototype. A codebase that scales. Auth, admin, payments — all wired. Your AI knows where everything goes. Describe your feature. Ship your startup.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-6">
               <div className="space-y-1.5 sm:space-y-2">
-                <p className="text-sm font-medium">Describe it</p>
+                <p className="text-sm font-medium">For founders</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Open Cursor or Claude Code. Tell it what you&apos;re building. The architecture is already there — your AI knows exactly where everything goes.
+                  Technical or non-technical. Describe your product. The architecture is there. Your AI builds on a real foundation.
                 </p>
               </div>
               <div className="space-y-1.5 sm:space-y-2">
-                <p className="text-sm font-medium">Iterate fast</p>
+                <p className="text-sm font-medium">Production code</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Auth, database, API routes, UI components — all wired up. Your AI isn&apos;t wasting tokens on setup. It&apos;s building your actual product.
+                  Solid codebase. Scales to thousands. Not a hacky prototype. Everything crafted for real startups.
                 </p>
               </div>
               <div className="space-y-1.5 sm:space-y-2">
-                <p className="text-sm font-medium">Ship by morning</p>
+                <p className="text-sm font-medium">Ship in hours</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  That 3 AM spark becomes a working app before your coffee. Batman is the boilerplate that turns midnight vibe sessions into real products.
+                  Guided Setup Wizard. One admin dashboard. Describe your feature. Your startup is live.
                 </p>
               </div>
             </div>
           </div>
         </ExpandableSection>
 
-        <ExpandableSection number="02" label="Suit Up" title="Five commands. Before the sun rises." open={openSection === "02"} onToggle={() => setOpenSection(openSection === "02" ? null : "02")}>
+        <ExpandableSection number="02" label="Setup" title="Guided Setup Wizard. No manual config." open={openSection === "02"} onToggle={() => setOpenSection(openSection === "02" ? null : "02")}>
           <div className="grid md:grid-cols-[1fr,1.5fr] gap-10 md:gap-16 items-start">
             <div>
               <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mb-5 sm:mb-6">
-                It&apos;s 3 AM. The idea won&apos;t let you sleep. Five commands and you&apos;ve got a full-stack app running — then open your AI IDE and start vibe coding.
+                No manual .env editing. No 47-step tutorials. Clone, install, run dev — the Setup Wizard appears in your browser. Walk through Database, Auth, Features (storage, email, OAuth, payments) and generate your config. Non-technical founders can get live without touching a config file.
               </p>
-              <div className="space-y-3 text-sm text-muted-foreground">
-                <div className="flex items-start gap-2 sm:gap-3">
-                  <span className="text-foreground font-mono text-[10px] sm:text-xs mt-0.5 shrink-0">DATABASE_URL</span>
-                  <span className="text-[10px] sm:text-xs">Supabase Transaction URL <span className="text-muted-foreground/60">(port 6543)</span></span>
-                </div>
-                <div className="flex items-start gap-2 sm:gap-3">
-                  <span className="text-foreground font-mono text-[10px] sm:text-xs mt-0.5 shrink-0">DIRECT_URL</span>
-                  <span className="text-[10px] sm:text-xs">Supabase Session URL <span className="text-muted-foreground/60">(port 5432)</span></span>
-                </div>
+              <div className="space-y-2 text-xs text-muted-foreground">
+                <p className="font-medium text-foreground">Wizard steps</p>
+                <p className="text-[10px] sm:text-xs">Database → Auth → Features → Storage (optional) → Email (optional) → Social Login (optional) → Payments (optional) → Review & Launch</p>
               </div>
             </div>
             <div className="space-y-0">
-              {steps.map((step, i) => (
+              {setupSteps.map((step, i) => (
                 <div key={step.number} className="group">
                   <div className="flex items-start gap-3 sm:gap-5 py-4 sm:py-6 border-b border-border/30">
                     <span className="font-mono text-xs text-muted-foreground/40 mt-1 shrink-0 w-5">
@@ -451,32 +502,32 @@ export default function MarketingPage() {
                     </span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium mb-2">{step.title}</p>
-                      <div className="font-mono text-[10px] sm:text-xs bg-secondary/30 border border-border/30 rounded-md px-2.5 sm:px-3 py-2 sm:py-2.5 text-muted-foreground overflow-x-auto whitespace-nowrap">
-                        <span className="text-foreground/60 select-none">$ </span>
-                        {step.command}
-                      </div>
+                      {step.command && (
+                        <div className="font-mono text-[10px] sm:text-xs bg-secondary/30 border border-border/30 rounded-md px-2.5 sm:px-3 py-2 sm:py-2.5 text-muted-foreground overflow-x-auto whitespace-nowrap">
+                          <span className="text-foreground/60 select-none">$ </span>
+                          {step.command}
+                        </div>
+                      )}
                       {step.detail && (
                         <p className="text-[10px] sm:text-xs text-muted-foreground/60 mt-2">{step.detail}</p>
                       )}
                     </div>
                   </div>
-                  {i === steps.length - 1 && (
+                  {i === setupSteps.length - 1 && (
                     <div className="flex items-start gap-3 sm:gap-5 py-4 sm:py-6">
                       <span className="font-mono text-xs text-foreground mt-1 shrink-0 w-5">
                         --
                       </span>
                       <div className="flex-1">
-                        <p className="text-sm font-medium mb-1">Gotham is yours</p>
+                        <p className="text-sm font-medium mb-1">Your startup is live</p>
                         <p className="text-[10px] sm:text-xs text-muted-foreground">
                           Open{" "}
                           <span className="font-mono text-foreground/80">localhost:3001</span>
-                          {" "}— your app is live before dawn. Hand it off to{" "}
+                          {" "}— production codebase, one admin dashboard. Hand it off to{" "}
                           <span className="text-foreground">Cursor</span>,{" "}
-                          <span className="text-foreground">Claude Code</span>,{" "}
-                          <span className="text-foreground">Antigravity</span>,{" "}
-                          or{" "}
+                          <span className="text-foreground">Claude</span>, or{" "}
                           <span className="text-foreground">Codex</span>{" "}
-                          and vibe code until sunrise.
+                          and build your product.
                         </p>
                       </div>
                     </div>
@@ -487,40 +538,45 @@ export default function MarketingPage() {
           </div>
         </ExpandableSection>
 
-        <ExpandableSection number="03" label="Config" title="The Bat-Signal Config" open={openSection === "03"} onToggle={() => setOpenSection(openSection === "03" ? null : "03")}>
+        <ExpandableSection number="03" label="Config" title="What the wizard generates" open={openSection === "03"} onToggle={() => setOpenSection(openSection === "03" ? null : "03")}>
           <div className="max-w-2xl">
-            <p className="text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-6">Every vigilante needs their secrets. Here&apos;s what goes in <span className="font-mono text-foreground/80">apps/web/.env</span></p>
+            <p className="text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-6">The Setup Wizard creates <span className="font-mono text-foreground/80">apps/web/.env</span> for you. No copy-paste. Here&apos;s what it configures:</p>
             <div className="font-mono text-[10px] sm:text-xs bg-secondary/30 border border-border/30 rounded-lg p-3 sm:p-5 leading-relaxed overflow-x-auto">
-              <div className="text-muted-foreground/40 mb-3"># Authentication</div>
-              <div><span className="text-foreground">BETTER_AUTH_SECRET</span><span className="text-muted-foreground">=</span><span className="text-muted-foreground/60">your-secret-here</span></div>
-              <div><span className="text-foreground">BETTER_AUTH_URL</span><span className="text-muted-foreground">=</span><span className="text-foreground">http://localhost:3001</span></div>
-              <div><span className="text-foreground">CORS_ORIGIN</span><span className="text-muted-foreground">=</span><span className="text-foreground">http://localhost:3001</span></div>
-              <div className="mt-3 text-muted-foreground/40"># Supabase</div>
-              <div><span className="text-foreground">DATABASE_URL</span><span className="text-muted-foreground">=</span><span className="text-muted-foreground/60">postgresql://...@...pooler.supabase.com:6543/postgres?pgbouncer=true</span></div>
-              <div><span className="text-foreground">DIRECT_URL</span><span className="text-muted-foreground">=</span><span className="text-muted-foreground/60">postgresql://...@...supabase.com:5432/postgres</span></div>
+              <div className="text-muted-foreground/40 mb-3"># Required (wizard guides you)</div>
+              <div><span className="text-foreground">DATABASE_URL</span><span className="text-muted-foreground">, </span><span className="text-foreground">DIRECT_URL</span><span className="text-muted-foreground"> — Supabase</span></div>
+              <div><span className="text-foreground">BETTER_AUTH_SECRET</span><span className="text-muted-foreground">, </span><span className="text-foreground">BETTER_AUTH_URL</span><span className="text-muted-foreground">, </span><span className="text-foreground">CORS_ORIGIN</span></div>
+              <div className="mt-3 text-muted-foreground/40"># Optional (pick in Features step)</div>
+              <div><span className="text-foreground">SUPABASE_*</span><span className="text-muted-foreground"> — Storage</span></div>
+              <div><span className="text-foreground">RESEND_API_KEY</span><span className="text-muted-foreground"> — Email</span></div>
+              <div><span className="text-foreground">GOOGLE_*</span><span className="text-muted-foreground">, </span><span className="text-foreground">GITHUB_*</span><span className="text-muted-foreground"> — OAuth</span></div>
+              <div><span className="text-foreground">Polar</span><span className="text-muted-foreground"> — Payments</span></div>
             </div>
           </div>
         </ExpandableSection>
       </div>
 
       {/* CTA */}
-      <section className="py-12 sm:py-16">
+      <section className="py-12 sm:py-16 border-t border-border/50">
         <div data-reveal className="max-w-6xl mx-auto px-4 sm:px-6 text-center reveal-section">
           <BatLogo className="h-6 sm:h-8 w-auto text-foreground mx-auto mb-4 sm:mb-6 opacity-60" />
           <p className="text-xs sm:text-sm text-muted-foreground/60 italic mb-4 sm:mb-6 max-w-md mx-auto">
             &ldquo;{nightQuotes[1]}&rdquo;
           </p>
           <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight mb-3">
-            Can&apos;t sleep? Start vibe coding.
+            For founders who want to ship.
           </h2>
-          <p className="text-xs sm:text-sm text-muted-foreground mb-6 sm:mb-8 max-w-md mx-auto">
-            That 3 AM idea won&apos;t build itself. Clone Batman, open your AI IDE, and let the vibes carry you from midnight spark to shipped product.
+          <p className="text-xs sm:text-sm text-muted-foreground mb-6 sm:mb-8 max-w-lg mx-auto">
+            Production-grade codebase. One admin dashboard. Everything crafted out of the box. Technical or non-technical — ship your startup in hours. Get Batman.
           </p>
-          <Link href="/signup">
-            <Button className="h-10 w-full sm:w-auto px-8 text-sm font-medium bg-foreground text-background hover:bg-foreground/90">
-              Answer the Signal
+          <a
+            href={process.env.NEXT_PUBLIC_PURCHASE_URL || "#"}
+            target={process.env.NEXT_PUBLIC_PURCHASE_URL ? "_blank" : undefined}
+            rel={process.env.NEXT_PUBLIC_PURCHASE_URL ? "noopener noreferrer" : undefined}
+          >
+            <Button className="h-11 px-8 text-sm font-medium bg-foreground text-background hover:bg-foreground/90">
+              Get Batman
             </Button>
-          </Link>
+          </a>
         </div>
       </section>
 

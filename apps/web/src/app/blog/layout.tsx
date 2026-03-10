@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { isMarketing } from "@/lib/marketing";
+
 function BatLogo({ className }: { className?: string }) {
   return (
     <svg
@@ -35,12 +37,14 @@ export default function BlogLayout({
             >
               Blog
             </Link>
-            <Link
-              href="/login"
-              className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Sign in
-            </Link>
+            {!isMarketing && (
+              <Link
+                href="/login"
+                className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Sign in
+              </Link>
+            )}
           </div>
         </div>
       </header>

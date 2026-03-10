@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { isMarketing } from "@/lib/marketing";
 import { Button } from "@/components/ui/button";
 
 function BatLogo({ className }: { className?: string }) {
@@ -245,20 +246,22 @@ export default function AboutPage() {
         </section>
       ))}
 
-      {/* CTA */}
-      <section className="py-10 sm:py-14">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 text-center">
-          <BatLogo className="h-5 sm:h-6 w-auto text-foreground mx-auto mb-4 opacity-60" />
-          <p className="text-xs sm:text-sm text-muted-foreground mb-5 max-w-sm mx-auto">
-            Interested in Batman? Clone the repo and start vibe coding.
-          </p>
-          <Link href="/signup">
-            <Button className="h-9 px-6 text-sm font-medium bg-foreground text-background hover:bg-foreground/90">
-              Get Started
-            </Button>
-          </Link>
-        </div>
-      </section>
+      {/* CTA — hidden in marketing mode (no auth/signup) */}
+      {!isMarketing && (
+        <section className="py-10 sm:py-14">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 text-center">
+            <BatLogo className="h-5 sm:h-6 w-auto text-foreground mx-auto mb-4 opacity-60" />
+            <p className="text-xs sm:text-sm text-muted-foreground mb-5 max-w-sm mx-auto">
+              Interested in Batman? Clone the repo and start vibe coding.
+            </p>
+            <Link href="/signup">
+              <Button className="h-9 px-6 text-sm font-medium bg-foreground text-background hover:bg-foreground/90">
+                Get Started
+              </Button>
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* Footer */}
       <footer className="border-t border-border/50 py-5 sm:py-6">
