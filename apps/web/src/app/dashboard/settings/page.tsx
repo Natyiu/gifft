@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 import { authClient } from "@/lib/auth-client";
 import { updateProfile } from "@/lib/actions/user";
@@ -11,15 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
 import { ProfileSettingsSkeleton } from "@/components/skeletons";
 
 export default function ProfileSettings() {
@@ -96,106 +89,113 @@ export default function ProfileSettings() {
   }
 
   return (
-    <div className="space-y-6 max-w-2xl">
-      <Card className="border-border/30 bg-card/50">
-        <CardHeader>
-          <CardTitle className="text-sm">Avatar</CardTitle>
-          <CardDescription className="text-xs">
-            Click to upload a new profile picture.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-4">
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="relative group"
-              disabled={uploading}
-            >
-              <Avatar className="h-16 w-16">
-                <AvatarImage src={avatarUrl} />
-                <AvatarFallback className="text-sm font-bold bg-primary/10 text-primary">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <span className="text-white text-[10px] font-medium">
-                  {uploading ? "..." : "Edit"}
-                </span>
-              </div>
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleAvatarUpload}
-            />
-            <div className="text-xs text-muted-foreground">
-              <p>Recommended: Square image, at least 200x200px.</p>
-              <p>Max 5MB. JPG, PNG, or WebP.</p>
+    <div className="max-w-md space-y-8">
+      {/* Avatar */}
+      <section>
+        <SectionHeader title="Avatar" description="Click to upload a new profile picture." />
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="relative group cursor-pointer"
+            disabled={uploading}
+          >
+            <Avatar className="h-14 w-14">
+              <AvatarImage src={avatarUrl} />
+              <AvatarFallback className="text-xs font-bold bg-muted text-foreground/60">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+            <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              {uploading ? (
+                <Loader2 className="h-3 w-3 text-white animate-spin" />
+              ) : (
+                <span className="text-white text-[9px] font-medium">Edit</span>
+              )}
             </div>
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleAvatarUpload}
+          />
+          <div className="text-[10px] text-muted-foreground/50 space-y-0.5">
+            <p>Square image, at least 200×200px.</p>
+            <p>Max 5MB. JPG, PNG, or WebP.</p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
-      <Card className="border-border/30 bg-card/50">
-        <CardHeader>
-          <CardTitle className="text-sm">Profile Information</CardTitle>
-          <CardDescription className="text-xs">
-            Update your name and bio. This information is visible to other users.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name" className="text-xs">
-              Name
-            </Label>
+      {/* Profile info */}
+      <section>
+        <SectionHeader title="Profile" description="Your name and bio visible to others." />
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="name" className="text-[11px]">Name</Label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Your name"
+              className="h-8 text-xs"
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-xs">
-              Email
-            </Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="email" className="text-[11px]">Email</Label>
             <Input
               id="email"
               value={session.user.email}
               disabled
-              className="opacity-60"
+              className="h-8 text-xs opacity-50"
             />
-            <p className="text-[10px] text-muted-foreground">
-              Email cannot be changed from here.
+            <p className="text-[9px] text-muted-foreground/40">
+              Email cannot be changed here.
             </p>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="bio" className="text-xs">
-              Bio
-            </Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="bio" className="text-[11px]">Bio</Label>
             <Textarea
               id="bio"
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               placeholder="Tell us about yourself..."
               rows={3}
+              className="text-xs resize-none"
             />
           </div>
 
-          <Separator className="opacity-30" />
-
-          <div className="flex justify-end">
-            <Button onClick={handleSave} disabled={saving} size="sm">
-              {saving ? "Saving..." : "Save Changes"}
+          <div className="flex justify-end pt-2">
+            <Button
+              onClick={handleSave}
+              disabled={saving}
+              size="sm"
+              className="text-xs h-8 bg-foreground text-background hover:bg-foreground/90"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="h-3 w-3 animate-spin mr-1.5" />
+                  Saving...
+                </>
+              ) : (
+                "Save Changes"
+              )}
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function SectionHeader({ title, description }: { title: string; description: string }) {
+  return (
+    <div className="mb-3 pb-2 border-b border-border/30">
+      <h3 className="text-xs font-semibold">{title}</h3>
+      <p className="text-[10px] text-muted-foreground/50 mt-0.5">{description}</p>
     </div>
   );
 }

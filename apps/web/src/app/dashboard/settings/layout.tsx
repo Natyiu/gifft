@@ -18,15 +18,15 @@ export default function SettingsLayout({
   const pathname = usePathname();
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-        <p className="text-xs text-muted-foreground mt-1">
+    <div>
+      <div className="mb-6">
+        <h1 className="text-lg font-semibold tracking-tight">Settings</h1>
+        <p className="text-xs text-muted-foreground mt-0.5">
           Manage your account settings and preferences.
         </p>
       </div>
 
-      <div className="flex gap-1 border-b border-border/30 pb-px">
+      <div className="flex gap-0.5 border-b border-border/40 mb-6">
         {settingsNav.map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -34,10 +34,10 @@ export default function SettingsLayout({
               key={item.href}
               href={item.href as never}
               className={cn(
-                "px-3 py-2 text-xs font-medium transition-colors -mb-px",
+                "px-3 py-2 text-[11px] font-medium transition-colors -mb-px",
                 isActive
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground",
+                  ? "border-b-2 border-foreground text-foreground"
+                  : "text-muted-foreground/60 hover:text-foreground",
               )}
             >
               {item.name}

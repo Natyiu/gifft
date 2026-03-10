@@ -6,17 +6,9 @@ import Link from "next/link";
 import { toast } from "sonner";
 
 import { authClient } from "@/lib/auth-client";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -48,60 +40,60 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <Card className="border-border/30 bg-card/50 backdrop-blur">
-      <CardHeader className="text-center pb-4">
-        <CardTitle className="text-lg font-semibold tracking-tight">
-          New password
-        </CardTitle>
-        <CardDescription className="text-xs">
+    <div>
+      <div className="mb-6">
+        <h1 className="text-lg font-semibold tracking-tight">New password</h1>
+        <p className="text-xs text-muted-foreground mt-0.5">
           Choose a new password for your account
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="password" className="text-xs">
-              New Password
-            </Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Min 8 characters"
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="confirm" className="text-xs">
-              Confirm Password
-            </Label>
-            <Input
-              id="confirm"
-              type="password"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              placeholder="Repeat password"
-              required
-            />
-          </div>
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={resetting || !password || !confirm}
-          >
-            {resetting ? "Resetting..." : "Reset Password"}
-          </Button>
-        </form>
-        <div className="mt-5 text-center">
-          <Link
-            href="/login"
-            className="text-xs text-muted-foreground hover:text-foreground"
-          >
-            Back to login
-          </Link>
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="password" className="text-[11px]">
+            New Password
+          </Label>
+          <Input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Min 8 characters"
+            required
+            className="h-8 text-xs"
+          />
         </div>
-      </CardContent>
-    </Card>
+        <div className="space-y-1.5">
+          <Label htmlFor="confirm" className="text-[11px]">
+            Confirm Password
+          </Label>
+          <Input
+            id="confirm"
+            type="password"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            placeholder="Repeat password"
+            required
+            className="h-8 text-xs"
+          />
+        </div>
+        <Button
+          type="submit"
+          className="w-full h-8 text-xs bg-foreground text-background hover:bg-foreground/90"
+          disabled={resetting || !password || !confirm}
+        >
+          {resetting ? "Resetting..." : "Reset Password"}
+        </Button>
+      </form>
+
+      <div className="mt-5 text-center">
+        <Link
+          href="/login"
+          className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Back to login
+        </Link>
+      </div>
+    </div>
   );
 }

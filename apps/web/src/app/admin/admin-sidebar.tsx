@@ -12,12 +12,14 @@ import {
   BarChart3,
   MessageSquare,
   ArrowLeft,
+  FileText,
 } from "lucide-react";
 
 const adminNav = [
   { name: "Overview", href: "/admin", icon: LayoutDashboard, exact: true },
   { name: "Users", href: "/admin/users", icon: Users },
   { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
+  { name: "Blog", href: "/admin/blog", icon: FileText },
   { name: "Notifications", href: "/admin/notifications", icon: Bell },
   { name: "Feedback", href: "/admin/feedback", icon: MessageSquare },
   { name: "General", href: "/admin/general", icon: Settings2 },

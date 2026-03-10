@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { Button } from "@/components/ui/button";
+import { AuthVisual } from "@/components/auth-visual";
 
 function BatLogo({ className }: { className?: string }) {
   return (
@@ -30,38 +30,45 @@ export default async function AuthLayout({
   if (session?.user) {
     redirect("/dashboard");
   }
+
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="border-b border-border/30">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="flex h-14 items-center justify-between">
-            <Link href="/" className="flex items-center gap-2.5">
-              <BatLogo className="h-5 w-auto text-primary" />
-              <span className="font-semibold text-sm tracking-widest uppercase">Batman</span>
-            </Link>
-            <Link href="/">
-              <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-primary h-8">
+    <div className="min-h-screen flex bg-background">
+      {/* Left — form side */}
+      <div className="w-full lg:w-[45%] xl:w-[40%] flex flex-col min-h-screen">
+        <header className="border-b border-border/40 lg:border-b-0">
+          <div className="px-6 sm:px-8 lg:px-10">
+            <div className="flex h-12 items-center justify-between">
+              <Link href="/" className="flex items-center gap-2">
+                <BatLogo className="h-3.5 w-auto text-foreground" />
+                <span className="text-[11px] font-semibold tracking-widest uppercase">
+                  Batman
+                </span>
+              </Link>
+              <Link
+                href="/"
+                className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+              >
                 Back
-              </Button>
-            </Link>
+              </Link>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <main className="flex-1 flex items-center justify-center py-16 relative">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-primary/3 rounded-full blur-[100px]" />
-        <div className="w-full max-w-sm mx-auto px-6 relative">
-          {children}
-        </div>
-      </main>
+        <main className="flex-1 flex items-center justify-center px-6 sm:px-8 lg:px-10 py-12">
+          <div className="w-full max-w-xs">{children}</div>
+        </main>
 
-      <footer className="border-t border-border/30 py-6">
-        <div className="max-w-6xl mx-auto px-6">
-          <p className="text-center text-xs text-muted-foreground/60">
+        <footer className="py-4 px-6 sm:px-8 lg:px-10">
+          <p className="text-[10px] text-muted-foreground/30">
             &copy; {new Date().getFullYear()} Batman
           </p>
-        </div>
-      </footer>
+        </footer>
+      </div>
+
+      {/* Right — visual side (hidden on mobile) */}
+      <div className="hidden lg:block lg:w-[55%] xl:w-[60%] border-l border-border/40">
+        <AuthVisual />
+      </div>
     </div>
   );
 }

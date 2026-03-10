@@ -269,7 +269,7 @@ export function DashboardHome({
     <div className="max-w-xl">
       <div className="mb-10">
         <p className="text-xs text-muted-foreground/50 font-medium uppercase tracking-widest mb-2">
-          Dashboard
+          User Dashboard
         </p>
         <h1 className="text-lg font-semibold tracking-tight">
           Hey, {firstName}
