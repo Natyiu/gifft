@@ -23,13 +23,26 @@ function BatLogo({ className }: { className?: string }) {
 
 const techStack = [
   { label: "Next.js", desc: "Full-stack React" },
-  { label: "Prisma", desc: "Type-safe ORM" },
-  { label: "Better Auth", desc: "Authentication" },
-  { label: "shadcn/ui", desc: "Components" },
-  { label: "Tailwind", desc: "Styling" },
+  { label: "React 19", desc: "UI framework" },
   { label: "TypeScript", desc: "Type safety" },
+  { label: "Prisma", desc: "Type-safe ORM" },
   { label: "PostgreSQL", desc: "Database" },
+  { label: "Better Auth", desc: "Authentication" },
+  { label: "Tailwind CSS", desc: "Styling" },
+  { label: "shadcn/ui", desc: "Components" },
+  { label: "Radix UI", desc: "Primitives" },
+  { label: "Polar", desc: "Payments" },
+  { label: "Supabase", desc: "Storage" },
+  { label: "Resend", desc: "Email" },
+  { label: "Google OAuth", desc: "Social login" },
+  { label: "GitHub OAuth", desc: "Social login" },
+  { label: "TipTap", desc: "Rich text" },
+  { label: "Vercel AI", desc: "AI SDK" },
+  { label: "Zod", desc: "Validation" },
+  { label: "Recharts", desc: "Charts" },
+  { label: "Vitest", desc: "Testing" },
   { label: "Turborepo", desc: "Monorepo" },
+  { label: "pnpm", desc: "Package manager" },
 ];
 
 const builtInFeatures = [
@@ -281,6 +294,11 @@ export default function MarketingPage() {
                   Features
                 </Button>
               </a>
+              <a href="#tech-stack">
+                <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground hover:bg-secondary h-8 px-2 sm:px-3">
+                  Tech Stack
+                </Button>
+              </a>
               <a href="#pricing">
                 <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground hover:bg-secondary h-8 px-2 sm:px-3">
                   Pricing
@@ -360,7 +378,7 @@ export default function MarketingPage() {
 
             {/* Mini tech list */}
             <div className="grid grid-cols-2 gap-x-5 gap-y-1.5 mb-4 sm:mb-5">
-              {techStack.slice(0, 4).map((f) => (
+              {techStack.slice(0, 6).map((f) => (
                 <div key={f.label} className="flex items-center gap-2">
                   <div className="w-1 h-1 rounded-full bg-foreground/40 shrink-0" />
                   <span className="text-[10px] sm:text-xs font-mono text-foreground/70">{f.label}</span>
@@ -411,6 +429,29 @@ export default function MarketingPage() {
           ))}
         </div>
       </section>
+
+      {/* Tech Stack — full list */}
+      {/* <section id="tech-stack" className="border-t border-border/50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="h-px w-6 sm:w-8 bg-foreground" />
+            <span className="text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-muted-foreground/50">
+              Tech stack
+            </span>
+          </div>
+          <h2 className="text-lg sm:text-xl font-semibold tracking-tight mb-6">
+            Everything under the hood.
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+            {techStack.map((item, i) => (
+              <div key={i} className="flex flex-col gap-0.5">
+                <span className="text-xs sm:text-sm font-medium text-foreground">{item.label}</span>
+                <span className="text-[10px] sm:text-[11px] text-muted-foreground">{item.desc}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section> */}
 
       {/* Out of the box */}
       <section id="why" className="border-t border-border/50">
