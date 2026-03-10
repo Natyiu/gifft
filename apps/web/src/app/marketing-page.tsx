@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -60,31 +61,24 @@ const nightQuotes = [
 const setupSteps = [
   {
     number: "01",
-    title: "Clone & install",
-    command: "git clone <repo-url> && cd Batman && pnpm install",
+    title: "Pay and get access",
+    detail: "One-time purchase. You get instant access to the private repo.",
   },
   {
     number: "02",
-    title: "Run dev",
-    command: "pnpm dev",
-    detail: "Visit localhost:3001 — the Setup Wizard appears automatically",
+    title: "Clone the project",
+    command: "git clone <repo-url> && cd Batman",
   },
   {
     number: "03",
-    title: "Complete the wizard",
-    detail: "Guided steps: Database (Supabase) → Auth → Features (storage, email, OAuth, payments) → Review. No manual .env editing. The wizard generates everything.",
+    title: "Install and run",
+    command: "pnpm install && pnpm dev",
+    detail: "Visit localhost:3001 — the Setup Wizard appears automatically.",
   },
   {
     number: "04",
-    title: "Push the database",
-    command: "pnpm db:generate && pnpm db:push",
-    detail: "One-time setup. Creates your tables.",
-  },
-  {
-    number: "05",
-    title: "Launch",
-    command: "pnpm dev",
-    detail: "Your startup is live. Open Cursor or Claude and build.",
+    title: "Complete the onboarding",
+    detail: "Guided setup: Database, Auth, Features (storage, email, OAuth, payments). The wizard generates your config. Run db:push, then you're live.",
   },
 ];
 
@@ -255,9 +249,20 @@ function ThemeToggle() {
 export default function MarketingPage() {
   const scrollRef = useScrollReveal();
   const [openSection, setOpenSection] = useState<string | null>("01");
+  const searchParams = useSearchParams();
+  const checkoutError = searchParams.get("error");
 
   return (
     <div ref={scrollRef} className="min-h-screen flex flex-col">
+      {checkoutError && (
+        <div className="fixed top-14 left-0 right-0 z-40 bg-destructive/10 border-b border-destructive/30 px-4 py-2.5 text-center">
+          <p className="text-xs text-destructive">
+            Checkout failed: {checkoutError.includes("Product not found") || checkoutError.includes("Product does not exist")
+              ? "Product not found. Verify POLAR_MARKETING_PRODUCT_ID and POLAR_MARKETING_ACCESS_TOKEN (sandbox vs production)."
+              : checkoutError.slice(0, 150)}
+          </p>
+        </div>
+      )}
       {/* Nav */}
       <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/90 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
@@ -276,11 +281,11 @@ export default function MarketingPage() {
                   Features
                 </Button>
               </a>
-              <Link href="/about">
+              <a href="#pricing">
                 <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground hover:bg-secondary h-8 px-2 sm:px-3">
-                  About
+                  Pricing
                 </Button>
-              </Link>
+              </a>
               <Link href="/blog">
                 <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground hover:bg-secondary h-8 px-2 sm:px-3">
                   Blog
@@ -366,6 +371,11 @@ export default function MarketingPage() {
 
             {/* CTA */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+              <a href="/api/checkout/marketing">
+                <Button className="h-9 w-full sm:w-auto px-5 text-sm bg-foreground text-background hover:bg-foreground/90">
+                  Get Batman — $49.99
+                </Button>
+              </a>
               <Link href="#setup">
                 <Button variant="ghost" className="h-9 w-full sm:w-auto px-5 text-sm text-muted-foreground hover:text-foreground">
                   View Setup
@@ -414,14 +424,47 @@ export default function MarketingPage() {
           <h2 className="text-lg sm:text-xl font-semibold tracking-tight mb-6">
             Everything included.
           </h2>
-          <ul className="space-y-2">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {outOfTheBox.map((item, i) => (
-              <li key={i} className="text-[11px] sm:text-xs text-muted-foreground">
-                <span className="font-medium text-foreground">{item.title}</span>
-                <span className="text-muted-foreground/80"> — {item.detail}</span>
-              </li>
+              <div
+                key={i}
+                className="pl-4 border-l-2 border-foreground/20 py-1"
+              >
+                <p className="text-xs sm:text-sm font-medium text-foreground mb-1">{item.title}</p>
+                <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed">{item.detail}</p>
+              </div>
             ))}
-          </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section id="pricing" className="border-t border-border/50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="h-px w-6 sm:w-8 bg-foreground" />
+            <span className="text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-muted-foreground/50">
+              Pricing
+            </span>
+          </div>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+            <div>
+              <h2 className="text-lg sm:text-xl font-semibold tracking-tight mb-1">
+                One-time purchase
+              </h2>
+              <p className="text-[11px] sm:text-xs text-muted-foreground">
+                Pay once. Get lifetime access to the codebase.
+              </p>
+            </div>
+            <div className="flex items-baseline gap-1">
+              <span className="text-2xl sm:text-3xl font-bold tracking-tight">$49.99</span>
+            </div>
+          </div>
+          <a href="/api/checkout/marketing" className="mt-6 inline-block">
+            <Button className="h-10 px-6 text-sm font-medium bg-foreground text-background hover:bg-foreground/90">
+              Get Batman — $49.99
+            </Button>
+          </a>
         </div>
       </section>
 
@@ -486,7 +529,7 @@ export default function MarketingPage() {
           <div className="grid md:grid-cols-[1fr,1.5fr] gap-10 md:gap-16 items-start">
             <div>
               <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mb-5 sm:mb-6">
-                No manual .env editing. No 47-step tutorials. Clone, install, run dev — the Setup Wizard appears in your browser. Walk through Database, Auth, Features (storage, email, OAuth, payments) and generate your config. Non-technical founders can get live without touching a config file.
+                Pay once, get access. Clone, install, run dev — the Setup Wizard appears in your browser. Walk through Database, Auth, Features (storage, email, OAuth, payments) and generate your config. Non-technical founders can get live without touching a config file.
               </p>
               <div className="space-y-2 text-xs text-muted-foreground">
                 <p className="font-medium text-foreground">Wizard steps</p>
@@ -515,41 +558,17 @@ export default function MarketingPage() {
                   </div>
                   {i === setupSteps.length - 1 && (
                     <div className="flex items-start gap-3 sm:gap-5 py-4 sm:py-6">
-                      <span className="font-mono text-xs text-foreground mt-1 shrink-0 w-5">
-                        --
-                      </span>
+                      <span className="font-mono text-xs text-foreground mt-1 shrink-0 w-5">--</span>
                       <div className="flex-1">
                         <p className="text-sm font-medium mb-1">Your startup is live</p>
                         <p className="text-[10px] sm:text-xs text-muted-foreground">
-                          Open{" "}
-                          <span className="font-mono text-foreground/80">localhost:3001</span>
-                          {" "}— production codebase, one admin dashboard. Hand it off to{" "}
-                          <span className="text-foreground">Cursor</span>,{" "}
-                          <span className="text-foreground">Claude</span>, or{" "}
-                          <span className="text-foreground">Codex</span>{" "}
-                          and build your product.
+                          Open <span className="font-mono text-foreground/80">localhost:3001</span> — production codebase, one admin dashboard. Hand it off to Cursor, Claude, or Codex and build your product.
                         </p>
                       </div>
                     </div>
                   )}
                 </div>
               ))}
-            </div>
-          </div>
-        </ExpandableSection>
-
-        <ExpandableSection number="03" label="Config" title="What the wizard generates" open={openSection === "03"} onToggle={() => setOpenSection(openSection === "03" ? null : "03")}>
-          <div className="max-w-2xl">
-            <p className="text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-6">The Setup Wizard creates <span className="font-mono text-foreground/80">apps/web/.env</span> for you. No copy-paste. Here&apos;s what it configures:</p>
-            <div className="font-mono text-[10px] sm:text-xs bg-secondary/30 border border-border/30 rounded-lg p-3 sm:p-5 leading-relaxed overflow-x-auto">
-              <div className="text-muted-foreground/40 mb-3"># Required (wizard guides you)</div>
-              <div><span className="text-foreground">DATABASE_URL</span><span className="text-muted-foreground">, </span><span className="text-foreground">DIRECT_URL</span><span className="text-muted-foreground"> — Supabase</span></div>
-              <div><span className="text-foreground">BETTER_AUTH_SECRET</span><span className="text-muted-foreground">, </span><span className="text-foreground">BETTER_AUTH_URL</span><span className="text-muted-foreground">, </span><span className="text-foreground">CORS_ORIGIN</span></div>
-              <div className="mt-3 text-muted-foreground/40"># Optional (pick in Features step)</div>
-              <div><span className="text-foreground">SUPABASE_*</span><span className="text-muted-foreground"> — Storage</span></div>
-              <div><span className="text-foreground">RESEND_API_KEY</span><span className="text-muted-foreground"> — Email</span></div>
-              <div><span className="text-foreground">GOOGLE_*</span><span className="text-muted-foreground">, </span><span className="text-foreground">GITHUB_*</span><span className="text-muted-foreground"> — OAuth</span></div>
-              <div><span className="text-foreground">Polar</span><span className="text-muted-foreground"> — Payments</span></div>
             </div>
           </div>
         </ExpandableSection>
@@ -568,13 +587,9 @@ export default function MarketingPage() {
           <p className="text-xs sm:text-sm text-muted-foreground mb-6 sm:mb-8 max-w-lg mx-auto">
             Production-grade codebase. One admin dashboard. Everything crafted out of the box. Technical or non-technical — ship your startup in hours. Get Batman.
           </p>
-          <a
-            href={process.env.NEXT_PUBLIC_PURCHASE_URL || "#"}
-            target={process.env.NEXT_PUBLIC_PURCHASE_URL ? "_blank" : undefined}
-            rel={process.env.NEXT_PUBLIC_PURCHASE_URL ? "noopener noreferrer" : undefined}
-          >
+          <a href="/api/checkout/marketing">
             <Button className="h-11 px-8 text-sm font-medium bg-foreground text-background hover:bg-foreground/90">
-              Get Batman
+              Get Batman — $49.99
             </Button>
           </a>
         </div>
