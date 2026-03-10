@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 
-import { createCheckoutSession } from "@/lib/actions/polar";
-import type { PolarProduct } from "@/lib/actions/polar";
+import { createCheckoutSession, type PolarProduct } from "@/lib/actions/polar";
+import { parseProductDescription } from "@/lib/product-description";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -36,6 +36,7 @@ export function PricingCard({
 
   const primaryPrice = product.prices[0];
   const priceStr = primaryPrice ? formatPrice(primaryPrice) : "—";
+  const { description, features } = parseProductDescription(product.description);
 
   async function handleSubscribe() {
     if (!isLoggedIn) {
@@ -62,46 +63,57 @@ export function PricingCard({
   }
 
   return (
-    <div className="border border-border/40 bg-card/50 rounded-lg p-6 flex flex-col">
-      <div className="flex-1">
-        <h3 className="text-sm font-semibold">{product.name}</h3>
-        {product.description && (
-          <p className="text-xs text-muted-foreground mt-2 line-clamp-3">
-            {product.description}
+    <div className="border border-border/40 bg-card/30 rounded-sm p-5 flex flex-col gap-4">
+      <div>
+        <h3 className="text-sm font-semibold tracking-tight">{product.name}</h3>
+        {description && (
+          <p className="text-[11px] text-muted-foreground mt-1.5 leading-relaxed">
+            {description}
           </p>
         )}
+        {features.length > 0 && (
+          <ul className="mt-2 space-y-1">
+            {features.map((feature, i) => (
+              <li
+                key={i}
+                className="text-[11px] text-muted-foreground flex items-start gap-1.5"
+              >
+                <span className="text-foreground/50 mt-0.5 shrink-0">•</span>
+                <span>{feature}</span>
+              </li>
+            ))}
+          </ul>
+        )}
 
-        <div className="mt-4">
-          <span className="text-2xl font-bold">{priceStr}</span>
+        <div className="mt-3 flex items-baseline gap-1">
+          <span className="text-xl font-bold tracking-tight">{priceStr}</span>
           {product.isRecurring && (
-            <span className="text-xs text-muted-foreground ml-1">
-              /{product.recurringInterval === "month" ? "month" : "year"}
+            <span className="text-[10px] text-muted-foreground">
+              /{product.recurringInterval === "month" ? "mo" : "yr"}
             </span>
           )}
         </div>
 
         {product.prices.length > 1 && (
-          <p className="text-[10px] text-muted-foreground mt-1">
+          <p className="text-[10px] text-muted-foreground/60 mt-0.5">
             {product.prices.length} price options
           </p>
         )}
       </div>
 
-      <div className="mt-6">
-        <Button
-          className="w-full"
-          onClick={handleSubscribe}
-          disabled={loading}
-        >
-          {loading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : isLoggedIn ? (
-            "Subscribe"
-          ) : (
-            "Sign in to subscribe"
-          )}
-        </Button>
-      </div>
+      <Button
+        className="w-full h-8 text-xs bg-foreground text-background hover:bg-foreground/90"
+        onClick={handleSubscribe}
+        disabled={loading}
+      >
+        {loading ? (
+          <Loader2 className="h-3 w-3 animate-spin" />
+        ) : isLoggedIn ? (
+          "Subscribe"
+        ) : (
+          "Sign in to subscribe"
+        )}
+      </Button>
     </div>
   );
 }

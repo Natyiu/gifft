@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import {
   CreditCard,
   Plus,
+  Minus,
   Trash2,
   Loader2,
   Archive,
@@ -58,6 +59,16 @@ const CURRENCIES = [
   { value: "gbp", label: "GBP" },
 ];
 
+const FEATURES_DELIMITER = "\n\n---\n";
+
+function buildProductDescription(description: string, features: string[]): string {
+  const desc = description.trim();
+  const feats = features.map((f) => f.trim()).filter(Boolean);
+  if (feats.length === 0) return desc;
+  if (!desc) return FEATURES_DELIMITER + feats.join("\n");
+  return desc + FEATURES_DELIMITER + feats.join("\n");
+}
+
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<PolarProduct[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -70,6 +81,7 @@ export default function AdminProductsPage() {
   const [form, setForm] = useState({
     name: "",
     description: "",
+    features: [] as string[],
     type: "saas-monthly" as (typeof PRICING_TYPES)[number]["value"],
     priceAmount: "",
     priceCurrency: "usd",
@@ -108,9 +120,14 @@ export default function AdminProductsPage() {
 
     setSaving(true);
     try {
+      const fullDescription = buildProductDescription(
+        form.description,
+        form.features
+      );
+
       const result = await createPolarProduct({
         name,
-        description: form.description.trim() || undefined,
+        description: fullDescription || undefined,
         type: form.type,
         priceAmountCents: priceCents,
         priceCurrency: form.priceCurrency,
@@ -126,6 +143,7 @@ export default function AdminProductsPage() {
       setForm({
         name: "",
         description: "",
+        features: [],
         type: "saas-monthly",
         priceAmount: "",
         priceCurrency: "usd",
@@ -328,6 +346,60 @@ export default function AdminProductsPage() {
                 rows={2}
                 className="text-xs resize-none"
               />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-[11px] font-medium">
+                Features (optional)
+              </Label>
+              <p className="text-[9px] text-muted-foreground">
+                Add bullet points for the pricing page. Shown as an unordered list.
+              </p>
+              <div className="space-y-2">
+                {form.features.map((feature, i) => (
+                  <div key={i} className="flex gap-2">
+                    <Input
+                      value={feature}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          features: f.features.map((v, j) =>
+                            j === i ? e.target.value : v
+                          ),
+                        }))
+                      }
+                      placeholder={`Feature ${i + 1}`}
+                      className="h-8 text-xs flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                      onClick={() =>
+                        setForm((f) => ({
+                          ...f,
+                          features: f.features.filter((_, j) => j !== i),
+                        }))
+                      }
+                    >
+                      <Minus className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-xs w-full border-dashed"
+                  onClick={() =>
+                    setForm((f) => ({ ...f, features: [...f.features, ""] }))
+                  }
+                >
+                  <Plus className="h-3 w-3 mr-1.5" />
+                  Add feature
+                </Button>
+              </div>
             </div>
 
             <div className="space-y-1.5">

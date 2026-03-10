@@ -64,11 +64,11 @@ function ReadyPage({ onRerunSetup }: { onRerunSetup: () => void }) {
                 Pricing
               </Button>
             </Link>
-            <Link href="/login">
+            {/* <Link href="/login">
               <Button variant="ghost" size="sm" className="text-[11px] h-7 text-muted-foreground">
                 Sign in
               </Button>
-            </Link>
+            </Link> */}
             <Link href="/signup">
               <Button size="sm" className="text-[11px] h-7 bg-foreground text-background hover:bg-foreground/90">
                 Get Started
