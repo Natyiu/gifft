@@ -1,4 +1,13 @@
-import "dotenv/config";
+import path from "node:path";
+import { config } from "dotenv";
+
+// Load .env: try apps/web/.env when running from monorepo root, else .env in cwd
+const cwd = process.cwd();
+const webEnvPath = path.resolve(cwd, "apps/web/.env");
+const localEnvPath = path.resolve(cwd, ".env");
+config({ path: webEnvPath });
+config({ path: localEnvPath }); // overrides when running from apps/web (same file)
+
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 

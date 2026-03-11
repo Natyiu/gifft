@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "postinstall": "node -e \"const fs=require('fs');const p='.env';if(!fs.existsSync(p)){fs.copyFileSync('.env.example',p);console.log('Created .env from .env.example — fill in DATABASE_URL, BETTER_AUTH_SECRET, etc.')}\"",
     "dev": "next dev --port 3001",
     "build": "next build",
     "start": "next start"
