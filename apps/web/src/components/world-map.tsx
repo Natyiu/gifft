@@ -40,10 +40,10 @@ export function WorldMap({ countries }: { countries: CountryData[] }) {
 
   return (
     <div className="space-y-4">
-      <div className="relative">
+      <div className="relative min-h-[200px] w-full" style={{ aspectRatio: "2/1" }}>
         <svg
           viewBox="0 0 1000 500"
-          className="w-full h-auto"
+          className="w-full h-full"
           onMouseMove={(e) => {
             const rect = e.currentTarget.getBoundingClientRect();
             setTooltipPos({
@@ -67,7 +67,7 @@ export function WorldMap({ countries }: { countries: CountryData[] }) {
                 cx="4"
                 cy="4"
                 r="0.8"
-                className="fill-muted-foreground/20 dark:fill-muted-foreground/40"
+                className="fill-muted-foreground/35 dark:fill-muted-foreground/50"
               />
             </pattern>
 
@@ -84,7 +84,7 @@ export function WorldMap({ countries }: { countries: CountryData[] }) {
                 cx="3"
                 cy="3"
                 r="0.8"
-                className="fill-muted-foreground/40 dark:fill-muted-foreground/60"
+                className="fill-muted-foreground/50 dark:fill-muted-foreground/65"
               />
             </pattern>
 
@@ -201,7 +201,7 @@ export function WorldMap({ countries }: { countries: CountryData[] }) {
                     ? "stroke-foreground/50 dark:stroke-foreground/70"
                     : intensity > 0
                       ? "stroke-primary/30 dark:stroke-primary/50"
-                      : "stroke-border/40 dark:stroke-border/60"
+                      : "stroke-muted-foreground/35 dark:stroke-muted-foreground/50"
                 }`}
                 strokeWidth={isHovered ? 1.2 : 0.4}
                 onMouseEnter={() => setHovered(path.id)}
@@ -273,19 +273,21 @@ export function MiniWorldMap({
   );
 
   return (
-    <svg viewBox="0 0 1000 500" className="w-full h-auto">
-      {worldMapPaths.map((path) => (
-        <path
-          key={path.id}
-          d={path.d}
-          className={
-            countrySet.has(path.id)
-              ? "fill-foreground/80 stroke-foreground/40 dark:fill-foreground/95 dark:stroke-foreground/60"
-              : "fill-muted-foreground/10 stroke-muted-foreground/15 dark:fill-muted-foreground/25 dark:stroke-muted-foreground/35"
-          }
-          strokeWidth={0.5}
-        />
-      ))}
-    </svg>
+    <div className="min-h-[120px] w-full" style={{ aspectRatio: "2/1" }}>
+      <svg viewBox="0 0 1000 500" className="w-full h-full">
+        {worldMapPaths.map((path) => (
+          <path
+            key={path.id}
+            d={path.d}
+            className={
+              countrySet.has(path.id)
+                ? "fill-foreground/80 stroke-foreground/40 dark:fill-foreground/95 dark:stroke-foreground/60"
+                : "fill-muted-foreground/25 stroke-muted-foreground/30 dark:fill-muted-foreground/35 dark:stroke-muted-foreground/45"
+            }
+            strokeWidth={0.5}
+          />
+        ))}
+      </svg>
+    </div>
   );
 }

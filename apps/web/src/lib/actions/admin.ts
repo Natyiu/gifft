@@ -308,14 +308,21 @@ export async function getOverview() {
   ]);
 
   // Resolve IPs to countries (top 5 for overview)
-  const userIpMap = new Map<string, string>();
+  const userIpMap = new Map<string, string | null>();
   for (const s of recentSessions) {
-    if (s.ipAddress && !userIpMap.has(s.userId)) {
-      userIpMap.set(s.userId, s.ipAddress);
+    if (!userIpMap.has(s.userId)) {
+      userIpMap.set(s.userId, s.ipAddress ?? null);
     }
   }
   const countryCounts = new Map<string, { code: string; name: string; count: number }>();
+  const UNKNOWN_KEY = "__unknown__";
   for (const ip of userIpMap.values()) {
+    if (!ip) {
+      const existing = countryCounts.get(UNKNOWN_KEY);
+      if (existing) existing.count++;
+      else countryCounts.set(UNKNOWN_KEY, { code: "XX", name: "Unknown", count: 1 });
+      continue;
+    }
     const result = geoip.lookup(ip);
     if (result) {
       const existing = countryCounts.get(result.country);
@@ -324,6 +331,11 @@ export async function getOverview() {
       } else {
         countryCounts.set(result.country, { code: result.country, name: result.name, count: 1 });
       }
+    } else {
+      // Localhost (127.0.0.1, ::1) or private IPs — geoip returns null
+      const existing = countryCounts.get(UNKNOWN_KEY);
+      if (existing) existing.count++;
+      else countryCounts.set(UNKNOWN_KEY, { code: "XX", name: "Unknown", count: 1 });
     }
   }
   const countries = Array.from(countryCounts.values()).sort((a, b) => b.count - a.count);
@@ -511,14 +523,21 @@ export async function getAnalytics() {
   }));
 
   // Resolve unique user IPs to countries
-  const userIpMap = new Map<string, string>();
+  const userIpMap = new Map<string, string | null>();
   for (const s of recentSessions) {
-    if (s.ipAddress && !userIpMap.has(s.userId)) {
-      userIpMap.set(s.userId, s.ipAddress);
+    if (!userIpMap.has(s.userId)) {
+      userIpMap.set(s.userId, s.ipAddress ?? null);
     }
   }
   const countryCounts = new Map<string, { code: string; name: string; count: number }>();
+  const UNKNOWN_KEY = "__unknown__";
   for (const ip of userIpMap.values()) {
+    if (!ip) {
+      const existing = countryCounts.get(UNKNOWN_KEY);
+      if (existing) existing.count++;
+      else countryCounts.set(UNKNOWN_KEY, { code: "XX", name: "Unknown", count: 1 });
+      continue;
+    }
     const result = geoip.lookup(ip);
     if (result) {
       const existing = countryCounts.get(result.country);
@@ -531,6 +550,11 @@ export async function getAnalytics() {
           count: 1,
         });
       }
+    } else {
+      // Localhost (127.0.0.1, ::1) or private IPs — geoip returns null
+      const existing = countryCounts.get(UNKNOWN_KEY);
+      if (existing) existing.count++;
+      else countryCounts.set(UNKNOWN_KEY, { code: "XX", name: "Unknown", count: 1 });
     }
   }
   const countries = Array.from(countryCounts.values()).sort(
