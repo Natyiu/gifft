@@ -124,7 +124,8 @@ export async function getAppSettings() {
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2021") {
       return DEFAULT_APP_SETTINGS;
     }
-    throw err;
+    // Connection refused, schema not pushed, or DB not ready — return defaults
+    return DEFAULT_APP_SETTINGS;
   }
 }
 

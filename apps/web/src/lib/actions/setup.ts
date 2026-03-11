@@ -23,9 +23,12 @@ export async function getSetupStatus() {
       vars[key] = val;
     }
 
+    const isPlaceholder =
+      vars.BETTER_AUTH_SECRET?.includes("dev-placeholder") ||
+      vars.DATABASE_URL?.includes("batman_dev");
     return {
       exists: true,
-      configured: !!(vars.DATABASE_URL && vars.BETTER_AUTH_SECRET),
+      configured: !!(vars.DATABASE_URL && vars.BETTER_AUTH_SECRET) && !isPlaceholder,
       vars: {
         hasDatabase: !!vars.DATABASE_URL,
         hasDirectUrl: !!vars.DIRECT_URL,
