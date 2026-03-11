@@ -18,6 +18,7 @@ import {
   Sun,
   Moon,
   CreditCard,
+  Globe,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -30,6 +31,7 @@ const adminNav = [
   { name: "Products", href: "/admin/products", icon: CreditCard },
   { name: "Feedback", href: "/admin/feedback", icon: MessageSquare },
   { name: "General", href: "/admin/general", icon: Settings2 },
+  { name: "Site Settings", href: "/admin/site-settings", icon: Globe },
   { name: "Features", href: "/admin/features", icon: ToggleRight },
   { name: "API Keys", href: "/admin/api-keys", icon: Key },
 ];

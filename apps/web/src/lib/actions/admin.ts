@@ -41,6 +41,7 @@ export async function updateAppSettings(data: {
   appDescription?: string;
   appUrl?: string;
   emailVerificationEnabled?: boolean;
+  forgotPasswordEnabled?: boolean;
   socialLoginEnabled?: boolean;
   organizationsEnabled?: boolean;
   invitesEnabled?: boolean;
@@ -54,6 +55,20 @@ export async function updateAppSettings(data: {
   termsContent?: string;
   signupsEnabled?: boolean;
   sessionTimeout?: number;
+  waitlistMode?: boolean;
+  waitlistTitle?: string;
+  waitlistHeadline?: string;
+  waitlistDescription?: string;
+  waitlistButtonText?: string;
+  waitlistSuccessMessage?: string;
+  waitlistShowName?: boolean;
+  waitlistShowCompany?: boolean;
+  countdownMode?: boolean;
+  countdownTarget?: Date | null;
+  countdownTitle?: string;
+  countdownHeadline?: string;
+  countdownDescription?: string;
+  countdownEndMessage?: string;
 }) {
   await requireAdmin();
 
@@ -79,8 +94,6 @@ export async function getApiKeys() {
       resendFromEmail: true,
       googleClientId: true,
       googleClientSecret: true,
-      githubClientId: true,
-      githubClientSecret: true,
       polarAccessToken: true,
       polarOrganizationId: true,
       polarWebhookSecret: true,
@@ -97,8 +110,6 @@ export async function getApiKeys() {
       resendFromEmail: "noreply@updates.yourdomain.com",
       googleClientId: "",
       googleClientSecret: "",
-      githubClientId: "",
-      githubClientSecret: "",
       polarAccessToken: "",
       polarOrganizationId: "",
       polarWebhookSecret: "",
@@ -114,8 +125,6 @@ export async function getApiKeys() {
     resendFromEmail: settings.resendFromEmail ?? "noreply@updates.yourdomain.com",
     googleClientId: settings.googleClientId ?? "",
     googleClientSecret: mask(settings.googleClientSecret),
-    githubClientId: settings.githubClientId ?? "",
-    githubClientSecret: mask(settings.githubClientSecret),
     polarAccessToken: mask(settings.polarAccessToken),
     polarOrganizationId: settings.polarOrganizationId ?? "",
     polarWebhookSecret: mask(settings.polarWebhookSecret),
@@ -131,8 +140,6 @@ export async function saveApiKeys(data: {
   resendFromEmail?: string;
   googleClientId?: string;
   googleClientSecret?: string;
-  githubClientId?: string;
-  githubClientSecret?: string;
   polarAccessToken?: string;
   polarOrganizationId?: string;
   polarWebhookSecret?: string;
@@ -147,7 +154,6 @@ export async function saveApiKeys(data: {
       supabaseServiceRoleKey: true,
       resendApiKey: true,
       googleClientSecret: true,
-      githubClientSecret: true,
       polarAccessToken: true,
       polarWebhookSecret: true,
     },
@@ -184,14 +190,6 @@ export async function saveApiKeys(data: {
       ? data.googleClientSecret || null
       : current?.googleClientSecret ?? null;
   }
-  if (data.githubClientId !== undefined) {
-    update.githubClientId = data.githubClientId || null;
-  }
-  if (data.githubClientSecret !== undefined) {
-    update.githubClientSecret = unmasked(data.githubClientSecret)
-      ? data.githubClientSecret || null
-      : current?.githubClientSecret ?? null;
-  }
   if (data.polarAccessToken !== undefined) {
     update.polarAccessToken = unmasked(data.polarAccessToken)
       ? data.polarAccessToken || null
@@ -216,6 +214,15 @@ export async function saveApiKeys(data: {
   });
 
   return { success: true };
+}
+
+export async function getWaitlistEntries(limit = 50) {
+  await requireAdmin();
+
+  return prisma.waitlistEntry.findMany({
+    orderBy: { createdAt: "desc" },
+    take: limit,
+  });
 }
 
 function mask(value: string | null | undefined): string {

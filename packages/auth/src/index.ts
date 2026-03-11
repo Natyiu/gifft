@@ -81,19 +81,8 @@ async function getGoogleCredentials() {
   return clientId && clientSecret ? { clientId, clientSecret } : null;
 }
 
-async function getGithubCredentials() {
-  const settings = await getSettings();
-  const clientId = settings?.githubClientId || env.GITHUB_CLIENT_ID;
-  const clientSecret = settings?.githubClientSecret || env.GITHUB_CLIENT_SECRET;
-  return clientId && clientSecret ? { clientId, clientSecret } : null;
-}
-
 const googleCreds = env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
   ? { clientId: env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_CLIENT_SECRET }
-  : { clientId: "placeholder", clientSecret: "placeholder" };
-
-const githubCreds = env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET
-  ? { clientId: env.GITHUB_CLIENT_ID, clientSecret: env.GITHUB_CLIENT_SECRET }
   : { clientId: "placeholder", clientSecret: "placeholder" };
 
 export const auth = betterAuth({
@@ -133,7 +122,6 @@ export const auth = betterAuth({
 
   socialProviders: {
     google: googleCreds,
-    github: githubCreds,
   },
 
   user: {
@@ -248,4 +236,4 @@ export const auth = betterAuth({
   ],
 });
 
-export { getGoogleCredentials, getGithubCredentials, getResendClient };
+export { getGoogleCredentials, getResendClient };

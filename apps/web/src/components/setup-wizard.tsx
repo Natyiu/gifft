@@ -1,63 +1,38 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Check, ChevronRight, ExternalLink, Eye, EyeOff, Loader2, RefreshCw, ArrowLeft, Play, X } from "lucide-react";
+import { Check, ChevronRight, ExternalLink, Eye, EyeOff, Loader2, ArrowLeft, Play, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { saveSetup, generateAuthSecret } from "@/lib/actions/setup";
+import { saveSetup } from "@/lib/actions/setup";
 
-type StepId = "database" | "auth" | "features" | "storage" | "email" | "social" | "payment" | "review";
+type StepId = "supabase" | "auth" | "payment" | "review";
 
 interface StepDef {
   id: StepId;
   label: string;
   description: string;
   required?: boolean;
-  conditional?: boolean;
 }
 
 const ALL_STEPS: StepDef[] = [
-  { id: "database", label: "Database", description: "Supabase PostgreSQL connection", required: true },
-  { id: "auth", label: "Authentication", description: "Auth secret & app URL", required: true },
-  { id: "features", label: "Features", description: "What does your app need?" },
-  { id: "storage", label: "Storage", description: "Supabase storage for uploads & avatars", conditional: true },
-  { id: "email", label: "Email", description: "Resend for transactional emails", conditional: true },
-  { id: "social", label: "Social Login", description: "Google & GitHub OAuth", conditional: true },
-  { id: "payment", label: "Payments", description: "Polar for subscriptions & checkout", conditional: true },
+  { id: "supabase", label: "Supabase (DB & Storage)", description: "Database connection and file storage", required: true },
+  { id: "auth", label: "Auth", description: "OAuth, email, and auth options", required: true },
+  { id: "payment", label: "Payments", description: "Polar for subscriptions & checkout" },
   { id: "review", label: "Launch", description: "Review & generate .env" },
 ];
 
 const STEP_TUTORIALS: Partial<Record<StepId, { title: string; duration: string; videoUrl: string }>> = {
-  database: {
-    title: "Setting up Supabase Database",
+  supabase: {
+    title: "Setting up Supabase",
     duration: "2:30",
     videoUrl: "",
   },
   auth: {
-    title: "Configuring Authentication",
-    duration: "1:45",
-    videoUrl: "",
-  },
-  storage: {
-    title: "Setting up Storage Buckets",
-    duration: "2:00",
-    videoUrl: "",
-  },
-  features: {
-    title: "Choosing Features",
-    duration: "1:00",
-    videoUrl: "",
-  },
-  email: {
-    title: "Configuring Resend for Email",
-    duration: "1:30",
-    videoUrl: "",
-  },
-  social: {
-    title: "Setting up OAuth Providers",
+    title: "Configuring Auth",
     duration: "3:00",
     videoUrl: "",
   },
@@ -76,70 +51,54 @@ const STEP_TUTORIALS: Partial<Record<StepId, { title: string; duration: string; 
 type FormData = {
   databaseUrl: string;
   directUrl: string;
-  betterAuthSecret: string;
+  databasePassword: string;
   betterAuthUrl: string;
   corsOrigin: string;
-  wantEmail: boolean;
-  wantSocial: boolean;
-  wantPayment: boolean;
-  wantStorage: boolean;
   supabaseUrl: string;
   supabaseAnonKey: string;
   supabaseServiceRoleKey: string;
   resendApiKey: string;
   googleClientId: string;
   googleClientSecret: string;
-  githubClientId: string;
-  githubClientSecret: string;
   polarAccessToken: string;
   polarOrganizationId: string;
   polarWebhookSecret: string;
   polarSandboxMode: boolean;
   wantGoogle: boolean;
-  wantGithub: boolean;
+  emailVerificationEnabled: boolean;
+  forgotPasswordEnabled: boolean;
 };
 
 const defaultForm: FormData = {
   databaseUrl: "",
   directUrl: "",
-  betterAuthSecret: "",
+  databasePassword: "",
   betterAuthUrl: "http://localhost:3001",
   corsOrigin: "http://localhost:3001",
-  wantEmail: false,
-  wantSocial: false,
-  wantPayment: false,
-  wantStorage: false,
   supabaseUrl: "",
   supabaseAnonKey: "",
   supabaseServiceRoleKey: "",
   resendApiKey: "",
   googleClientId: "",
   googleClientSecret: "",
-  githubClientId: "",
-  githubClientSecret: "",
   polarAccessToken: "",
   polarOrganizationId: "",
   polarWebhookSecret: "",
   polarSandboxMode: false,
   wantGoogle: false,
-  wantGithub: false,
+  emailVerificationEnabled: false,
+  forgotPasswordEnabled: true,
 };
 
 export function SetupWizard({ onComplete }: { onComplete: () => void }) {
   const [form, setForm] = useState<FormData>(defaultForm);
-  const [currentStep, setCurrentStep] = useState<StepId>("database");
+  const [currentStep, setCurrentStep] = useState<StepId>("supabase");
   const [saving, setSaving] = useState(false);
   const [videoOpen, setVideoOpen] = useState(false);
   const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const visibleSteps = ALL_STEPS.filter((s) => {
-    if (s.id === "email") return form.wantEmail;
-    if (s.id === "social") return form.wantSocial;
-    if (s.id === "payment") return form.wantPayment;
-    if (s.id === "storage") return form.wantStorage;
-    return true;
-  });
+  const visibleSteps = ALL_STEPS;
 
   const currentIndex = visibleSteps.findIndex((s) => s.id === currentStep);
   const isFirst = currentIndex === 0;
@@ -164,37 +123,27 @@ export function SetupWizard({ onComplete }: { onComplete: () => void }) {
   function validateStep(): boolean {
     const errs: Record<string, string> = {};
 
-    if (currentStep === "database") {
+    if (currentStep === "supabase") {
       if (!form.databaseUrl.trim()) errs.databaseUrl = "Required";
-      else if (!form.databaseUrl.includes("postgresql")) errs.databaseUrl = "Must be a PostgreSQL connection string";
+      else if (!form.databaseUrl.includes("postgresql") && !form.databaseUrl.includes("postgres://")) errs.databaseUrl = "Must be a PostgreSQL connection string";
       if (!form.directUrl.trim()) errs.directUrl = "Required";
+      const hasPlaceholder = form.databaseUrl.includes("[YOUR-PASSWORD]") || form.directUrl.includes("[YOUR-PASSWORD]");
+      if (hasPlaceholder && !form.databasePassword.trim()) errs.databasePassword = "Required when using placeholder";
+      if (!form.supabaseUrl.trim()) errs.supabaseUrl = "Required";
+      if (!form.supabaseServiceRoleKey.trim()) errs.supabaseServiceRoleKey = "Required";
     }
 
     if (currentStep === "auth") {
-      if (!form.betterAuthSecret.trim()) errs.betterAuthSecret = "Required";
-      else if (form.betterAuthSecret.length < 32) errs.betterAuthSecret = "Must be at least 32 characters";
       if (!form.betterAuthUrl.trim()) errs.betterAuthUrl = "Required";
       if (!form.corsOrigin.trim()) errs.corsOrigin = "Required";
-    }
-
-    if (currentStep === "storage") {
-      if (!form.supabaseUrl.trim()) errs.supabaseUrl = "Required for file storage";
-      if (!form.supabaseServiceRoleKey.trim()) errs.supabaseServiceRoleKey = "Required for server-side uploads";
-    }
-
-    if (currentStep === "social") {
       if (form.wantGoogle) {
         if (!form.googleClientId.trim()) errs.googleClientId = "Required";
         if (!form.googleClientSecret.trim()) errs.googleClientSecret = "Required";
       }
-      if (form.wantGithub) {
-        if (!form.githubClientId.trim()) errs.githubClientId = "Required";
-        if (!form.githubClientSecret.trim()) errs.githubClientSecret = "Required";
-      }
     }
 
     if (currentStep === "payment") {
-      if (!form.polarAccessToken.trim()) errs.polarAccessToken = "Required";
+      // Payment is optional - no required validation
     }
 
     setErrors(errs);
@@ -220,21 +169,21 @@ export function SetupWizard({ onComplete }: { onComplete: () => void }) {
       await saveSetup({
         databaseUrl: form.databaseUrl.trim(),
         directUrl: form.directUrl.trim(),
-        betterAuthSecret: form.betterAuthSecret.trim(),
+        databasePassword: form.databasePassword.trim() || undefined,
         betterAuthUrl: form.betterAuthUrl.trim(),
         corsOrigin: form.corsOrigin.trim(),
-        supabaseUrl: form.wantStorage ? (form.supabaseUrl.trim() || undefined) : undefined,
-        supabaseAnonKey: form.wantStorage ? (form.supabaseAnonKey.trim() || undefined) : undefined,
-        supabaseServiceRoleKey: form.wantStorage ? (form.supabaseServiceRoleKey.trim() || undefined) : undefined,
+        supabaseUrl: form.supabaseUrl.trim() || undefined,
+        supabaseAnonKey: form.supabaseAnonKey.trim() || undefined,
+        supabaseServiceRoleKey: form.supabaseServiceRoleKey.trim() || undefined,
         resendApiKey: form.resendApiKey.trim() || undefined,
-        googleClientId: form.googleClientId.trim() || undefined,
-        googleClientSecret: form.googleClientSecret.trim() || undefined,
-        githubClientId: form.githubClientId.trim() || undefined,
-        githubClientSecret: form.githubClientSecret.trim() || undefined,
-        polarAccessToken: form.wantPayment ? form.polarAccessToken.trim() || undefined : undefined,
-        polarOrganizationId: form.wantPayment ? form.polarOrganizationId.trim() || undefined : undefined,
-        polarWebhookSecret: form.wantPayment ? form.polarWebhookSecret.trim() || undefined : undefined,
-        polarSandboxMode: form.wantPayment ? form.polarSandboxMode : undefined,
+        googleClientId: form.wantGoogle ? (form.googleClientId.trim() || undefined) : undefined,
+        googleClientSecret: form.wantGoogle ? (form.googleClientSecret.trim() || undefined) : undefined,
+        emailVerificationEnabled: form.emailVerificationEnabled,
+        forgotPasswordEnabled: form.forgotPasswordEnabled,
+        polarAccessToken: form.polarAccessToken.trim() || undefined,
+        polarOrganizationId: form.polarOrganizationId.trim() || undefined,
+        polarWebhookSecret: form.polarWebhookSecret.trim() || undefined,
+        polarSandboxMode: form.polarSandboxMode,
       });
       onComplete();
     } catch {
@@ -242,11 +191,6 @@ export function SetupWizard({ onComplete }: { onComplete: () => void }) {
     } finally {
       setSaving(false);
     }
-  }
-
-  async function handleGenerateSecret() {
-    const secret = await generateAuthSecret();
-    update("betterAuthSecret", secret);
   }
 
   return (
@@ -322,23 +266,11 @@ export function SetupWizard({ onComplete }: { onComplete: () => void }) {
             />
           )}
 
-          {currentStep === "database" && (
-            <DatabaseStep form={form} update={update} errors={errors} showSecrets={showSecrets} toggleSecret={toggleSecret} />
+          {currentStep === "supabase" && (
+            <SupabaseStep form={form} update={update} errors={errors} showSecrets={showSecrets} toggleSecret={toggleSecret} />
           )}
           {currentStep === "auth" && (
-            <AuthStep form={form} update={update} errors={errors} showSecrets={showSecrets} toggleSecret={toggleSecret} onGenerateSecret={handleGenerateSecret} />
-          )}
-          {currentStep === "features" && (
-            <FeaturesStep form={form} update={update} />
-          )}
-          {currentStep === "storage" && (
-            <StorageStep form={form} update={update} errors={errors} showSecrets={showSecrets} toggleSecret={toggleSecret} />
-          )}
-          {currentStep === "email" && (
-            <EmailStep form={form} update={update} errors={errors} showSecrets={showSecrets} toggleSecret={toggleSecret} />
-          )}
-          {currentStep === "social" && (
-            <SocialStep form={form} update={update} errors={errors} showSecrets={showSecrets} toggleSecret={toggleSecret} />
+            <AuthStep form={form} update={update} errors={errors} showSecrets={showSecrets} toggleSecret={toggleSecret} />
           )}
           {currentStep === "payment" && (
             <PaymentStep form={form} update={update} errors={errors} showSecrets={showSecrets} toggleSecret={toggleSecret} />
@@ -410,22 +342,39 @@ type StepProps = {
   toggleSecret: (key: string) => void;
 };
 
-function DatabaseStep({ form, update, errors, showSecrets, toggleSecret }: StepProps) {
+function SupabaseStep({ form, update, errors, showSecrets, toggleSecret }: StepProps) {
   return (
     <div className="space-y-5">
       <Hint>
-        You need a <strong>Supabase</strong> PostgreSQL database.{" "}
-        <HintLink href="https://supabase.com/dashboard">Create a project</HintLink> → then go to{" "}
-        <strong>Settings → Database → Connection string</strong>.
+        Configure your <strong>Supabase</strong> project for database and file storage.{" "}
+        <HintLink href="https://supabase.com/dashboard">Create a project</HintLink> →{" "}
+        <strong>Settings → Database</strong> for connection strings, <strong>Settings → API</strong> for keys.
+        We&apos;ll create storage buckets automatically.
       </Hint>
 
+      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Database</p>
+
       <FieldGroup>
-        <FieldLabel htmlFor="databaseUrl">
-          Transaction URL <Required />
-        </FieldLabel>
+        <FieldLabel htmlFor="databasePassword">Database password</FieldLabel>
         <FieldHint>
-          Use the <strong>Transaction</strong> connection string (port 6543). Append{" "}
-          <code className="bg-muted/50 px-1 text-[9px]">?pgbouncer=true</code> if not already there.
+          Enter your database password. We&apos;ll embed it into the URLs above when saving. Required if your URLs contain the placeholder.
+        </FieldHint>
+        <SecretField
+          id="databasePassword"
+          value={form.databasePassword}
+          onChange={(v) => update("databasePassword", v)}
+          show={showSecrets.databasePassword}
+          onToggle={() => toggleSecret("databasePassword")}
+          placeholder="Your database password"
+          error={errors.databasePassword}
+        />
+      </FieldGroup>
+
+      <FieldGroup>
+        <FieldLabel htmlFor="databaseUrl">Transaction URL <Required /></FieldLabel>
+        <FieldHint>
+          Copy the <strong>Transaction</strong> connection string (port 6543) from Supabase. Paste as-is with the{" "}
+          <code className="bg-muted/50 px-1 text-[9px]">[YOUR-PASSWORD]</code> placeholder.
         </FieldHint>
         <SecretField
           id="databaseUrl"
@@ -433,17 +382,16 @@ function DatabaseStep({ form, update, errors, showSecrets, toggleSecret }: StepP
           onChange={(v) => update("databaseUrl", v)}
           show={showSecrets.databaseUrl}
           onToggle={() => toggleSecret("databaseUrl")}
-          placeholder="postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres?pgbouncer=true"
+          placeholder="postgresql://postgres.[ref]:[YOUR-PASSWORD]@aws-0-[region].pooler.supabase.com:6543/postgres?pgbouncer=true"
           error={errors.databaseUrl}
         />
       </FieldGroup>
 
       <FieldGroup>
-        <FieldLabel htmlFor="directUrl">
-          Direct URL <Required />
-        </FieldLabel>
+        <FieldLabel htmlFor="directUrl">Direct URL <Required /></FieldLabel>
         <FieldHint>
-          The <strong>Session / Direct</strong> connection string (port 5432). Used by Prisma for migrations.
+          Copy the <strong>Session / Direct</strong> connection string (port 5432). Paste as-is with the{" "}
+          <code className="bg-muted/50 px-1 text-[9px]">[YOUR-PASSWORD]</code> placeholder.
         </FieldHint>
         <SecretField
           id="directUrl"
@@ -451,120 +399,16 @@ function DatabaseStep({ form, update, errors, showSecrets, toggleSecret }: StepP
           onChange={(v) => update("directUrl", v)}
           show={showSecrets.directUrl}
           onToggle={() => toggleSecret("directUrl")}
-          placeholder="postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supabase.com:5432/postgres"
+          placeholder="postgresql://postgres.[ref]:[YOUR-PASSWORD]@aws-0-[region].pooler.supabase.com:5432/postgres"
           error={errors.directUrl}
         />
       </FieldGroup>
-    </div>
-  );
-}
 
-function AuthStep({ form, update, errors, showSecrets, toggleSecret, onGenerateSecret }: StepProps & { onGenerateSecret: () => void }) {
-  return (
-    <div className="space-y-5">
-      <Hint>
-        The auth secret is used to sign sessions and tokens. Generate one below or use{" "}
-        <code className="bg-muted/50 px-1 text-[9px]">openssl rand -base64 32</code> in your terminal.
-      </Hint>
+     
 
+      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mt-6">Storage</p>
       <FieldGroup>
-        <FieldLabel htmlFor="betterAuthSecret">
-          Auth Secret <Required />
-        </FieldLabel>
-        <FieldHint>At least 32 characters. Keep this private.</FieldHint>
-        <div className="flex gap-1.5">
-          <div className="flex-1">
-            <SecretField
-              id="betterAuthSecret"
-              value={form.betterAuthSecret}
-              onChange={(v) => update("betterAuthSecret", v)}
-              show={showSecrets.betterAuthSecret}
-              onToggle={() => toggleSecret("betterAuthSecret")}
-              placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-              error={errors.betterAuthSecret}
-            />
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onGenerateSecret}
-            className="h-8 text-[10px] gap-1 shrink-0"
-            type="button"
-          >
-            <RefreshCw className="w-3 h-3" />
-            Generate
-          </Button>
-        </div>
-      </FieldGroup>
-
-      <FieldGroup>
-        <FieldLabel htmlFor="betterAuthUrl">
-          App URL <Required />
-        </FieldLabel>
-        <FieldHint>Where your app runs. In development this is usually localhost:3001.</FieldHint>
-        <PlainField
-          id="betterAuthUrl"
-          value={form.betterAuthUrl}
-          onChange={(v) => {
-            update("betterAuthUrl", v);
-            update("corsOrigin", v);
-          }}
-          placeholder="http://localhost:3001"
-          error={errors.betterAuthUrl}
-        />
-      </FieldGroup>
-    </div>
-  );
-}
-
-function FeaturesStep({ form, update }: Pick<StepProps, "form" | "update">) {
-  return (
-    <div className="space-y-6">
-      <p className="text-xs text-muted-foreground leading-relaxed">
-        A few quick questions. Say yes to set it up now, or skip and add it later from the admin dashboard.
-      </p>
-
-      <FeatureQuestion
-        question="Will users upload stuff?"
-        detail="Photos, videos, profile pictures — anything they can upload. We&apos;ll set this up for you."
-        checked={form.wantStorage}
-        onChange={(v) => update("wantStorage", v)}
-      />
-      <FeatureQuestion
-        question="Do you want to send emails to users?"
-        detail="Like when someone signs up — verify their email, or let them reset their password."
-        checked={form.wantEmail}
-        onChange={(v) => update("wantEmail", v)}
-      />
-      <FeatureQuestion
-        question="Sign in with Google?"
-        detail="Let people use their Google account instead of creating a password."
-        checked={form.wantSocial}
-        onChange={(v) => update("wantSocial", v)}
-      />
-      <FeatureQuestion
-        question="Will you charge for your app?"
-        detail="Subscriptions, one-time payments — we&apos;ll help you set that up."
-        checked={form.wantPayment}
-        onChange={(v) => update("wantPayment", v)}
-      />
-    </div>
-  );
-}
-
-function StorageStep({ form, update, errors, showSecrets, toggleSecret }: StepProps) {
-  return (
-    <div className="space-y-5">
-      <Hint>
-        We&apos;ll use these keys for avatars, file uploads, and attachments. In your Supabase project, go to{" "}
-        <HintLink href="https://supabase.com/dashboard">Dashboard</HintLink> → <strong>Settings → API</strong> to find them.
-        We&apos;ll create the storage buckets for you automatically.
-      </Hint>
-
-      <FieldGroup>
-        <FieldLabel htmlFor="supabaseUrl">
-          Project URL <Required />
-        </FieldLabel>
+        <FieldLabel htmlFor="supabaseUrl">Project URL <Required /></FieldLabel>
         <PlainField
           id="supabaseUrl"
           value={form.supabaseUrl}
@@ -589,9 +433,7 @@ function StorageStep({ form, update, errors, showSecrets, toggleSecret }: StepPr
       </FieldGroup>
 
       <FieldGroup>
-        <FieldLabel htmlFor="supabaseServiceRoleKey">
-          Service Role Key <Required />
-        </FieldLabel>
+        <FieldLabel htmlFor="supabaseServiceRoleKey">Service Role Key <Required /></FieldLabel>
         <FieldHint>Server-only. Used for uploads and admin operations.</FieldHint>
         <SecretField
           id="supabaseServiceRoleKey"
@@ -607,47 +449,29 @@ function StorageStep({ form, update, errors, showSecrets, toggleSecret }: StepPr
   );
 }
 
-function EmailStep({ form, update, errors, showSecrets, toggleSecret }: StepProps) {
-  return (
-    <div className="space-y-5">
-      <Hint>
-        <HintLink href="https://resend.com/signup">Sign up at Resend</HintLink> →{" "}
-        <strong>API Keys</strong> → create a key. Free tier covers 100 emails/day.
-        You&apos;ll also need to{" "}
-        <HintLink href="https://resend.com/domains">verify a domain</HintLink> for production use.
-      </Hint>
-
-      <FieldGroup>
-        <FieldLabel htmlFor="resendApiKey">API Key</FieldLabel>
-        <SecretField
-          id="resendApiKey"
-          value={form.resendApiKey}
-          onChange={(v) => update("resendApiKey", v)}
-          show={showSecrets.resendApiKey}
-          onToggle={() => toggleSecret("resendApiKey")}
-          placeholder="re_xxxxxxxxxx"
-          error={errors.resendApiKey}
-        />
-      </FieldGroup>
-
-      <div className="border border-dashed border-border/40 px-3 py-2.5">
-        <p className="text-[10px] text-muted-foreground/50 leading-relaxed">
-          Without email configured, password resets and email verification will be silently skipped. 
-          You can add this later in <strong>Admin → API Keys</strong>.
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function SocialStep({ form, update, errors, showSecrets, toggleSecret }: StepProps) {
+function AuthStep({ form, update, errors, showSecrets, toggleSecret }: StepProps) {
   return (
     <div className="space-y-6">
       <p className="text-xs text-muted-foreground leading-relaxed">
-        Select which OAuth providers to configure. You can enable both, one, or skip entirely.
+        Configure auth options. You can enable OAuth, email, or skip and add later from Admin Dashboard.
       </p>
 
-      {/* Google */}
+      <FieldGroup>
+        <FieldLabel htmlFor="betterAuthUrl">App URL <Required /></FieldLabel>
+        <FieldHint>Where your app runs. In development this is usually localhost:3001.</FieldHint>
+        <PlainField
+          id="betterAuthUrl"
+          value={form.betterAuthUrl}
+          onChange={(v) => {
+            update("betterAuthUrl", v);
+            update("corsOrigin", v);
+          }}
+          placeholder="http://localhost:3001"
+          error={errors.betterAuthUrl}
+        />
+      </FieldGroup>
+
+      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">OAuth (Google)</p>
       <div className="space-y-3">
         <FeatureToggle
           title="Google"
@@ -688,45 +512,50 @@ function SocialStep({ form, update, errors, showSecrets, toggleSecret }: StepPro
         )}
       </div>
 
-      {/* GitHub */}
-      <div className="space-y-3">
-        <FeatureToggle
-          title="GitHub"
-          description="Sign in with GitHub"
-          checked={form.wantGithub}
-          onChange={(v) => update("wantGithub", v)}
+      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Email (Resend)</p>
+      <Hint>
+        <HintLink href="https://resend.com/signup">Sign up at Resend</HintLink> →{" "}
+        <strong>API Keys</strong> → create a key. Used for password reset and verification emails.
+      </Hint>
+      <FieldGroup>
+        <FieldLabel htmlFor="resendApiKey">Resend API Key</FieldLabel>
+        <SecretField
+          id="resendApiKey"
+          value={form.resendApiKey}
+          onChange={(v) => update("resendApiKey", v)}
+          show={showSecrets.resendApiKey}
+          onToggle={() => toggleSecret("resendApiKey")}
+          placeholder="re_xxxxxxxxxx"
+          error={errors.resendApiKey}
         />
-        {form.wantGithub && (
-          <div className="ml-6 space-y-4 border-l border-border/30 pl-4">
-            <Hint>
-              <HintLink href="https://github.com/settings/developers">GitHub Developer Settings</HintLink> →
-              New OAuth App. Callback URL:{" "}
-              <code className="bg-muted/50 px-1 text-[9px]">{form.betterAuthUrl}/api/auth/callback/github</code>
-            </Hint>
-            <FieldGroup>
-              <FieldLabel htmlFor="githubClientId">Client ID <Required /></FieldLabel>
-              <PlainField
-                id="githubClientId"
-                value={form.githubClientId}
-                onChange={(v) => update("githubClientId", v)}
-                placeholder="Iv1.xxxxxxxxxx"
-                error={errors.githubClientId}
-              />
-            </FieldGroup>
-            <FieldGroup>
-              <FieldLabel htmlFor="githubClientSecret">Client Secret <Required /></FieldLabel>
-              <SecretField
-                id="githubClientSecret"
-                value={form.githubClientSecret}
-                onChange={(v) => update("githubClientSecret", v)}
-                show={showSecrets.githubClientSecret}
-                onToggle={() => toggleSecret("githubClientSecret")}
-                placeholder="xxxxxxxxxxxxxxxxxxxxxxx"
-                error={errors.githubClientSecret}
-              />
-            </FieldGroup>
-          </div>
-        )}
+      </FieldGroup>
+
+      <div className="flex items-center justify-between rounded-md border border-border/40 px-3 py-2.5">
+        <div>
+          <p className="text-xs font-medium">Email verification</p>
+          <p className="text-[10px] text-muted-foreground">Require users to verify their email before accessing the app</p>
+        </div>
+        <Switch
+          checked={form.emailVerificationEnabled}
+          onCheckedChange={(v) => update("emailVerificationEnabled", v)}
+        />
+      </div>
+
+      <div className="flex items-center justify-between rounded-md border border-border/40 px-3 py-2.5">
+        <div>
+          <p className="text-xs font-medium">Forgot password</p>
+          <p className="text-[10px] text-muted-foreground">Show &quot;Forgot?&quot; link on login. Requires Resend API key above to send reset emails.</p>
+        </div>
+        <Switch
+          checked={form.forgotPasswordEnabled}
+          onCheckedChange={(v) => update("forgotPasswordEnabled", v)}
+        />
+      </div>
+
+      <div className="border border-dashed border-border/40 px-3 py-2.5">
+        <p className="text-[10px] text-muted-foreground/50 leading-relaxed">
+          You can change these later in <strong>Admin → Features</strong> and <strong>Admin → API Keys</strong>.
+        </p>
       </div>
     </div>
   );
@@ -808,45 +637,28 @@ function PaymentStep({ form, update, errors, showSecrets, toggleSecret }: StepPr
 }
 
 function ReviewStep({ form }: { form: FormData }) {
-  const sections = [
+  const authItems: { label: string; value: string; masked?: boolean }[] = [
+    { label: "App URL", value: form.betterAuthUrl },
+    { label: "Email verification", value: form.emailVerificationEnabled ? "Yes" : "No" },
+    { label: "Forgot password", value: form.forgotPasswordEnabled ? "Yes" : "No" },
+  ];
+  if (form.resendApiKey) authItems.push({ label: "Resend API Key", value: form.resendApiKey, masked: true });
+  if (form.wantGoogle) authItems.push({ label: "Google Client ID", value: form.googleClientId });
+
+  const sections: { title: string; items: { label: string; value: string; masked?: boolean }[] }[] = [
     {
-      title: "Database",
+      title: "Supabase (DB & Storage)",
       items: [
         { label: "Transaction URL", value: form.databaseUrl, masked: true },
         { label: "Direct URL", value: form.directUrl, masked: true },
-      ],
-    },
-    {
-      title: "Authentication",
-      items: [
-        { label: "Auth Secret", value: form.betterAuthSecret, masked: true },
-        { label: "App URL", value: form.betterAuthUrl },
-      ],
-    },
-  ];
-
-  if (form.wantStorage) {
-    sections.push({
-      title: "File Storage",
-      items: [
-        { label: "Supabase URL", value: form.supabaseUrl },
+        { label: "Project URL", value: form.supabaseUrl },
         { label: "Service Role Key", value: form.supabaseServiceRoleKey, masked: true },
       ],
-    });
-  }
-  if (form.wantEmail) {
-    sections.push({
-      title: "Email",
-      items: [{ label: "Resend API Key", value: form.resendApiKey, masked: true }],
-    });
-  }
-  if (form.wantSocial && (form.wantGoogle || form.wantGithub)) {
-    const items: { label: string; value: string; masked?: boolean }[] = [];
-    if (form.wantGoogle) items.push({ label: "Google Client ID", value: form.googleClientId });
-    if (form.wantGithub) items.push({ label: "GitHub Client ID", value: form.githubClientId });
-    sections.push({ title: "Social Login", items });
-  }
-  if (form.wantPayment && form.polarAccessToken) {
+    },
+    { title: "Auth", items: authItems },
+  ];
+
+  if (form.polarAccessToken) {
     sections.push({
       title: "Payments",
       items: [
@@ -901,51 +713,6 @@ function ReviewStep({ form }: { form: FormData }) {
 }
 
 // -- Shared UI Primitives --
-
-function FeatureQuestion({
-  question,
-  detail,
-  checked,
-  onChange,
-}: {
-  question: string;
-  detail: string;
-  checked: boolean;
-  onChange: (v: boolean) => void;
-}) {
-  return (
-    <div className="border border-border/40 rounded-md overflow-hidden">
-      <div className="px-3 py-3 bg-muted/20">
-        <p className="text-xs font-medium text-foreground">{question}</p>
-        <p className="text-[10px] text-muted-foreground mt-0.5 leading-relaxed">{detail}</p>
-      </div>
-      <div className="flex border-t border-border/30">
-        <button
-          type="button"
-          onClick={() => onChange(true)}
-          className={`flex-1 px-3 py-2.5 text-[11px] font-medium transition-colors ${
-            checked
-              ? "bg-foreground text-background"
-              : "text-muted-foreground hover:bg-muted/30 hover:text-foreground"
-          }`}
-        >
-          Yes, configure
-        </button>
-        <button
-          type="button"
-          onClick={() => onChange(false)}
-          className={`flex-1 px-3 py-2.5 text-[11px] font-medium transition-colors border-l border-border/30 ${
-            !checked
-              ? "bg-foreground text-background"
-              : "text-muted-foreground hover:bg-muted/30 hover:text-foreground"
-          }`}
-        >
-          Skip for now
-        </button>
-      </div>
-    </div>
-  );
-}
 
 function FeatureToggle({
   title,

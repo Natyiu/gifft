@@ -21,8 +21,6 @@ type ApiKeysData = {
   resendFromEmail: string;
   googleClientId: string;
   googleClientSecret: string;
-  githubClientId: string;
-  githubClientSecret: string;
   polarAccessToken: string;
   polarOrganizationId: string;
   polarWebhookSecret: string;
@@ -37,8 +35,6 @@ const emptyKeys: ApiKeysData = {
   resendFromEmail: "",
   googleClientId: "",
   googleClientSecret: "",
-  githubClientId: "",
-  githubClientSecret: "",
   polarAccessToken: "",
   polarOrganizationId: "",
   polarWebhookSecret: "",
@@ -210,48 +206,6 @@ export default function AdminApiKeysPage() {
             show={showSecrets.googleClientSecret}
             onToggleShow={() => toggleShow("googleClientSecret")}
             placeholder="GOCSPX-xxxxxxxxxx"
-          />
-        </section>
-
-        <Separator className="opacity-20" />
-
-        {/* GitHub */}
-        <section className="space-y-3">
-          <div>
-            <p className="text-xs font-semibold">GitHub OAuth</p>
-            <p className="text-[10px] text-muted-foreground">
-              <a
-                href="https://github.com/settings/developers"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline"
-              >
-                Developer Settings
-              </a>
-              . Callback URL:{" "}
-              <code className="text-[9px] bg-muted px-1">
-                {typeof window !== "undefined"
-                  ? window.location.origin
-                  : ""}
-                /api/auth/callback/github
-              </code>
-            </p>
-          </div>
-          <PlainInput
-            id="githubClientId"
-            label="Client ID"
-            value={form.githubClientId}
-            onChange={(v) => update("githubClientId", v)}
-            placeholder="Iv1.xxxxxxxxxx"
-          />
-          <SecretInput
-            id="githubClientSecret"
-            label="Client Secret"
-            value={form.githubClientSecret}
-            onChange={(v) => update("githubClientSecret", v)}
-            show={showSecrets.githubClientSecret}
-            onToggleShow={() => toggleShow("githubClientSecret")}
-            placeholder="xxxxxxxxxxxxxxxxxxxxxxx"
           />
         </section>
 

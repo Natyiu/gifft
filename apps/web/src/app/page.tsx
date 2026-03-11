@@ -11,19 +11,57 @@ import { Button } from "@/components/ui/button";
 import { SetupWizard } from "@/components/setup-wizard";
 import { getSetupStatus } from "@/lib/actions/setup";
 import { getAppSettings } from "@/lib/actions/user";
+import { getSiteSettings } from "@/lib/actions/site-settings";
 import { isMarketing } from "@/lib/marketing";
 
 const MarketingPage = dynamic(() => import("./marketing-page"), {
   ssr: true,
 });
 
+const WaitlistPage = dynamic(() => import("./waitlist-page").then((m) => ({ default: m.WaitlistPage })), {
+  ssr: true,
+});
+
+const CountdownPage = dynamic(() => import("./countdown-page").then((m) => ({ default: m.CountdownPage })), {
+  ssr: true,
+});
+
+const CountdownWaitlistPage = dynamic(
+  () => import("./countdown-waitlist-page").then((m) => ({ default: m.CountdownWaitlistPage })),
+  { ssr: true }
+);
+
 export default function Page() {
-  if (isMarketing)
+  const [siteSettings, setSiteSettings] = useState<Awaited<ReturnType<typeof getSiteSettings>> | "loading">("loading");
+
+  useEffect(() => {
+    getSiteSettings().then(setSiteSettings);
+  }, []);
+
+  if (siteSettings === "loading") {
+    return <StarterSkeleton />;
+  }
+  if (siteSettings?.countdown && siteSettings?.waitlist) {
+    return (
+      <CountdownWaitlistPage
+        countdown={siteSettings.countdown}
+        waitlist={siteSettings.waitlist}
+      />
+    );
+  }
+  if (siteSettings?.countdown) {
+    return <CountdownPage settings={siteSettings.countdown} />;
+  }
+  if (siteSettings?.waitlist) {
+    return <WaitlistPage settings={siteSettings.waitlist} />;
+  }
+  if (isMarketing) {
     return (
       <Suspense fallback={null}>
         <MarketingPage />
       </Suspense>
     );
+  }
   return <StarterPage />;
 }
 

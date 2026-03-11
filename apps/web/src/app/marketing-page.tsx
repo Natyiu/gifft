@@ -35,7 +35,6 @@ const techStack = [
   { label: "Supabase", desc: "Storage" },
   { label: "Resend", desc: "Email" },
   { label: "Google OAuth", desc: "Social login" },
-  { label: "GitHub OAuth", desc: "Social login" },
   { label: "TipTap", desc: "Rich text" },
   { label: "Vercel AI", desc: "AI SDK" },
   { label: "Zod", desc: "Validation" },
@@ -57,7 +56,7 @@ const builtInFeatures = [
 ];
 
 const outOfTheBox = [
-  { title: "Auth", detail: "Sign up, login, password reset. Google and GitHub OAuth. Sessions and email verification included." },
+  { title: "Auth", detail: "Sign up, login, password reset. Google OAuth. Sessions and email verification included." },
   { title: "Admin dashboard", detail: "Users, analytics, blog CMS, notifications( send message to users), pricing, receive feedback, manage API keys. One control panel for everything." },
   { title: "Payments", detail: "Polar subscriptions wired. Create products, checkout flow, webhooks. Connect your account and start accepting payments." },
   { title: "User dashboard", detail: "Settings, organizations, invitations, notifications. Pro tier structure ready." },

@@ -1,0 +1,11 @@
+model WaitlistEntry {
+  id        String   @id @default(cuid())
+  email     String
+  name      String?
+  company   String?
+  createdAt DateTime @default(now())
+
+  @@unique([email])
+  @@index([createdAt])
+  @@map("waitlist_entry")
+}

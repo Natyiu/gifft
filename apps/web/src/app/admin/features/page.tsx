@@ -13,6 +13,7 @@ import { FeatureTogglesSkeleton } from "@/components/skeletons";
 type AppSettings = {
   onboardingEnabled: boolean;
   emailVerificationEnabled: boolean;
+  forgotPasswordEnabled: boolean;
   socialLoginEnabled: boolean;
   organizationsEnabled: boolean;
   invitesEnabled: boolean;
@@ -34,9 +35,14 @@ const features: {
     description: "Require users to verify their email before accessing the app.",
   },
   {
+    key: "forgotPasswordEnabled",
+    label: "Forgot Password",
+    description: "Show the \"Forgot?\" link on login so users can reset their password via email. Requires Resend to be configured.",
+  },
+  {
     key: "socialLoginEnabled",
     label: "Social Login (OAuth)",
-    description: "Allow users to sign in with Google and/or GitHub.",
+    description: "Allow users to sign in with Google.",
   },
   {
     key: "organizationsEnabled",
