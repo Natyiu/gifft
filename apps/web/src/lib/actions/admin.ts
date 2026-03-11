@@ -12,6 +12,17 @@ async function requireAdmin() {
   return session;
 }
 
+/** Public: fetch legal page content (no auth required) */
+export async function getLegalContent(slug: "privacy" | "terms") {
+  const settings = await prisma.appSettings.findUnique({
+    where: { id: "default" },
+    select: { privacyContent: true, termsContent: true },
+  });
+  if (!settings) return null;
+  const content = slug === "privacy" ? settings.privacyContent : settings.termsContent;
+  return content || null;
+}
+
 export async function toggleOnboarding(enabled: boolean) {
   await requireAdmin();
 
@@ -39,8 +50,8 @@ export async function updateAppSettings(data: {
   maxUsersEnabled?: boolean;
   maxUsers?: number;
   supportEmail?: string;
-  privacyUrl?: string;
-  termsUrl?: string;
+  privacyContent?: string;
+  termsContent?: string;
   signupsEnabled?: boolean;
   sessionTimeout?: number;
 }) {

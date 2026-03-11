@@ -3,7 +3,7 @@
 import { auth } from "@Batman/auth";
 import prisma from "@Batman/db";
 import { headers } from "next/headers";
-import { notifyAdmins } from "@/lib/notify";
+import { notifyUser } from "@/lib/notify";
 
 export async function updateProfile(data: {
   name?: string;
@@ -24,9 +24,9 @@ export async function updateProfile(data: {
   if (data.image) changes.push("avatar");
 
   if (changes.length > 0) {
-    await notifyAdmins({
+    await notifyUser(session.user.id, {
       title: "Profile updated",
-      description: `${session.user.name ?? session.user.email} updated their ${changes.join(", ")}.`,
+      description: `You updated your ${changes.join(", ")}.`,
       tag: "update",
       senderId: session.user.id,
     });
@@ -44,9 +44,9 @@ export async function completeOnboarding() {
     data: { onboardingCompleted: true },
   });
 
-  await notifyAdmins({
+  await notifyUser(session.user.id, {
     title: "Onboarding completed",
-    description: `${session.user.name ?? session.user.email} completed the onboarding flow.`,
+    description: "You've completed the onboarding flow. Welcome to the dashboard!",
     tag: "general",
     senderId: session.user.id,
   });

@@ -11,6 +11,7 @@ import {
   AlertTriangle,
   Link2,
   Clock,
+  Pencil,
 } from "lucide-react";
 import { getAppSettings } from "@/lib/actions/user";
 import { updateAppSettings } from "@/lib/actions/admin";
@@ -27,6 +28,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { GeneralSettingsSkeleton } from "@/components/skeletons";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 type Settings = {
   appName: string;
@@ -38,8 +46,8 @@ type Settings = {
   maxUsersEnabled: boolean;
   maxUsers: number;
   supportEmail: string;
-  privacyUrl: string;
-  termsUrl: string;
+  privacyContent: string;
+  termsContent: string;
   signupsEnabled: boolean;
   sessionTimeout: number;
 };
@@ -120,6 +128,7 @@ function ToggleRow({
 export default function AdminGeneralPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [legalModal, setLegalModal] = useState<"privacy" | "terms" | null>(null);
   const [s, setS] = useState<Settings>({
     appName: "",
     appDescription: "",
@@ -130,8 +139,8 @@ export default function AdminGeneralPage() {
     maxUsersEnabled: false,
     maxUsers: 0,
     supportEmail: "",
-    privacyUrl: "",
-    termsUrl: "",
+    privacyContent: "",
+    termsContent: "",
     signupsEnabled: true,
     sessionTimeout: 30,
   });
@@ -148,8 +157,8 @@ export default function AdminGeneralPage() {
         maxUsersEnabled: (data as Record<string, unknown>).maxUsersEnabled as boolean ?? false,
         maxUsers: (data as Record<string, unknown>).maxUsers as number ?? 0,
         supportEmail: (data as Record<string, unknown>).supportEmail as string ?? "",
-        privacyUrl: (data as Record<string, unknown>).privacyUrl as string ?? "",
-        termsUrl: (data as Record<string, unknown>).termsUrl as string ?? "",
+        privacyContent: (data as Record<string, unknown>).privacyContent as string ?? "",
+        termsContent: (data as Record<string, unknown>).termsContent as string ?? "",
         signupsEnabled: (data as Record<string, unknown>).signupsEnabled as boolean ?? true,
         sessionTimeout: (data as Record<string, unknown>).sessionTimeout as number ?? 30,
       });
@@ -182,6 +191,21 @@ export default function AdminGeneralPage() {
     } catch {
       update(key, prev);
       toast.error("Failed to update");
+    }
+  }
+
+  async function handleSaveLegal(type: "privacy" | "terms") {
+    setSaving(true);
+    try {
+      await updateAppSettings(
+        type === "privacy" ? { privacyContent: s.privacyContent } : { termsContent: s.termsContent }
+      );
+      toast.success("Published");
+      setLegalModal(null);
+    } catch {
+      toast.error("Failed to save");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -347,7 +371,7 @@ export default function AdminGeneralPage() {
       <SectionCard
         icon={Link2}
         title="Contact & Legal"
-        description="Support email and legal page URLs"
+        description="Support email and legal documents"
       >
         <FieldRow label="Support Email" hint="Displayed in footer and error pages">
           <Input
@@ -358,23 +382,87 @@ export default function AdminGeneralPage() {
             className="h-8 text-xs"
           />
         </FieldRow>
-        <FieldRow label="Privacy Policy URL" hint="Link to your privacy policy">
-          <Input
-            value={s.privacyUrl}
-            onChange={(e) => update("privacyUrl", e.target.value)}
-            placeholder="https://yourapp.com/privacy"
-            className="h-8 text-xs"
-          />
-        </FieldRow>
-        <FieldRow label="Terms of Service URL" hint="Link to your terms of service">
-          <Input
-            value={s.termsUrl}
-            onChange={(e) => update("termsUrl", e.target.value)}
-            placeholder="https://yourapp.com/terms"
-            className="h-8 text-xs"
-          />
-        </FieldRow>
+        <div className="border-t border-border/20 pt-3 space-y-2">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-[11px] font-medium">Privacy Policy</p>
+              <p className="text-[10px] text-muted-foreground">Shown at /legal/privacy</p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-[11px] gap-1.5"
+              onClick={() => setLegalModal("privacy")}
+            >
+              <Pencil className="h-3 w-3" />
+              Edit
+            </Button>
+          </div>
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-[11px] font-medium">Terms of Service</p>
+              <p className="text-[10px] text-muted-foreground">Shown at /legal/terms</p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-[11px] gap-1.5"
+              onClick={() => setLegalModal("terms")}
+            >
+              <Pencil className="h-3 w-3" />
+              Edit
+            </Button>
+          </div>
+        </div>
       </SectionCard>
+
+      {/* Legal editor modals */}
+      <Dialog open={legalModal === "privacy"} onOpenChange={(open) => !open && setLegalModal(null)}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col p-0">
+          <DialogHeader className="px-4 pt-4 pb-2">
+            <DialogTitle className="text-sm">Privacy Policy</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 min-h-0 overflow-y-auto px-4">
+            <Textarea
+              value={s.privacyContent}
+              onChange={(e) => update("privacyContent", e.target.value)}
+              placeholder={`# Privacy Policy\n\nWrite your privacy policy in **markdown**...\n\n- Bullet points\n- [Links](https://example.com)`}
+              className="min-h-[280px] text-xs font-mono resize-y"
+            />
+          </div>
+          <DialogFooter className="mx-0 mb-0 rounded-b-xl border-t border-border/30 px-4 py-3">
+            <Button variant="ghost" size="sm" onClick={() => setLegalModal(null)}>
+              Cancel
+            </Button>
+            <Button size="sm" onClick={() => handleSaveLegal("privacy")} disabled={saving}>
+              {saving ? "Publishing..." : "Publish"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={legalModal === "terms"} onOpenChange={(open) => !open && setLegalModal(null)}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col p-0">
+          <DialogHeader className="px-4 pt-4 pb-2">
+            <DialogTitle className="text-sm">Terms of Service</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 min-h-0 overflow-y-auto px-4">
+            <Textarea
+              value={s.termsContent}
+              onChange={(e) => update("termsContent", e.target.value)}
+              placeholder={`# Terms of Service\n\nWrite your terms in **markdown**...\n\n- Bullet points\n- [Links](https://example.com)`}
+              className="min-h-[280px] text-xs font-mono resize-y"
+            />
+          </div>
+          <DialogFooter className="mx-0 mb-0 rounded-b-xl border-t border-border/30 px-4 py-3">
+            <Button variant="ghost" size="sm" onClick={() => setLegalModal(null)}>
+              Cancel
+            </Button>
+            <Button size="sm" onClick={() => handleSaveLegal("terms")} disabled={saving}>
+              {saving ? "Publishing..." : "Publish"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="flex justify-end pb-4">
         <Button

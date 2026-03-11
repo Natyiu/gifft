@@ -10,6 +10,7 @@ import { ArrowRight, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SetupWizard } from "@/components/setup-wizard";
 import { getSetupStatus } from "@/lib/actions/setup";
+import { getAppSettings } from "@/lib/actions/user";
 import { isMarketing } from "@/lib/marketing";
 
 const MarketingPage = dynamic(() => import("./marketing-page"), {
@@ -47,6 +48,15 @@ function StarterPage() {
 }
 
 function ReadyPage({ onRerunSetup }: { onRerunSetup: () => void }) {
+  const [supportEmail, setSupportEmail] = useState<string>("");
+
+  useEffect(() => {
+    getAppSettings().then((data) => {
+      const email = (data as Record<string, unknown>).supportEmail as string;
+      setSupportEmail(email ?? "");
+    });
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <header className="border-b border-border/40">
@@ -165,16 +175,21 @@ function ReadyPage({ onRerunSetup }: { onRerunSetup: () => void }) {
       </main>
 
       <footer className="border-t border-border/40 py-4">
-        <div className="max-w-2xl mx-auto px-4 flex items-center justify-between">
-          <span className="text-[10px] text-muted-foreground/40">Built with Batman</span>
-          <a
-            href="https://github.com/yeabnoah/Batman-Boilerplate"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[10px] text-muted-foreground/40 hover:text-muted-foreground transition-colors"
-          >
-            GitHub
-          </a>
+        <div className="max-w-2xl flex justify-between mx-auto px-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-muted-foreground/40">
+          <span>Batman</span>
+         <div className="flex items-center gap-x-3">
+         <Link href="/legal/privacy" className="hover:text-muted-foreground transition-colors">
+            Privacy
+          </Link>
+          <Link href="/legal/terms" className="hover:text-muted-foreground transition-colors">
+            Terms
+          </Link>
+          {supportEmail && (
+            <a href={`mailto:${supportEmail}`} className="hover:text-muted-foreground transition-colors">
+              Contact
+            </a>
+          )}
+         </div>
         </div>
       </footer>
     </div>

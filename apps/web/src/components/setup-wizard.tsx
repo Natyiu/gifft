@@ -858,6 +858,13 @@ function ReviewStep({ form }: { form: FormData }) {
 
   return (
     <div className="space-y-4">
+      <div className="rounded-md border border-foreground/20 bg-foreground/5 px-3 py-2.5">
+        <p className="text-[11px] font-medium text-foreground mb-0.5">First account = admin</p>
+        <p className="text-[10px] text-muted-foreground leading-relaxed">
+          The first user to sign up will automatically be an admin with full access to the dashboard, users, and settings.
+        </p>
+      </div>
+
       <p className="text-xs text-muted-foreground leading-relaxed mb-4">
         Review your configuration. Clicking <strong>Generate .env & Launch</strong> will create your{" "}
         <code className="bg-muted/50 px-1 text-[9px]">apps/web/.env</code> file.

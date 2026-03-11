@@ -152,12 +152,46 @@ export const auth = betterAuth({
     user: {
       create: {
         after: async (newUser) => {
-          await notifyAllAdmins({
-            title: "New user signed up",
-            description: `${newUser.name ?? newUser.email ?? "A user"} just created an account.`,
-            tag: "general",
-            senderId: newUser.id,
-          });
+          const count = await prisma.user.count();
+          const isFirstUser = count === 1;
+
+          if (isFirstUser) {
+            await prisma.user.update({
+              where: { id: newUser.id },
+              data: { role: "admin" },
+            });
+            try {
+              await prisma.notification.create({
+                data: {
+                  title: "You're the admin",
+                  description: "As the first user, you have full admin access. You can manage users, settings, and everything from the admin dashboard.",
+                  tag: "general",
+                  senderId: "system",
+                  recipients: {
+                    create: [{ userId: newUser.id }],
+                  },
+                },
+              });
+            } catch {
+              // Never break auth flow for notifications
+            }
+          } else {
+            try {
+              await prisma.notification.create({
+                data: {
+                  title: "Welcome",
+                  description: "You've created your account. Get started by exploring the dashboard.",
+                  tag: "general",
+                  senderId: "system",
+                  recipients: {
+                    create: [{ userId: newUser.id }],
+                  },
+                },
+              });
+            } catch {
+              // Never break auth flow for notifications
+            }
+          }
         },
       },
     },
@@ -172,22 +206,23 @@ export const auth = betterAuth({
           | undefined);
 
       if (ctx.path === "/change-password" && session?.user) {
-        await notifyAllAdmins({
-          title: "Password changed",
-          description: `${session.user.name ?? session.user.email ?? "A user"} changed their password.`,
-          tag: "security",
-          senderId: session.user.id,
-        });
+        try {
+          await prisma.notification.create({
+            data: {
+              title: "Password changed",
+              description: "Your password was updated successfully.",
+              tag: "security",
+              senderId: "system",
+              recipients: {
+                create: [{ userId: session.user.id }],
+              },
+            },
+          });
+        } catch {
+          // Never break auth flow for notifications
+        }
       }
-
-      if (ctx.path === "/delete-user" && session?.user) {
-        await notifyAllAdmins({
-          title: "Account deleted",
-          description: `${session.user.name ?? session.user.email ?? "A user"} deleted their account.`,
-          tag: "security",
-          senderId: session.user.id,
-        });
-      }
+      // delete-user: user is gone, no notification needed
     }),
   },
 

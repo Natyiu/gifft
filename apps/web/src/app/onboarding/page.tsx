@@ -159,6 +159,14 @@ export default function OnboardingPage() {
               <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                 Let&apos;s set up your profile in a few quick steps. You can always change this later.
               </p>
+              {(session.user as { role?: string }).role === "admin" && (
+                <div className="mt-3 rounded-md border border-foreground/20 bg-foreground/5 px-3 py-2.5">
+                  <p className="text-[11px] font-medium text-foreground">You&apos;re the admin</p>
+                  <p className="text-[10px] text-muted-foreground leading-relaxed mt-0.5">
+                    You have full access to the admin dashboard — users, settings, analytics, and more.
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="flex gap-2 pt-2">

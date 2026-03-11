@@ -18,8 +18,8 @@ model AppSettings {
   maxUsers                Int      @default(0)
 
   supportEmail            String   @default("")
-  privacyUrl              String   @default("")
-  termsUrl                String   @default("")
+  privacyContent          String   @default("") @db.Text
+  termsContent            String   @default("") @db.Text
 
   signupsEnabled          Boolean  @default(true)
   sessionTimeout          Int      @default(30)

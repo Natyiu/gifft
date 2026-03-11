@@ -59,9 +59,15 @@ export default async function AuthLayout({
         </main>
 
         <footer className="py-4 px-6 sm:px-8 lg:px-10">
-          <p className="text-[10px] text-muted-foreground/30">
-            &copy; {new Date().getFullYear()} Batman
-          </p>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-muted-foreground/30">
+            <span>&copy; {new Date().getFullYear()} Batman</span>
+            <Link href="/legal/privacy" className="hover:text-muted-foreground/60 transition-colors">
+              Privacy
+            </Link>
+            <Link href="/legal/terms" className="hover:text-muted-foreground/60 transition-colors">
+              Terms
+            </Link>
+          </div>
         </footer>
       </div>
 

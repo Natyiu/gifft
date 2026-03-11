@@ -1,7 +1,7 @@
 import { auth } from "@Batman/auth";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
-import { notifyAdmins } from "@/lib/notify";
+import { notifyUser } from "@/lib/notify";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
 
 export async function POST(req: NextRequest) {
@@ -39,9 +39,9 @@ export async function POST(req: NextRequest) {
   const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(path);
 
   if (bucket !== "attachments") {
-    await notifyAdmins({
+    await notifyUser(session.user.id, {
       title: "File uploaded",
-      description: `${session.user.name ?? session.user.email} uploaded "${file.name}" to ${bucket}.`,
+      description: `You uploaded "${file.name}" to ${bucket}.`,
       tag: "update",
       senderId: session.user.id,
     });
@@ -74,9 +74,9 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  await notifyAdmins({
+  await notifyUser(session.user.id, {
     title: "File deleted",
-    description: `${session.user.name ?? session.user.email} deleted a file from ${bucket}.`,
+    description: `You deleted a file from ${bucket}.`,
     tag: "update",
     senderId: session.user.id,
   });
