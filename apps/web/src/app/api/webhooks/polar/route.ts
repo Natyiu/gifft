@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
       select: { polarWebhookSecret: true },
     });
 
-    const secret = settings?.polarWebhookSecret?.trim();
+    const secret = (settings?.polarWebhookSecret || process.env.POLAR_WEBHOOK_SECRET)?.trim();
     if (!secret) {
       console.error("[Polar webhook] No webhook secret configured");
       return NextResponse.json({ error: "Webhook not configured" }, { status: 500 });

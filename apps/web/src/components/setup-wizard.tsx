@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { saveSetup } from "@/lib/actions/setup";
+import { getSetupValues, saveSetup } from "@/lib/actions/setup";
 
 type StepId = "supabase" | "auth" | "payment" | "review";
 
@@ -48,6 +48,8 @@ const STEP_TUTORIALS: Partial<Record<StepId, { title: string; duration: string; 
   },
 };
 
+const RESEND_DEFAULT_FROM = "Batman <onboarding@resend.dev>";
+
 type FormData = {
   databaseUrl: string;
   directUrl: string;
@@ -58,6 +60,7 @@ type FormData = {
   supabaseAnonKey: string;
   supabaseServiceRoleKey: string;
   resendApiKey: string;
+  resendFromEmail: string;
   googleClientId: string;
   googleClientSecret: string;
   polarAccessToken: string;
@@ -79,6 +82,7 @@ const defaultForm: FormData = {
   supabaseAnonKey: "",
   supabaseServiceRoleKey: "",
   resendApiKey: "",
+  resendFromEmail: RESEND_DEFAULT_FROM,
   googleClientId: "",
   googleClientSecret: "",
   polarAccessToken: "",
@@ -86,7 +90,7 @@ const defaultForm: FormData = {
   polarWebhookSecret: "",
   polarSandboxMode: false,
   wantGoogle: false,
-  emailVerificationEnabled: false,
+  emailVerificationEnabled: true,
   forgotPasswordEnabled: true,
 };
 
@@ -97,6 +101,16 @@ export function SetupWizard({ onComplete }: { onComplete: () => void }) {
   const [videoOpen, setVideoOpen] = useState(false);
   const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getSetupValues().then((values) => {
+      if (values && Object.keys(values).length > 0) {
+        setForm((prev) => ({ ...prev, ...values }));
+      }
+      setLoading(false);
+    });
+  }, []);
 
   const visibleSteps = ALL_STEPS;
 
@@ -176,6 +190,7 @@ export function SetupWizard({ onComplete }: { onComplete: () => void }) {
         supabaseAnonKey: form.supabaseAnonKey.trim() || undefined,
         supabaseServiceRoleKey: form.supabaseServiceRoleKey.trim() || undefined,
         resendApiKey: form.resendApiKey.trim() || undefined,
+        resendFromEmail: form.resendFromEmail.trim() || undefined,
         googleClientId: form.wantGoogle ? (form.googleClientId.trim() || undefined) : undefined,
         googleClientSecret: form.wantGoogle ? (form.googleClientSecret.trim() || undefined) : undefined,
         emailVerificationEnabled: form.emailVerificationEnabled,
@@ -254,7 +269,7 @@ export function SetupWizard({ onComplete }: { onComplete: () => void }) {
               {visibleSteps[currentIndex].label}
             </h2>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {visibleSteps[currentIndex].description}
+              {loading ? "Loading existing config…" : visibleSteps[currentIndex].description}
             </p>
           </div>
 
@@ -529,6 +544,22 @@ function AuthStep({ form, update, errors, showSecrets, toggleSecret }: StepProps
           error={errors.resendApiKey}
         />
       </FieldGroup>
+      <FieldGroup>
+        <FieldLabel htmlFor="resendFromEmail">From address</FieldLabel>
+        <FieldHint>
+          Default: <code className="bg-muted/50 px-1 text-[9px]">{RESEND_DEFAULT_FROM}</code>. Resend requires a verified domain —{" "}
+          <code className="bg-muted/50 px-1 text-[9px]">onboarding@resend.dev</code> is pre-verified for testing. For production, add your domain at{" "}
+          <HintLink href="https://resend.com/domains">resend.com/domains</HintLink> and use e.g.{" "}
+          <code className="bg-muted/50 px-1 text-[9px]">noreply@yourdomain.com</code>.
+        </FieldHint>
+        <PlainField
+          id="resendFromEmail"
+          value={form.resendFromEmail}
+          onChange={(v) => update("resendFromEmail", v)}
+          placeholder={RESEND_DEFAULT_FROM}
+          error={errors.resendFromEmail}
+        />
+      </FieldGroup>
 
       <div className="flex items-center justify-between rounded-md border border-border/40 px-3 py-2.5">
         <div>
@@ -643,6 +674,7 @@ function ReviewStep({ form }: { form: FormData }) {
     { label: "Forgot password", value: form.forgotPasswordEnabled ? "Yes" : "No" },
   ];
   if (form.resendApiKey) authItems.push({ label: "Resend API Key", value: form.resendApiKey, masked: true });
+  if (form.resendFromEmail) authItems.push({ label: "Resend From", value: form.resendFromEmail });
   if (form.wantGoogle) authItems.push({ label: "Google Client ID", value: form.googleClientId });
 
   const sections: { title: string; items: { label: string; value: string; masked?: boolean }[] }[] = [

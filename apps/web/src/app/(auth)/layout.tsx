@@ -1,4 +1,5 @@
 import { auth } from "@Batman/auth";
+import prisma from "@Batman/db";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -28,6 +29,17 @@ export default async function AuthLayout({
   });
 
   if (session?.user) {
+    const settings = await prisma.appSettings.findUnique({
+      where: { id: "default" },
+      select: { emailVerificationEnabled: true },
+    });
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { emailVerified: true },
+    });
+    if (settings?.emailVerificationEnabled && user && !user.emailVerified) {
+      redirect("/verify-email");
+    }
     redirect("/dashboard");
   }
 

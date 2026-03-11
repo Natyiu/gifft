@@ -114,9 +114,48 @@ export async function getAppSettings() {
     });
 
     if (!settings) {
+      // Sync from .env when creating first row — onboarding config should apply
+      const hasGoogle = !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+      const hasResend = !!process.env.RESEND_API_KEY;
       settings = await prisma.appSettings.create({
-        data: { id: "default" },
+        data: {
+          id: "default",
+          socialLoginEnabled: hasGoogle,
+          emailVerificationEnabled: hasResend,
+          forgotPasswordEnabled: true,
+          googleClientId: process.env.GOOGLE_CLIENT_ID || null,
+          googleClientSecret: process.env.GOOGLE_CLIENT_SECRET || null,
+          resendApiKey: process.env.RESEND_API_KEY || null,
+        },
       });
+    } else {
+      // One-time sync: if .env has creds but DB has schema defaults, update from env
+      const hasGoogleEnv = !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+      const hasResendEnv = !!process.env.RESEND_API_KEY;
+      const needsSync =
+        (hasGoogleEnv && !settings.googleClientId) ||
+        (hasResendEnv && !settings.resendApiKey);
+      if (needsSync) {
+        try {
+          settings = await prisma.appSettings.update({
+            where: { id: "default" },
+            data: {
+              ...(hasGoogleEnv && {
+                googleClientId: process.env.GOOGLE_CLIENT_ID || null,
+                googleClientSecret: process.env.GOOGLE_CLIENT_SECRET || null,
+                socialLoginEnabled: true,
+              }),
+              ...(hasResendEnv && {
+                resendApiKey: process.env.RESEND_API_KEY || null,
+                emailVerificationEnabled: true,
+                forgotPasswordEnabled: true,
+              }),
+            },
+          });
+        } catch {
+          // Ignore update failures
+        }
+      }
     }
 
     return settings;
@@ -136,14 +175,18 @@ export async function getStorageUrl(): Promise<string> {
 
 export async function getAuthConfig() {
   const settings = await getAppSettings();
-  const hasGoogle = !!(
-    (settings.googleClientId && settings.googleClientSecret) ||
-    (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET)
-  );
+  const hasGoogleFromEnv = !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+  const hasGoogleFromDb = !!(settings.googleClientId && settings.googleClientSecret);
+  const hasGoogle = hasGoogleFromEnv || hasGoogleFromDb;
+
+  // When env has Google creds (from onboarding), always show — DB may have schema default false
+  // Otherwise respect DB toggle (Admin can disable)
+  const googleEnabled =
+    hasGoogle && (hasGoogleFromEnv || settings.socialLoginEnabled !== false);
 
   return {
     socialLoginEnabled: settings.socialLoginEnabled,
-    googleEnabled: settings.socialLoginEnabled && hasGoogle,
+    googleEnabled,
     forgotPasswordEnabled: settings.forgotPasswordEnabled ?? true,
     organizationsEnabled: settings.organizationsEnabled,
     invitesEnabled: settings.invitesEnabled,

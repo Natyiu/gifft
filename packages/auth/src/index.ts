@@ -36,15 +36,28 @@ async function getResendClient(): Promise<Resend | null> {
   return new Resend(apiKey);
 }
 
+const RESEND_DEFAULT_FROM = "Batman <onboarding@resend.dev>";
+
 async function sendEmail(to: string, subject: string, html: string) {
   try {
     const resend = await getResendClient();
-    if (!resend) return;
+    if (!resend) {
+      console.error("[Auth] Email not sent: no RESEND_API_KEY configured");
+      return;
+    }
     const settings = await getSettings();
-    const from = settings?.resendFromEmail || "noreply@updates.yourdomain.com";
-    await resend.emails.send({ from, to, subject, html });
-  } catch {
-    // Swallow — email failures shouldn't break auth
+    const customFrom =
+      settings?.resendFromEmail?.trim() || env.RESEND_FROM_EMAIL?.trim();
+    const from =
+      customFrom && !customFrom.includes("yourdomain.com")
+        ? customFrom
+        : RESEND_DEFAULT_FROM;
+    const { error } = await resend.emails.send({ from, to, subject, html });
+    if (error) {
+      console.error("[Auth] Resend error:", error);
+    }
+  } catch (err) {
+    console.error("[Auth] Email send failed:", err);
   }
 }
 
@@ -85,6 +98,14 @@ const googleCreds = env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
   ? { clientId: env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_CLIENT_SECRET }
   : { clientId: "placeholder", clientSecret: "placeholder" };
 
+let _requireEmailVerification = false;
+try {
+  const s = await prisma.appSettings.findUnique({ where: { id: "default" } });
+  _requireEmailVerification = s?.emailVerificationEnabled ?? false;
+} catch {
+  // DB not ready
+}
+
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
@@ -95,6 +116,7 @@ export const auth = betterAuth({
 
   emailAndPassword: {
     enabled: true,
+    requireEmailVerification: _requireEmailVerification,
     async sendResetPassword({ user, url }) {
       const settings = await getSettings();
       const appName = settings?.appName ?? "Batman";
@@ -108,10 +130,20 @@ export const auth = betterAuth({
 
   emailVerification: {
     sendOnSignUp: true,
+    sendOnSignIn: true,
+    autoSignInAfterVerification: true,
     async sendVerificationEmail({ user, url }) {
       const settings = await getSettings();
       if (!settings?.emailVerificationEnabled) return;
       const appName = settings.appName ?? "Batman";
+      // Redirect to onboarding after verification
+      try {
+        const urlObj = new URL(url);
+        urlObj.searchParams.set("callbackURL", "/onboarding");
+        url = urlObj.toString();
+      } catch {
+        // url might be relative, keep as-is
+      }
       await sendEmail(
         user.email,
         `Verify your ${appName} email`,

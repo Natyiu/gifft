@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import z from "zod";
-import { Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 import { authClient } from "@/lib/auth-client";
 import { getAuthConfig } from "@/lib/actions/user";
@@ -21,6 +21,7 @@ export function SignInForm() {
     forgotPasswordEnabled?: boolean;
   } | null>(null);
   const [socialLoading, setSocialLoading] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     getAuthConfig().then(setAuthConfig);
@@ -43,7 +44,11 @@ export function SignInForm() {
             toast.success("Sign in successful");
           },
           onError: (error) => {
-            toast.error(error.error.message || error.error.statusText);
+            if (error.error?.status === 403) {
+              toast.error("Please verify your email before signing in. Check your inbox for the verification link.");
+              return;
+            }
+            toast.error(error.error?.message || error.error?.statusText);
           },
         },
       );
@@ -162,15 +167,25 @@ export function SignInForm() {
                   </Link>
                 )}
               </div>
-              <Input
-                id={field.name}
-                name={field.name}
-                type="password"
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(e.target.value)}
-                className="h-8 text-xs"
-              />
+              <div className="relative">
+                <Input
+                  id={field.name}
+                  name={field.name}
+                  type={showPassword ? "text" : "password"}
+                  value={field.state.value}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  className="h-8 text-xs pr-8"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((p) => !p)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                </button>
+              </div>
               {field.state.meta.errors.map((error) => (
                 <p key={error?.message} className="text-[10px] text-red-400">
                   {error?.message}
