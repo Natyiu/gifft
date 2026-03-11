@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 import path from "node:path";
-import { defineConfig, env } from "prisma/config";
+import { defineConfig } from "prisma/config";
 
 dotenv.config({
   path: "../../apps/web/.env",
@@ -12,6 +12,7 @@ export default defineConfig({
     path: path.join("prisma", "migrations"),
   },
   datasource: {
-    url: env("DIRECT_URL"),
+    // Use process.env so prisma generate works without .env (e.g. fresh clone)
+    url: process.env.DIRECT_URL ?? "postgresql://localhost:5432/placeholder",
   },
 });
