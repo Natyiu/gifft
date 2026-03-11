@@ -61,6 +61,7 @@ export async function getSiteSettings() {
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2021") {
       return { countdown: null, waitlist: null };
     }
-    throw err;
+    // Connection errors, missing DB, or schema not pushed — show setup wizard
+    return { countdown: null, waitlist: null };
   }
 }
