@@ -67,7 +67,7 @@ export function WorldMap({ countries }: { countries: CountryData[] }) {
                 cx="4"
                 cy="4"
                 r="0.8"
-                className="fill-muted-foreground/20"
+                className="fill-muted-foreground/20 dark:fill-muted-foreground/40"
               />
             </pattern>
 
@@ -84,7 +84,7 @@ export function WorldMap({ countries }: { countries: CountryData[] }) {
                 cx="3"
                 cy="3"
                 r="0.8"
-                className="fill-muted-foreground/40"
+                className="fill-muted-foreground/40 dark:fill-muted-foreground/60"
               />
             </pattern>
 
@@ -158,7 +158,7 @@ export function WorldMap({ countries }: { countries: CountryData[] }) {
                 y1="0"
                 x2="50"
                 y2="50"
-                className="stroke-border/30"
+                className="stroke-border/30 dark:stroke-border/50"
                 strokeWidth="0.5"
               />
               <line
@@ -166,7 +166,7 @@ export function WorldMap({ countries }: { countries: CountryData[] }) {
                 y1="50"
                 x2="50"
                 y2="50"
-                className="stroke-border/30"
+                className="stroke-border/30 dark:stroke-border/50"
                 strokeWidth="0.5"
               />
             </pattern>
@@ -198,10 +198,10 @@ export function WorldMap({ countries }: { countries: CountryData[] }) {
                 fill={fill}
                 className={`transition-all duration-150 cursor-pointer ${
                   isHovered
-                    ? "stroke-foreground/50"
+                    ? "stroke-foreground/50 dark:stroke-foreground/70"
                     : intensity > 0
-                      ? "stroke-primary/30"
-                      : "stroke-border/40"
+                      ? "stroke-primary/30 dark:stroke-primary/50"
+                      : "stroke-border/40 dark:stroke-border/60"
                 }`}
                 strokeWidth={isHovered ? 1.2 : 0.4}
                 onMouseEnter={() => setHovered(path.id)}
@@ -280,8 +280,8 @@ export function MiniWorldMap({
           d={path.d}
           className={
             countrySet.has(path.id)
-              ? "fill-foreground/80 stroke-foreground/40"
-              : "fill-muted-foreground/10 stroke-muted-foreground/15"
+              ? "fill-foreground/80 stroke-foreground/40 dark:fill-foreground/95 dark:stroke-foreground/60"
+              : "fill-muted-foreground/10 stroke-muted-foreground/15 dark:fill-muted-foreground/25 dark:stroke-muted-foreground/35"
           }
           strokeWidth={0.5}
         />

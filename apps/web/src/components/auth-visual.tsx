@@ -72,16 +72,16 @@ const CONNECTION_LINES = [
 
 export function AuthVisual() {
   return (
-    <div className="relative h-full w-full overflow-hidden bg-foreground/2">
+    <div className="relative h-full w-full overflow-hidden bg-foreground/2 dark:bg-foreground/4">
       {/* Base grid pattern */}
       <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <pattern id="authGrid" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
-            <circle cx="20" cy="20" r="0.5" className="fill-foreground/10" />
+            <circle cx="20" cy="20" r="0.5" className="fill-foreground/10 dark:fill-foreground/22" />
           </pattern>
           <pattern id="authGridLarge" x="0" y="0" width="120" height="120" patternUnits="userSpaceOnUse">
-            <line x1="120" y1="0" x2="120" y2="120" className="stroke-foreground/8" strokeWidth="0.5" />
-            <line x1="0" y1="120" x2="120" y2="120" className="stroke-foreground/8" strokeWidth="0.5" />
+            <line x1="120" y1="0" x2="120" y2="120" className="stroke-foreground/8 dark:stroke-foreground/22" strokeWidth="0.5" />
+            <line x1="0" y1="120" x2="120" y2="120" className="stroke-foreground/8 dark:stroke-foreground/22" strokeWidth="0.5" />
           </pattern>
         </defs>
         <rect width="100%" height="100%" fill="url(#authGridLarge)" />
@@ -97,12 +97,12 @@ export function AuthVisual() {
         >
           <defs>
             <pattern id="authDot" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse">
-              <circle cx="3" cy="3" r="0.9" className="fill-foreground/30" />
+              <circle cx="3" cy="3" r="0.9" className="fill-foreground/30 dark:fill-foreground/55" />
             </pattern>
             <pattern id="authDotActive" x="0" y="0" width="4.5" height="4.5" patternUnits="userSpaceOnUse">
-              <circle cx="2.25" cy="2.25" r="1.1" className="fill-foreground/60" />
-              <line x1="0" y1="2.25" x2="4.5" y2="2.25" className="stroke-foreground/15" strokeWidth="0.3" />
-              <line x1="2.25" y1="0" x2="2.25" y2="4.5" className="stroke-foreground/15" strokeWidth="0.3" />
+              <circle cx="2.25" cy="2.25" r="1.1" className="fill-foreground/60 dark:fill-foreground/85" />
+              <line x1="0" y1="2.25" x2="4.5" y2="2.25" className="stroke-foreground/15 dark:stroke-foreground/35" strokeWidth="0.3" />
+              <line x1="2.25" y1="0" x2="2.25" y2="4.5" className="stroke-foreground/15 dark:stroke-foreground/35" strokeWidth="0.3" />
             </pattern>
           </defs>
           {worldMapPaths.map((path, i) => {
@@ -112,7 +112,7 @@ export function AuthVisual() {
                 key={path.id}
                 d={path.d}
                 fill={isHighlighted ? "url(#authDotActive)" : "url(#authDot)"}
-                className={isHighlighted ? "stroke-foreground/25" : "stroke-foreground/10"}
+                className={isHighlighted ? "stroke-foreground/25 dark:stroke-foreground/45" : "stroke-foreground/10 dark:stroke-foreground/25"}
                 strokeWidth={0.4}
               />
             );
@@ -129,7 +129,7 @@ export function AuthVisual() {
             y1={line.y1}
             x2={line.x2}
             y2={line.y2}
-            className="stroke-foreground/15 auth-line-pulse"
+            className="stroke-foreground/15 dark:stroke-foreground/35 auth-line-pulse"
             strokeWidth="0.15"
             style={{ animationDelay: `${line.delay}s` }}
           />
@@ -140,7 +140,7 @@ export function AuthVisual() {
             cx={node.cx}
             cy={node.cy}
             r="0.4"
-            className="fill-foreground/30 auth-node-pulse"
+            className="fill-foreground/30 dark:fill-foreground/55 auth-node-pulse"
             style={{ animationDelay: `${node.delay}s` }}
           />
         ))}
@@ -154,7 +154,7 @@ export function AuthVisual() {
             cx={dot.cx}
             cy={dot.cy}
             r={dot.r}
-            className="fill-foreground/15 auth-float"
+            className="fill-foreground/15 dark:fill-foreground/35 auth-float"
             style={{
               animationDelay: `${dot.delay}s`,
               animationDuration: `${dot.duration}s`,
@@ -174,14 +174,14 @@ export function AuthVisual() {
 
       {/* Quote at bottom */}
       <div className="absolute bottom-8 left-8 right-8">
-        <p className="text-[10px] font-mono text-foreground/35 italic leading-relaxed">
+        <p className="text-[10px] font-mono text-foreground/35 dark:text-foreground/60 italic leading-relaxed">
           &ldquo;{QUOTE}&rdquo;
         </p>
       </div>
 
       {/* Bat logo watermark */}
       <div className="absolute top-8 right-8">
-        <svg viewBox="0 0 100 40" fill="currentColor" className="h-5 w-auto text-foreground/15">
+        <svg viewBox="0 0 100 40" fill="currentColor" className="h-5 w-auto text-foreground/15 dark:text-foreground/35">
           <path d="M50 0C50 0 42 14 30 18C18 22 0 18 0 18C0 18 12 28 20 32C28 36 50 40 50 40C50 40 72 36 80 32C88 28 100 18 100 18C100 18 82 22 70 18C58 14 50 0 50 0Z" />
         </svg>
       </div>
