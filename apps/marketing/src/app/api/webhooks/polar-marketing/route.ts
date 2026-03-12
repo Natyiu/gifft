@@ -28,6 +28,7 @@ function extractBillingReason(data: Record<string, unknown>): string | undefined
 export async function POST(req: NextRequest) {
   try {
     const body = await req.text();
+    console.log("[Polar marketing webhook] Received POST, body length:", body?.length ?? 0);
     const headers: Record<string, string> = {};
     req.headers.forEach((v, k) => {
       headers[k.toLowerCase()] = v;
@@ -46,8 +47,10 @@ export async function POST(req: NextRequest) {
     const data = event.data as Record<string, unknown> | undefined;
 
     if (type !== "order.paid" || !data) {
+      console.log("[Polar marketing webhook] Ignoring event type:", type);
       return NextResponse.json({ received: true });
     }
+    console.log("[Polar marketing webhook] Processing order.paid, orderId:", data.id);
 
     const email = extractOrderEmail(data);
     const orderId = String(data.id ?? "");
