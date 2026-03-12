@@ -2,6 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@Batman/db";
 import { validateEvent, WebhookVerificationError } from "@polar-sh/sdk/webhooks";
 
+import { grantCodebaseAccess } from "@/lib/actions/marketing";
+
+function extractOrderEmail(data: Record<string, unknown>): string | undefined {
+  const customer = data.customer as Record<string, unknown> | undefined;
+  const email =
+    (customer?.email as string) ??
+    (data.email as string) ??
+    (data.customer_email as string);
+  return typeof email === "string" && email.trim() ? email.trim() : undefined;
+}
+
+function extractProductId(data: Record<string, unknown>): string | undefined {
+  const items = (data.order_items ?? data.items) as Array<{ product_id?: string }> | undefined;
+  const id = items?.[0]?.product_id ?? (data.product_id as string);
+  return typeof id === "string" ? id : undefined;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.text();
@@ -23,12 +40,22 @@ export async function POST(req: NextRequest) {
 
     const event = validateEvent(body, headers, secret);
     const type = (event as { type?: string }).type;
+    const data = event.data as Record<string, unknown> | undefined;
+
+    // Handle one-time purchase (marketing product) — send download link
+    if (type === "order.paid" && data) {
+      const email = extractOrderEmail(data);
+      const orderId = String(data.id ?? "");
+      const productId = extractProductId(data);
+      if (email && orderId) {
+        await grantCodebaseAccess({ email, polarOrderId: orderId, productId });
+      }
+      return NextResponse.json({ received: true });
+    }
 
     if (!type?.startsWith("subscription.")) {
       return NextResponse.json({ received: true });
     }
-
-    const data = event.data as Record<string, unknown> | undefined;
     if (!data) return NextResponse.json({ received: true });
 
     // Polar uses snake_case in webhook payloads

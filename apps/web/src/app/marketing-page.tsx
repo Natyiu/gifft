@@ -75,12 +75,12 @@ const setupSteps = [
   {
     number: "01",
     title: "Pay and get access",
-    detail: "One-time purchase. You get instant access to the private repo.",
+    detail: "One-time purchase. You get a secure download link by email (expires in 48 hours).",
   },
   {
     number: "02",
-    title: "Clone the project",
-    command: "git clone <repo-url> && cd Batman",
+    title: "Download and extract",
+    command: "unzip Batman.zip && cd Batman",
   },
   {
     number: "03",
@@ -264,9 +264,17 @@ export default function MarketingPage() {
   const [openSection, setOpenSection] = useState<string | null>("01");
   const searchParams = useSearchParams();
   const checkoutError = searchParams.get("error");
+  const checkoutSuccess = searchParams.get("checkout") === "success";
 
   return (
     <div ref={scrollRef} className="min-h-screen flex flex-col">
+      {checkoutSuccess && (
+        <div className="fixed top-14 left-0 right-0 z-40 bg-green-500/10 dark:bg-green-500/20 border-b border-green-500/30 px-4 py-2.5 text-center">
+          <p className="text-xs text-green-700 dark:text-green-400">
+            Payment successful! Check your email for the download link. It expires in 48 hours.
+          </p>
+        </div>
+      )}
       {checkoutError && (
         <div className="fixed top-14 left-0 right-0 z-40 bg-destructive/10 border-b border-destructive/30 px-4 py-2.5 text-center">
           <p className="text-xs text-destructive">
