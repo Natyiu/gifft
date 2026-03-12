@@ -12,7 +12,7 @@ export async function sendEmail(to: string, subject: string, html: string): Prom
     });
     const apiKey = settings?.resendApiKey || env.RESEND_API_KEY;
     if (!apiKey) {
-      console.error("[Email] Not sent: no RESEND_API_KEY configured");
+      console.error("[Email] Not sent: no RESEND_API_KEY. Add RESEND_API_KEY to Vercel env or Admin > API Keys.");
       return false;
     }
     const resend = new Resend(apiKey);
@@ -24,7 +24,7 @@ export async function sendEmail(to: string, subject: string, html: string): Prom
         : RESEND_DEFAULT_FROM;
     const { error } = await resend.emails.send({ from, to, subject, html });
     if (error) {
-      console.error("[Email] Resend error:", error);
+      console.error("[Email] Resend error:", JSON.stringify(error));
       return false;
     }
     return true;

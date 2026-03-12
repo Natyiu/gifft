@@ -13,10 +13,13 @@ import { grantCodebaseAccess } from "@/lib/actions/marketing";
 
 function extractOrderEmail(data: Record<string, unknown>): string | undefined {
   const customer = data.customer as Record<string, unknown> | undefined;
+  const buyer = data.buyer as Record<string, unknown> | undefined;
   const email =
     (customer?.email as string) ??
     (data.email as string) ??
-    (data.customer_email as string);
+    (data.customer_email as string) ??
+    (customer?.billing_email as string) ??
+    (buyer?.email as string);
   return typeof email === "string" && email.trim() ? email.trim() : undefined;
 }
 
@@ -24,6 +27,10 @@ function extractProductId(data: Record<string, unknown>): string | undefined {
   const items = (data.order_items ?? data.items) as Array<{ product_id?: string }> | undefined;
   const id = items?.[0]?.product_id ?? (data.product_id as string);
   return typeof id === "string" ? id : undefined;
+}
+
+function extractBillingReason(data: Record<string, unknown>): string | undefined {
+  return data.billing_reason as string | undefined;
 }
 
 export async function POST(req: NextRequest) {
@@ -53,10 +60,33 @@ export async function POST(req: NextRequest) {
     const email = extractOrderEmail(data);
     const orderId = String(data.id ?? "");
     const productId = extractProductId(data);
+    const billingReason = extractBillingReason(data);
 
-    if (email && orderId) {
-      await grantCodebaseAccess({ email, polarOrderId: orderId, productId });
+    // Safety: marketing webhook should only receive one-time purchases, but guard anyway
+    if (
+      billingReason === "subscription_create" ||
+      billingReason === "subscription_cycle" ||
+      billingReason === "subscription_update"
+    ) {
+      return NextResponse.json({ received: true }); // Subscription order — wrong webhook, ignore
     }
+
+    if (!email) {
+      console.error("[Polar marketing] No email in order.paid payload. Keys:", Object.keys(data).join(", "));
+      return NextResponse.json({ received: true });
+    }
+    if (!orderId) {
+      console.error("[Polar marketing] No order id in payload");
+      return NextResponse.json({ received: true });
+    }
+
+    await grantCodebaseAccess({
+      email,
+      polarOrderId: orderId,
+      productId,
+      forceMarketing: true, // Dedicated marketing webhook — all orders are codebase purchases
+      billingReason,
+    });
 
     return NextResponse.json({ received: true });
   } catch (e) {

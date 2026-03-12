@@ -19,6 +19,32 @@ const EXCLUDE_DIRS = new Set([
 ]);
 const EXCLUDE_FILES = new Set([".env", ".env.local"]);
 
+/** Paths excluded from customer download — marketing/seller-only. Customers get clean boilerplate. */
+const MARKETING_PATHS = new Set([
+  "Batman/apps/web/src/app/marketing-page.tsx",
+  "Batman/apps/web/src/app/marketing-page.stub.tsx",
+  "Batman/apps/web/src/app/api/checkout",
+  "Batman/apps/web/src/app/api/webhooks/polar-marketing",
+  "Batman/apps/web/src/app/api/download",
+  "Batman/apps/web/src/lib/actions/marketing.ts",
+  "Batman/packages/db/prisma/schema/marketing.prisma",
+]);
+
+const MARKETING_PAGE_STUB = `"use client";
+/** Stub — marketing excluded from customer download. */
+export default function MarketingPage() {
+  return null;
+}
+`;
+
+function isMarketingPath(archivePath: string): boolean {
+  const normalized = archivePath.replace(/\\/g, "/");
+  for (const p of MARKETING_PATHS) {
+    if (normalized === p || normalized.startsWith(p + "/")) return true;
+  }
+  return false;
+}
+
 function getCodebaseRoot(): string {
   const cwd = process.cwd();
   if (cwd.endsWith("apps/web") || cwd.includes("apps/web")) {
@@ -68,7 +94,13 @@ export async function GET(req: NextRequest) {
     for (const entry of entries) {
       if (shouldExclude(entry.name)) continue;
       const fullPath = path.join(dirPath, entry.name);
-      const relPath = path.join(archivePath, entry.name);
+      const relPath = path.join(archivePath, entry.name).replace(/\\/g, "/");
+      if (isMarketingPath(relPath)) {
+        if (relPath.endsWith("marketing-page.tsx")) {
+          archive.append(MARKETING_PAGE_STUB, { name: relPath });
+        }
+        continue; // Skip marketing dirs/files — customer gets clean boilerplate
+      }
       if (entry.isDirectory()) {
         addDir(fullPath, relPath);
       } else {

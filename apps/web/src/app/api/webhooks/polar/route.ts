@@ -42,13 +42,20 @@ export async function POST(req: NextRequest) {
     const type = (event as { type?: string }).type;
     const data = event.data as Record<string, unknown> | undefined;
 
-    // Handle one-time purchase (marketing product) — send download link
+    // Handle one-time purchase (marketing product) — send download link.
+    // Never for subscription payments (billing_reason: subscription_create, etc.) — those are boilerplate Pro.
     if (type === "order.paid" && data) {
+      const billingReason = data.billing_reason as string | undefined;
       const email = extractOrderEmail(data);
       const orderId = String(data.id ?? "");
       const productId = extractProductId(data);
       if (email && orderId) {
-        await grantCodebaseAccess({ email, polarOrderId: orderId, productId });
+        await grantCodebaseAccess({
+          email,
+          polarOrderId: orderId,
+          productId,
+          billingReason,
+        });
       }
       return NextResponse.json({ received: true });
     }
