@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Check, ChevronRight, ExternalLink, Eye, EyeOff, Loader2, ArrowLeft, Play, X } from "lucide-react";
+import { Check, ChevronRight, ChevronDown, ExternalLink, Eye, EyeOff, Loader2, ArrowLeft, Play, X, AlertTriangle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -201,8 +201,9 @@ export function SetupWizard({ onComplete }: { onComplete: () => void }) {
         polarSandboxMode: form.polarSandboxMode,
       });
       onComplete();
-    } catch {
-      setErrors({ _form: "Failed to save .env file. Check file permissions." });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to save .env or push database.";
+      setErrors({ _form: msg });
     } finally {
       setSaving(false);
     }
@@ -321,7 +322,7 @@ export function SetupWizard({ onComplete }: { onComplete: () => void }) {
                 {saving ? (
                   <>
                     <Loader2 className="w-3 h-3 animate-spin" />
-                    Generating .env...
+                    Generating .env & pushing database...
                   </>
                 ) : (
                   <>
@@ -347,6 +348,33 @@ export function SetupWizard({ onComplete }: { onComplete: () => void }) {
   );
 }
 
+// -- Collapsible Section --
+
+function CollapsibleSection({
+  title,
+  defaultOpen = false,
+  children,
+}: {
+  title: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="rounded-lg border border-border/40 overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left text-xs font-medium text-foreground hover:bg-muted/30 transition-colors"
+      >
+        {title}
+        <ChevronDown className={`size-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-0" : "-rotate-90"}`} />
+      </button>
+      {open && <div className="px-3 pb-3 pt-2 space-y-4 border-t border-border/30">{children}</div>}
+    </div>
+  );
+}
+
 // -- Step Components --
 
 type StepProps = {
@@ -359,7 +387,7 @@ type StepProps = {
 
 function SupabaseStep({ form, update, errors, showSecrets, toggleSecret }: StepProps) {
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <Hint>
         Configure your <strong>Supabase</strong> project for database and file storage.{" "}
         <HintLink href="https://supabase.com/dashboard">Create a project</HintLink> →{" "}
@@ -367,302 +395,306 @@ function SupabaseStep({ form, update, errors, showSecrets, toggleSecret }: StepP
         We&apos;ll create storage buckets automatically.
       </Hint>
 
-      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Database</p>
+      <CollapsibleSection title="Database" defaultOpen>
+        <FieldGroup>
+          <FieldLabel htmlFor="databasePassword">Database password</FieldLabel>
+          <FieldHint>
+            Enter your database password. We&apos;ll embed it into the URLs above when saving. Required if your URLs contain the placeholder.
+          </FieldHint>
+          <SecretField
+            id="databasePassword"
+            value={form.databasePassword}
+            onChange={(v) => update("databasePassword", v)}
+            show={showSecrets.databasePassword}
+            onToggle={() => toggleSecret("databasePassword")}
+            placeholder="Your database password"
+            error={errors.databasePassword}
+          />
+        </FieldGroup>
+        <FieldGroup>
+          <FieldLabel htmlFor="databaseUrl">Transaction URL <Required /></FieldLabel>
+          <FieldHint>
+            Copy the <strong>Transaction</strong> connection string (port 6543) from Supabase. Paste as-is with the{" "}
+            <code className="bg-muted/50 px-1 text-[9px]">[YOUR-PASSWORD]</code> placeholder.
+          </FieldHint>
+          <SecretField
+            id="databaseUrl"
+            value={form.databaseUrl}
+            onChange={(v) => update("databaseUrl", v)}
+            show={showSecrets.databaseUrl}
+            onToggle={() => toggleSecret("databaseUrl")}
+            placeholder="postgresql://postgres.[ref]:[YOUR-PASSWORD]@aws-0-[region].pooler.supabase.com:6543/postgres?pgbouncer=true"
+            error={errors.databaseUrl}
+          />
+        </FieldGroup>
+        <FieldGroup>
+          <FieldLabel htmlFor="directUrl">Direct URL <Required /></FieldLabel>
+          <FieldHint>
+            Copy the <strong>Session / Direct</strong> connection string (port 5432). Paste as-is with the{" "}
+            <code className="bg-muted/50 px-1 text-[9px]">[YOUR-PASSWORD]</code> placeholder.
+          </FieldHint>
+          <SecretField
+            id="directUrl"
+            value={form.directUrl}
+            onChange={(v) => update("directUrl", v)}
+            show={showSecrets.directUrl}
+            onToggle={() => toggleSecret("directUrl")}
+            placeholder="postgresql://postgres.[ref]:[YOUR-PASSWORD]@aws-0-[region].pooler.supabase.com:5432/postgres"
+            error={errors.directUrl}
+          />
+        </FieldGroup>
+      </CollapsibleSection>
 
-      <FieldGroup>
-        <FieldLabel htmlFor="databasePassword">Database password</FieldLabel>
-        <FieldHint>
-          Enter your database password. We&apos;ll embed it into the URLs above when saving. Required if your URLs contain the placeholder.
-        </FieldHint>
-        <SecretField
-          id="databasePassword"
-          value={form.databasePassword}
-          onChange={(v) => update("databasePassword", v)}
-          show={showSecrets.databasePassword}
-          onToggle={() => toggleSecret("databasePassword")}
-          placeholder="Your database password"
-          error={errors.databasePassword}
-        />
-      </FieldGroup>
-
-      <FieldGroup>
-        <FieldLabel htmlFor="databaseUrl">Transaction URL <Required /></FieldLabel>
-        <FieldHint>
-          Copy the <strong>Transaction</strong> connection string (port 6543) from Supabase. Paste as-is with the{" "}
-          <code className="bg-muted/50 px-1 text-[9px]">[YOUR-PASSWORD]</code> placeholder.
-        </FieldHint>
-        <SecretField
-          id="databaseUrl"
-          value={form.databaseUrl}
-          onChange={(v) => update("databaseUrl", v)}
-          show={showSecrets.databaseUrl}
-          onToggle={() => toggleSecret("databaseUrl")}
-          placeholder="postgresql://postgres.[ref]:[YOUR-PASSWORD]@aws-0-[region].pooler.supabase.com:6543/postgres?pgbouncer=true"
-          error={errors.databaseUrl}
-        />
-      </FieldGroup>
-
-      <FieldGroup>
-        <FieldLabel htmlFor="directUrl">Direct URL <Required /></FieldLabel>
-        <FieldHint>
-          Copy the <strong>Session / Direct</strong> connection string (port 5432). Paste as-is with the{" "}
-          <code className="bg-muted/50 px-1 text-[9px]">[YOUR-PASSWORD]</code> placeholder.
-        </FieldHint>
-        <SecretField
-          id="directUrl"
-          value={form.directUrl}
-          onChange={(v) => update("directUrl", v)}
-          show={showSecrets.directUrl}
-          onToggle={() => toggleSecret("directUrl")}
-          placeholder="postgresql://postgres.[ref]:[YOUR-PASSWORD]@aws-0-[region].pooler.supabase.com:5432/postgres"
-          error={errors.directUrl}
-        />
-      </FieldGroup>
-
-     
-
-      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mt-6">Storage</p>
-      <FieldGroup>
-        <FieldLabel htmlFor="supabaseUrl">Project URL <Required /></FieldLabel>
-        <PlainField
-          id="supabaseUrl"
-          value={form.supabaseUrl}
-          onChange={(v) => update("supabaseUrl", v)}
-          placeholder="https://xxxxxx.supabase.co"
-          error={errors.supabaseUrl}
-        />
-      </FieldGroup>
-
-      <FieldGroup>
-        <FieldLabel htmlFor="supabaseAnonKey">Anon / Public Key</FieldLabel>
-        <FieldHint>Used on the client side for public file access.</FieldHint>
-        <SecretField
-          id="supabaseAnonKey"
-          value={form.supabaseAnonKey}
-          onChange={(v) => update("supabaseAnonKey", v)}
-          show={showSecrets.supabaseAnonKey}
-          onToggle={() => toggleSecret("supabaseAnonKey")}
-          placeholder="eyJhbGciOi..."
-          error={errors.supabaseAnonKey}
-        />
-      </FieldGroup>
-
-      <FieldGroup>
-        <FieldLabel htmlFor="supabaseServiceRoleKey">Service Role Key <Required /></FieldLabel>
-        <FieldHint>Server-only. Used for uploads and admin operations.</FieldHint>
-        <SecretField
-          id="supabaseServiceRoleKey"
-          value={form.supabaseServiceRoleKey}
-          onChange={(v) => update("supabaseServiceRoleKey", v)}
-          show={showSecrets.supabaseServiceRoleKey}
-          onToggle={() => toggleSecret("supabaseServiceRoleKey")}
-          placeholder="eyJhbGciOi..."
-          error={errors.supabaseServiceRoleKey}
-        />
-      </FieldGroup>
+      <CollapsibleSection title="Storage">
+        <FieldGroup>
+          <FieldLabel htmlFor="supabaseUrl">Project URL <Required /></FieldLabel>
+          <PlainField
+            id="supabaseUrl"
+            value={form.supabaseUrl}
+            onChange={(v) => update("supabaseUrl", v)}
+            placeholder="https://xxxxxx.supabase.co"
+            error={errors.supabaseUrl}
+          />
+        </FieldGroup>
+        <FieldGroup>
+          <FieldLabel htmlFor="supabaseAnonKey">Anon / Public Key</FieldLabel>
+          <FieldHint>Used on the client side for public file access.</FieldHint>
+          <SecretField
+            id="supabaseAnonKey"
+            value={form.supabaseAnonKey}
+            onChange={(v) => update("supabaseAnonKey", v)}
+            show={showSecrets.supabaseAnonKey}
+            onToggle={() => toggleSecret("supabaseAnonKey")}
+            placeholder="eyJhbGciOi..."
+            error={errors.supabaseAnonKey}
+          />
+        </FieldGroup>
+        <FieldGroup>
+          <FieldLabel htmlFor="supabaseServiceRoleKey">Service Role Key <Required /></FieldLabel>
+          <FieldHint>Server-only. Used for uploads and admin operations.</FieldHint>
+          <SecretField
+            id="supabaseServiceRoleKey"
+            value={form.supabaseServiceRoleKey}
+            onChange={(v) => update("supabaseServiceRoleKey", v)}
+            show={showSecrets.supabaseServiceRoleKey}
+            onToggle={() => toggleSecret("supabaseServiceRoleKey")}
+            placeholder="eyJhbGciOi..."
+            error={errors.supabaseServiceRoleKey}
+          />
+        </FieldGroup>
+      </CollapsibleSection>
     </div>
   );
 }
 
 function AuthStep({ form, update, errors, showSecrets, toggleSecret }: StepProps) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <p className="text-xs text-muted-foreground leading-relaxed">
         Configure auth options. You can enable OAuth, email, or skip and add later from Admin Dashboard.
       </p>
 
-      <FieldGroup>
-        <FieldLabel htmlFor="betterAuthUrl">App URL <Required /></FieldLabel>
-        <FieldHint>Where your app runs. In development this is usually localhost:3001.</FieldHint>
-        <PlainField
-          id="betterAuthUrl"
-          value={form.betterAuthUrl}
-          onChange={(v) => {
-            update("betterAuthUrl", v);
-            update("corsOrigin", v);
-          }}
-          placeholder="http://localhost:3001"
-          error={errors.betterAuthUrl}
-        />
-      </FieldGroup>
+      <CollapsibleSection title="App URL" defaultOpen>
+        <FieldGroup>
+          <FieldLabel htmlFor="betterAuthUrl">App URL <Required /></FieldLabel>
+          <FieldHint>Where your app runs. In development this is usually localhost:3001.</FieldHint>
+          <PlainField
+            id="betterAuthUrl"
+            value={form.betterAuthUrl}
+            onChange={(v) => {
+              update("betterAuthUrl", v);
+              update("corsOrigin", v);
+            }}
+            placeholder="http://localhost:3001"
+            error={errors.betterAuthUrl}
+          />
+        </FieldGroup>
+      </CollapsibleSection>
 
-      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">OAuth (Google)</p>
-      <div className="space-y-3">
-        <FeatureToggle
-          title="Google"
-          description="Sign in with Google"
-          checked={form.wantGoogle}
-          onChange={(v) => update("wantGoogle", v)}
-        />
-        {form.wantGoogle && (
-          <div className="ml-6 space-y-4 border-l border-border/30 pl-4">
-            <Hint>
-              <HintLink href="https://console.cloud.google.com/apis/credentials">Google Cloud Console</HintLink> →
-              Create OAuth 2.0 Client. Add redirect URI:{" "}
-              <code className="bg-muted/50 px-1 text-[9px]">{form.betterAuthUrl}/api/auth/callback/google</code>
-            </Hint>
-            <FieldGroup>
-              <FieldLabel htmlFor="googleClientId">Client ID <Required /></FieldLabel>
-              <PlainField
-                id="googleClientId"
-                value={form.googleClientId}
-                onChange={(v) => update("googleClientId", v)}
-                placeholder="xxxx.apps.googleusercontent.com"
-                error={errors.googleClientId}
-              />
-            </FieldGroup>
-            <FieldGroup>
-              <FieldLabel htmlFor="googleClientSecret">Client Secret <Required /></FieldLabel>
-              <SecretField
-                id="googleClientSecret"
-                value={form.googleClientSecret}
-                onChange={(v) => update("googleClientSecret", v)}
-                show={showSecrets.googleClientSecret}
-                onToggle={() => toggleSecret("googleClientSecret")}
-                placeholder="GOCSPX-xxxxxxxxxx"
-                error={errors.googleClientSecret}
-              />
-            </FieldGroup>
+      <CollapsibleSection title="OAuth (Google)">
+        <div className="space-y-3">
+          <FeatureToggle
+            title="Google"
+            description="Sign in with Google"
+            checked={form.wantGoogle}
+            onChange={(v) => update("wantGoogle", v)}
+          />
+          {form.wantGoogle && (
+            <div className="ml-6 space-y-4 border-l border-border/30 pl-4">
+              <Hint>
+                <HintLink href="https://console.cloud.google.com/apis/credentials">Google Cloud Console</HintLink> →
+                Create OAuth 2.0 Client. Add redirect URI:{" "}
+                <code className="bg-muted/50 px-1 text-[9px]">{form.betterAuthUrl}/api/auth/callback/google</code>
+              </Hint>
+              <FieldGroup>
+                <FieldLabel htmlFor="googleClientId">Client ID <Required /></FieldLabel>
+                <PlainField
+                  id="googleClientId"
+                  value={form.googleClientId}
+                  onChange={(v) => update("googleClientId", v)}
+                  placeholder="xxxx.apps.googleusercontent.com"
+                  error={errors.googleClientId}
+                />
+              </FieldGroup>
+              <FieldGroup>
+                <FieldLabel htmlFor="googleClientSecret">Client Secret <Required /></FieldLabel>
+                <SecretField
+                  id="googleClientSecret"
+                  value={form.googleClientSecret}
+                  onChange={(v) => update("googleClientSecret", v)}
+                  show={showSecrets.googleClientSecret}
+                  onToggle={() => toggleSecret("googleClientSecret")}
+                  placeholder="GOCSPX-xxxxxxxxxx"
+                  error={errors.googleClientSecret}
+                />
+              </FieldGroup>
+            </div>
+          )}
+        </div>
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Email (Resend)">
+        {/localhost|127\.0\.0\.1/.test(form.betterAuthUrl) && (
+          <div className="flex gap-2.5 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2.5 text-[10px] text-amber-700 dark:text-amber-400 leading-relaxed">
+            <AlertTriangle className="size-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-500" />
+            <div>
+              <strong className="font-medium">Local development:</strong> Email (verification, password reset) may only work for the address you used to sign up for Resend, or may not be delivered at all. If you try another email and it fails, that&apos;s expected — the setup isn&apos;t broken. Use your Resend account email for testing.
+            </div>
           </div>
         )}
-      </div>
-
-      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Email (Resend)</p>
-      <Hint>
-        <HintLink href="https://resend.com/signup">Sign up at Resend</HintLink> →{" "}
-        <strong>API Keys</strong> → create a key. Used for password reset and verification emails.
-      </Hint>
-      <FieldGroup>
-        <FieldLabel htmlFor="resendApiKey">Resend API Key</FieldLabel>
-        <SecretField
-          id="resendApiKey"
-          value={form.resendApiKey}
-          onChange={(v) => update("resendApiKey", v)}
-          show={showSecrets.resendApiKey}
-          onToggle={() => toggleSecret("resendApiKey")}
-          placeholder="re_xxxxxxxxxx"
-          error={errors.resendApiKey}
-        />
-      </FieldGroup>
-      <FieldGroup>
-        <FieldLabel htmlFor="resendFromEmail">From address</FieldLabel>
-        <FieldHint>
-          Default: <code className="bg-muted/50 px-1 text-[9px]">{RESEND_DEFAULT_FROM}</code>. Resend requires a verified domain —{" "}
-          <code className="bg-muted/50 px-1 text-[9px]">onboarding@resend.dev</code> is pre-verified for testing. For production, add your domain at{" "}
-          <HintLink href="https://resend.com/domains">resend.com/domains</HintLink> and use e.g.{" "}
-          <code className="bg-muted/50 px-1 text-[9px]">noreply@yourdomain.com</code>.
-        </FieldHint>
-        <PlainField
-          id="resendFromEmail"
-          value={form.resendFromEmail}
-          onChange={(v) => update("resendFromEmail", v)}
-          placeholder={RESEND_DEFAULT_FROM}
-          error={errors.resendFromEmail}
-        />
-      </FieldGroup>
-
-      <div className="flex items-center justify-between rounded-md border border-border/40 px-3 py-2.5">
-        <div>
-          <p className="text-xs font-medium">Email verification</p>
-          <p className="text-[10px] text-muted-foreground">Require users to verify their email before accessing the app</p>
+        <Hint>
+          <HintLink href="https://resend.com/signup">Sign up at Resend</HintLink> →{" "}
+          <strong>API Keys</strong> → create a key. Used for password reset and verification emails.
+        </Hint>
+        <FieldGroup>
+          <FieldLabel htmlFor="resendApiKey">Resend API Key</FieldLabel>
+          <SecretField
+            id="resendApiKey"
+            value={form.resendApiKey}
+            onChange={(v) => update("resendApiKey", v)}
+            show={showSecrets.resendApiKey}
+            onToggle={() => toggleSecret("resendApiKey")}
+            placeholder="re_xxxxxxxxxx"
+            error={errors.resendApiKey}
+          />
+        </FieldGroup>
+        <FieldGroup>
+          <FieldLabel htmlFor="resendFromEmail">From address</FieldLabel>
+          <FieldHint>
+            Default: <code className="bg-muted/50 px-1 text-[9px]">{RESEND_DEFAULT_FROM}</code>. Resend requires a verified domain —{" "}
+            <code className="bg-muted/50 px-1 text-[9px]">onboarding@resend.dev</code> is pre-verified for testing. For production, add your domain at{" "}
+            <HintLink href="https://resend.com/domains">resend.com/domains</HintLink> and use e.g.{" "}
+            <code className="bg-muted/50 px-1 text-[9px]">noreply@yourdomain.com</code>.
+          </FieldHint>
+          <PlainField
+            id="resendFromEmail"
+            value={form.resendFromEmail}
+            onChange={(v) => update("resendFromEmail", v)}
+            placeholder={RESEND_DEFAULT_FROM}
+            error={errors.resendFromEmail}
+          />
+        </FieldGroup>
+        <div className="flex items-center justify-between rounded-md border border-border/40 px-3 py-2.5">
+          <div>
+            <p className="text-xs font-medium">Email verification</p>
+            <p className="text-[10px] text-muted-foreground">Require users to verify their email before accessing the app</p>
+          </div>
+          <Switch
+            checked={form.emailVerificationEnabled}
+            onCheckedChange={(v) => update("emailVerificationEnabled", v)}
+          />
         </div>
-        <Switch
-          checked={form.emailVerificationEnabled}
-          onCheckedChange={(v) => update("emailVerificationEnabled", v)}
-        />
-      </div>
-
-      <div className="flex items-center justify-between rounded-md border border-border/40 px-3 py-2.5">
-        <div>
-          <p className="text-xs font-medium">Forgot password</p>
-          <p className="text-[10px] text-muted-foreground">Show &quot;Forgot?&quot; link on login. Requires Resend API key above to send reset emails.</p>
+        <div className="flex items-center justify-between rounded-md border border-border/40 px-3 py-2.5">
+          <div>
+            <p className="text-xs font-medium">Forgot password</p>
+            <p className="text-[10px] text-muted-foreground">Show &quot;Forgot?&quot; link on login. Requires Resend API key above to send reset emails.</p>
+          </div>
+          <Switch
+            checked={form.forgotPasswordEnabled}
+            onCheckedChange={(v) => update("forgotPasswordEnabled", v)}
+          />
         </div>
-        <Switch
-          checked={form.forgotPasswordEnabled}
-          onCheckedChange={(v) => update("forgotPasswordEnabled", v)}
-        />
-      </div>
-
-      <div className="border border-dashed border-border/40 px-3 py-2.5">
-        <p className="text-[10px] text-muted-foreground/50 leading-relaxed">
-          You can change these later in <strong>Admin → Features</strong> and <strong>Admin → API Keys</strong>.
-        </p>
-      </div>
+        <div className="border border-dashed border-border/40 px-3 py-2.5">
+          <p className="text-[10px] text-muted-foreground/50 leading-relaxed">
+            You can change these later in <strong>Admin → Features</strong> and <strong>Admin → API Keys</strong>.
+          </p>
+        </div>
+      </CollapsibleSection>
     </div>
   );
 }
 
 function PaymentStep({ form, update, errors, showSecrets, toggleSecret }: StepProps) {
   return (
-    <div className="space-y-5">
-      <Hint>
-        <HintLink href={form.polarSandboxMode ? "https://sandbox.polar.sh" : "https://polar.sh/dashboard"}>
-          {form.polarSandboxMode ? "Sandbox Dashboard" : "Polar Dashboard"}
-        </HintLink>{" "}
-        → Settings → Access Tokens. Create an <strong>Organization Access Token</strong> with{" "}
-        <code className="bg-muted/50 px-1 text-[9px]">products:read</code> and{" "}
-        <code className="bg-muted/50 px-1 text-[9px]">products:write</code>.
-        Use sandbox for testing.
-      </Hint>
+    <div className="space-y-4">
+      <CollapsibleSection title="Setup" defaultOpen>
+        <Hint>
+          <HintLink href={form.polarSandboxMode ? "https://sandbox.polar.sh" : "https://polar.sh/dashboard"}>
+            {form.polarSandboxMode ? "Sandbox Dashboard" : "Polar Dashboard"}
+          </HintLink>{" "}
+          → Settings → Access Tokens. Create an <strong>Organization Access Token</strong> with{" "}
+          <code className="bg-muted/50 px-1 text-[9px]">products:read</code> and{" "}
+          <code className="bg-muted/50 px-1 text-[9px]">products:write</code>.
+          Use sandbox for testing.
+        </Hint>
+        <div className="flex items-center justify-between rounded-md border border-border/40 px-3 py-2">
+          <Label htmlFor="polarSandboxMode" className="text-xs font-medium">
+            Sandbox mode
+          </Label>
+          <Switch
+            id="polarSandboxMode"
+            checked={form.polarSandboxMode}
+            onCheckedChange={(v) => update("polarSandboxMode", v)}
+          />
+        </div>
+      </CollapsibleSection>
 
-      <div className="flex items-center justify-between rounded-md border border-border/40 px-3 py-2">
-        <Label htmlFor="polarSandboxMode" className="text-xs font-medium">
-          Sandbox mode
-        </Label>
-        <Switch
-          id="polarSandboxMode"
-          checked={form.polarSandboxMode}
-          onCheckedChange={(v) => update("polarSandboxMode", v)}
-        />
-      </div>
-
-      <FieldGroup>
-        <FieldLabel htmlFor="polarAccessToken">
-          Access Token <Required />
-        </FieldLabel>
-        <SecretField
-          id="polarAccessToken"
-          value={form.polarAccessToken}
-          onChange={(v) => update("polarAccessToken", v)}
-          show={showSecrets.polarAccessToken}
-          onToggle={() => toggleSecret("polarAccessToken")}
-          placeholder="polar_at_xxxxxxxxxx"
-          error={errors.polarAccessToken}
-        />
-      </FieldGroup>
-
-      <FieldGroup>
-        <FieldLabel htmlFor="polarOrganizationId">Organization ID</FieldLabel>
-        <FieldHint>Optional when using an Organization Access Token.</FieldHint>
-        <PlainField
-          id="polarOrganizationId"
-          value={form.polarOrganizationId}
-          onChange={(v) => update("polarOrganizationId", v)}
-          placeholder="UUID from Polar dashboard"
-          error={errors.polarOrganizationId}
-        />
-      </FieldGroup>
-
-      <FieldGroup>
-        <FieldLabel htmlFor="polarWebhookSecret">Webhook Secret</FieldLabel>
-        <FieldHint>From Polar → Webhooks. Required for subscription sync.</FieldHint>
-        <SecretField
-          id="polarWebhookSecret"
-          value={form.polarWebhookSecret}
-          onChange={(v) => update("polarWebhookSecret", v)}
-          show={showSecrets.polarWebhookSecret}
-          onToggle={() => toggleSecret("polarWebhookSecret")}
-          placeholder="From Polar Dashboard → Webhooks"
-          error={errors.polarWebhookSecret}
-        />
-      </FieldGroup>
-
-      <div className="border border-dashed border-border/40 px-3 py-2.5">
-        <p className="text-[10px] text-muted-foreground/50 leading-relaxed">
-          Webhook URL: <code className="bg-muted/50 px-1 text-[9px]">{form.betterAuthUrl}/api/webhooks/polar</code>.
-          For local dev, use ngrok. Configure in Polar → Webhooks.
-        </p>
-      </div>
+      <CollapsibleSection title="Credentials">
+        <FieldGroup>
+          <FieldLabel htmlFor="polarAccessToken">
+            Access Token <Required />
+          </FieldLabel>
+          <SecretField
+            id="polarAccessToken"
+            value={form.polarAccessToken}
+            onChange={(v) => update("polarAccessToken", v)}
+            show={showSecrets.polarAccessToken}
+            onToggle={() => toggleSecret("polarAccessToken")}
+            placeholder="polar_at_xxxxxxxxxx"
+            error={errors.polarAccessToken}
+          />
+        </FieldGroup>
+        <FieldGroup>
+          <FieldLabel htmlFor="polarOrganizationId">Organization ID</FieldLabel>
+          <FieldHint>Optional when using an Organization Access Token.</FieldHint>
+          <PlainField
+            id="polarOrganizationId"
+            value={form.polarOrganizationId}
+            onChange={(v) => update("polarOrganizationId", v)}
+            placeholder="UUID from Polar dashboard"
+            error={errors.polarOrganizationId}
+          />
+        </FieldGroup>
+        <FieldGroup>
+          <FieldLabel htmlFor="polarWebhookSecret">Webhook Secret</FieldLabel>
+          <FieldHint>From Polar → Webhooks. Required for subscription sync.</FieldHint>
+          <SecretField
+            id="polarWebhookSecret"
+            value={form.polarWebhookSecret}
+            onChange={(v) => update("polarWebhookSecret", v)}
+            show={showSecrets.polarWebhookSecret}
+            onToggle={() => toggleSecret("polarWebhookSecret")}
+            placeholder="From Polar Dashboard → Webhooks"
+            error={errors.polarWebhookSecret}
+          />
+        </FieldGroup>
+        <div className="border border-dashed border-border/40 px-3 py-2.5">
+          <p className="text-[10px] text-muted-foreground/50 leading-relaxed">
+            Webhook URL: <code className="bg-muted/50 px-1 text-[9px]">{form.betterAuthUrl}/api/webhooks/polar</code>.
+            For local dev, use ngrok. Configure in Polar → Webhooks.
+          </p>
+        </div>
+      </CollapsibleSection>
     </div>
   );
 }
@@ -711,7 +743,7 @@ function ReviewStep({ form }: { form: FormData }) {
 
       <p className="text-xs text-muted-foreground leading-relaxed mb-4">
         Review your configuration. Clicking <strong>Generate .env & Launch</strong> will create your{" "}
-        <code className="bg-muted/50 px-1 text-[9px]">apps/web/.env</code> file.
+        <code className="bg-muted/50 px-1 text-[9px]">apps/web/.env</code> file and push the database schema.
       </p>
 
       {sections.map((section) => (
@@ -734,9 +766,7 @@ function ReviewStep({ form }: { form: FormData }) {
 
       <div className="border border-dashed border-border/40 px-3 py-2.5 mt-2">
         <p className="text-[10px] text-muted-foreground/50 leading-relaxed">
-          After generating, run:{" "}
-          <code className="bg-muted/50 px-1 text-[9px]">pnpm db:generate && pnpm db:push</code>{" "}
-          to set up your database, then{" "}
+          The wizard will generate your .env, push the schema to your database, then you can run{" "}
           <code className="bg-muted/50 px-1 text-[9px]">pnpm dev</code> to start.
         </p>
       </div>

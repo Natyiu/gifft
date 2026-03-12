@@ -4,6 +4,9 @@ model AppSettings {
   appName                 String   @default("Batman")
   appDescription          String   @default("")
   appUrl                  String   @default("")
+  metaTitle               String?  // Social share title (og:title). Falls back to appName
+  metaDescription         String?  // Social share description (og:description). Falls back to appDescription
+  ogImage                 String?  // Social share preview image URL (og:image)
   appTheme                String   @default("default")
   emailVerificationEnabled Boolean @default(false)
   forgotPasswordEnabled   Boolean  @default(true)

@@ -1,5 +1,6 @@
 "use server";
 
+import { execSync } from "child_process";
 import { readFile, writeFile } from "fs/promises";
 import { dirname, resolve } from "path";
 import { fileURLToPath } from "url";
@@ -13,6 +14,7 @@ const STORAGE_BUCKETS = ["avatars", "uploads", "attachments"] as const;
 // so it works whether the app runs from monorepo root (turbo) or apps/web
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ENV_PATH = resolve(__dirname, "../../../.env");
+const ROOT_PATH = resolve(__dirname, "../../../../");
 
 export async function getSetupStatus() {
   try {
@@ -250,6 +252,20 @@ export async function saveSetup(data: SetupData) {
   lines.push("");
 
   await writeFile(ENV_PATH, lines.join("\n"), "utf-8");
+
+  try {
+    execSync("pnpm db:generate && pnpm db:push", {
+      cwd: ROOT_PATH,
+      stdio: "pipe",
+      encoding: "utf-8",
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    const stderr = err && typeof err === "object" && "stderr" in err ? String((err as { stderr?: string }).stderr) : "";
+    throw new Error(
+      `Database setup failed. .env was saved. Run \`pnpm db:push\` manually from the project root. ${msg}${stderr ? `\n\n${stderr}` : ""}`
+    );
+  }
 
   if (data.supabaseUrl && data.supabaseServiceRoleKey) {
     try {

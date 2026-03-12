@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import {
   Settings2,
@@ -12,9 +12,14 @@ import {
   Link2,
   Clock,
   Pencil,
+  Share2,
+  Upload,
+  Loader2,
+  X,
 } from "lucide-react";
 import { getAppSettings } from "@/lib/actions/user";
 import { updateAppSettings } from "@/lib/actions/admin";
+import { uploadFile } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -40,6 +45,9 @@ type Settings = {
   appName: string;
   appDescription: string;
   appUrl: string;
+  metaTitle: string;
+  metaDescription: string;
+  ogImage: string;
   maintenanceMode: boolean;
   maintenanceMessage: string;
   defaultUserRole: string;
@@ -128,11 +136,16 @@ function ToggleRow({
 export default function AdminGeneralPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [ogImageUploading, setOgImageUploading] = useState(false);
+  const ogImageInputRef = useRef<HTMLInputElement>(null);
   const [legalModal, setLegalModal] = useState<"privacy" | "terms" | null>(null);
   const [s, setS] = useState<Settings>({
     appName: "",
     appDescription: "",
     appUrl: "",
+    metaTitle: "",
+    metaDescription: "",
+    ogImage: "",
     maintenanceMode: false,
     maintenanceMessage: "",
     defaultUserRole: "user",
@@ -151,6 +164,9 @@ export default function AdminGeneralPage() {
         appName: data.appName ?? "",
         appDescription: (data as Record<string, unknown>).appDescription as string ?? "",
         appUrl: (data as Record<string, unknown>).appUrl as string ?? "",
+        metaTitle: (data as Record<string, unknown>).metaTitle as string ?? "",
+        metaDescription: (data as Record<string, unknown>).metaDescription as string ?? "",
+        ogImage: (data as Record<string, unknown>).ogImage as string ?? "",
         maintenanceMode: (data as Record<string, unknown>).maintenanceMode as boolean ?? false,
         maintenanceMessage: (data as Record<string, unknown>).maintenanceMessage as string ?? "",
         defaultUserRole: (data as Record<string, unknown>).defaultUserRole as string ?? "user",
@@ -191,6 +207,36 @@ export default function AdminGeneralPage() {
     } catch {
       update(key, prev);
       toast.error("Failed to update");
+    }
+  }
+
+  async function handleOgImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Image must be under 2MB");
+      return;
+    }
+    setOgImageUploading(true);
+    try {
+      const ext = file.name.split(".").pop() || "png";
+      const path = `site/og-${Date.now()}.${ext}`;
+      const result = await uploadFile("uploads", path, file);
+      if ("error" in result) {
+        toast.error(result.error);
+        return;
+      }
+      update("ogImage", result.url);
+      toast.success("Preview image uploaded");
+    } catch {
+      toast.error("Failed to upload");
+    } finally {
+      setOgImageUploading(false);
     }
   }
 
@@ -259,6 +305,84 @@ export default function AdminGeneralPage() {
             placeholder="https://yourapp.com"
             className="h-8 text-xs"
           />
+        </FieldRow>
+      </SectionCard>
+
+      {/* Social Preview */}
+      <SectionCard
+        icon={Share2}
+        title="Social Preview"
+        description="Title, description, and image shown when your site is shared on social media, messaging apps, or link previews"
+      >
+        <FieldRow
+          label="Share Title"
+          hint="Shown as the main title in link previews. Leave empty to use App Name."
+        >
+          <Input
+            value={s.metaTitle}
+            onChange={(e) => update("metaTitle", e.target.value)}
+            placeholder={s.appName || "My App"}
+            className="h-8 text-xs"
+          />
+        </FieldRow>
+        <FieldRow
+          label="Share Description"
+          hint="Shown as the description in link previews. Leave empty to use App Description."
+        >
+          <Textarea
+            value={s.metaDescription}
+            onChange={(e) => update("metaDescription", e.target.value)}
+            placeholder={s.appDescription || "A brief description of your product"}
+            className="min-h-[60px] text-xs resize-none"
+          />
+        </FieldRow>
+        <FieldRow
+          label="Preview Image"
+          hint="Image shown in link previews (e.g. Facebook, Twitter, Slack). Recommended: 1200×630px. Max 2MB."
+        >
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => ogImageInputRef.current?.click()}
+              disabled={ogImageUploading}
+              className="flex items-center gap-2 h-8 px-3 rounded-md border border-input bg-background text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors disabled:opacity-50"
+            >
+              {ogImageUploading ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <Upload className="h-3 w-3" />
+              )}
+              {ogImageUploading ? "Uploading..." : "Upload image"}
+            </button>
+            <input
+              ref={ogImageInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleOgImageUpload}
+            />
+            {s.ogImage && (
+              <>
+                <div className="relative w-16 h-16 rounded overflow-hidden border border-border/40 shrink-0">
+                  <img
+                    src={s.ogImage}
+                    alt="Social preview"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs text-muted-foreground hover:text-destructive"
+                  onClick={() => update("ogImage", "")}
+                >
+                  <X className="h-3 w-3 mr-1" />
+                  Remove
+                </Button>
+              </>
+            )}
+          </div>
         </FieldRow>
       </SectionCard>
 

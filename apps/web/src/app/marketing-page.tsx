@@ -45,23 +45,23 @@ const techStack = [
 ];
 
 const builtInFeatures = [
-  { title: "Admin Dashboard", desc: "One place to control everything. Users, analytics, products, blog, notifications, feedback. Your startup's command center.", icon: "⚡" },
-  { title: "Auth", desc: "Sign up, login, OAuth. Production-grade. Scales to millions. No auth headaches.", icon: "🔐" },
-  { title: "Payments", desc: "Polar subscriptions wired. Create products, checkout, webhooks. Monetize from day one.", icon: "💳" },
-  { title: "User Dashboard", desc: "Settings, organizations, invitations. Pro tier ready. Built for SaaS.", icon: "👤" },
-  { title: "File Storage", desc: "Supabase storage. Uploads, avatars. S3-compatible. Production-ready.", icon: "📁" },
-  { title: "Blog & CMS", desc: "Rich text, authors, SEO. Ship content without building a CMS.", icon: "✍️" },
-  { title: "Notifications", desc: "In-app notifications, tags. Keep users engaged. Out of the box.", icon: "🔔" },
-  { title: "Setup Wizard", desc: "Guided setup. Database, auth, storage, OAuth, payments. Non-technical founders can get live.", icon: "🧙" },
+  { title: "Admin Dashboard", desc: "Manage users, analytics, products, blog, notifications, feedback. One control panel for your whole app.", icon: "⚡" },
+  { title: "Auth", desc: "Sign up, login, Google sign-in. Production-ready. No auth headaches.", icon: "🔐" },
+  { title: "Payments", desc: "Subscriptions with Polar. Create products, add checkout. Start taking payments from day one.", icon: "💳" },
+  { title: "User Dashboard", desc: "Settings, teams, invitations. Built for SaaS. Pro tier structure included.", icon: "👤" },
+  { title: "File Storage", desc: "Uploads and avatars via Supabase. Ready to use.", icon: "📁" },
+  { title: "Blog & CMS", desc: "Rich text editor, authors, SEO. Ship content without building a CMS.", icon: "✍️" },
+  { title: "Notifications", desc: "In-app notifications. Keep users engaged. Included.", icon: "🔔" },
+  { title: "Setup Wizard", desc: "Guided setup for database, auth, storage, email, social login, payments. Non-technical founders can go live.", icon: "🧙" },
 ];
 
 const outOfTheBox = [
-  { title: "Auth", detail: "Sign up, login, password reset. Google OAuth. Sessions and email verification included." },
-  { title: "Admin dashboard", detail: "Users, analytics, blog CMS, notifications( send message to users), pricing, receive feedback, manage API keys. One control panel for everything." },
-  { title: "Payments", detail: "Polar subscriptions wired. Create products, checkout flow, webhooks. Connect your account and start accepting payments." },
-  { title: "User dashboard", detail: "Settings, organizations, invitations, notifications. Pro tier structure ready." },
-  { title: "Storage & blog", detail: "Supabase storage for any upload feature for your app and avatars. Rich text blog with authors and SEO." },
-  { title: "Setup Wizard", detail: "Out of the box setup Guide to help you get started: database, auth, features (storage, email, OAuth, payments). Generates .env for you — no manual config." },
+  { title: "Auth", detail: "Sign up, login, password reset, Google sign-in. Ready to use — no setup headaches." },
+  { title: "Admin dashboard", detail: "Manage users, view analytics, run your blog, send notifications, set pricing, collect feedback, manage API keys. One place for everything." },
+  { title: "Payments", detail: "Subscriptions wired with Polar. Create products, add checkout, connect your account. Start taking payments right away." },
+  { title: "User dashboard", detail: "Settings, teams, invitations, notifications. Built for SaaS. Pro tier structure included." },
+  { title: "Storage & blog", detail: "File uploads and avatars via Supabase. Rich text blog with authors and SEO. Ship content without building a CMS." },
+  { title: "Setup Wizard", detail: "Guided setup walks you through database, auth, storage, email, social login, payments. Generates config for you — no manual editing." },
 ];
 
 const nightQuotes = [
@@ -283,19 +283,19 @@ export default function MarketingPage() {
               <BatLogo className="h-4 sm:h-5 w-auto text-foreground" />
               <div className="flex flex-col leading-none">
                 <span className="font-semibold text-xs sm:text-sm tracking-widest uppercase">Batman</span>
-                <span className="hidden sm:block text-[9px] tracking-[0.25em] uppercase text-muted-foreground">Production boilerplate for founders</span>
+                <span className="hidden sm:block text-[9px] tracking-[0.25em] uppercase text-muted-foreground">Full-stack startup template — auth, payments, admin</span>
               </div>
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <ThemeToggle />
+             
+              <a href="#how-it-works">
+                <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground hover:bg-secondary h-8 px-2 sm:px-3">
+                  How it works
+                </Button>
+              </a>
               <a href="#features">
                 <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground hover:bg-secondary h-8 px-2 sm:px-3">
                   Features
-                </Button>
-              </a>
-              <a href="#tech-stack">
-                <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground hover:bg-secondary h-8 px-2 sm:px-3">
-                  Tech Stack
                 </Button>
               </a>
               <a href="#pricing">
@@ -308,6 +308,7 @@ export default function MarketingPage() {
                   Blog
                 </Button>
               </Link>
+              <ThemeToggle />
             </div>
           </div>
         </div>
@@ -324,12 +325,12 @@ export default function MarketingPage() {
               </span>
               <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                 <span className="text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-muted-foreground/50">
-                  For Founders Who Ship
+                  What is Batman?
                 </span>
                 <div className="h-px flex-1 bg-border/30" />
-                <span className="text-sm sm:text-base font-semibold tracking-tight text-foreground">
-                  Production codebase. One admin. Ship in hours.
-                </span>
+                {/* <span className="text-sm sm:text-base font-semibold tracking-tight text-foreground">
+                  Full-stack template. Auth, payments, admin. Setup in 4 steps.
+                </span> */}
               </div>
             </div>
           </div>
@@ -362,29 +363,20 @@ export default function MarketingPage() {
             <div className="flex items-center gap-2 mb-3 sm:mb-4">
               <div className="h-px w-6 sm:w-8 bg-foreground" />
               <span className="text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-muted-foreground/50">
-                For founders
+                Save months of building
               </span>
             </div>
 
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight leading-[1.15] mb-3 sm:mb-4">
-              Ship your startup<br />
-              <span className="text-muted-foreground/50">in hours, not months.</span>
+              Everything your startup needs,<br />
+              <span className="text-muted-foreground/50">ready in 4 steps.</span>
             </h1>
 
-            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-md mb-4 sm:mb-5">
-      A startup boilerplate with everything built in: auth, payments, admin dashboard, user management. All-in-one control panel. Scale to millions of users.
+            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-md mb-6 sm:mb-7">
+            Batman is a full-stack template with auth, payments, admin dashboard, and user management already 
+              built. No need to wire up login, checkout, or an admin panel — it&apos;s all there. One-time 
+              purchase. Clone, run the guided setup, and go live.
             </p>
-
-            {/* Mini tech list */}
-            <div className="grid grid-cols-2 gap-x-5 gap-y-1.5 mb-4 sm:mb-5">
-              {techStack.slice(0, 6).map((f) => (
-                <div key={f.label} className="flex items-center gap-2">
-                  <div className="w-1 h-1 rounded-full bg-foreground/40 shrink-0" />
-                  <span className="text-[10px] sm:text-xs font-mono text-foreground/70">{f.label}</span>
-                  <span className="text-[9px] sm:text-[10px] text-muted-foreground/40">{f.desc}</span>
-                </div>
-              ))}
-            </div>
 
             {/* CTA */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
@@ -393,9 +385,9 @@ export default function MarketingPage() {
                   Get Batman — $49.99
                 </Button>
               </a>
-              <Link href="#setup">
+              <Link href="#how-it-works">
                 <Button variant="ghost" className="h-9 w-full sm:w-auto px-5 text-sm text-muted-foreground hover:text-foreground">
-                  View Setup
+                  See how easy setup is
                 </Button>
               </Link>
             </div>
@@ -428,6 +420,43 @@ export default function MarketingPage() {
           ))}
         </div>
       </section>
+
+      {/* How easy is setup — 4 steps, always visible */}
+      <section id="how-it-works" className="border-b border-border/50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+          <div className="flex items-center gap-2 mb-6">
+            <div className="h-px w-6 sm:w-8 bg-foreground" />
+            <span className="text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-muted-foreground/50">
+              How easy is setup?
+            </span>
+          </div>
+          <h2 className="text-lg sm:text-xl font-semibold tracking-tight mb-2">
+            Four steps. No config files to edit.
+          </h2>
+          <p className="text-xs sm:text-sm text-muted-foreground mb-8 max-w-xl">
+            A guided Setup Wizard walks you through everything. Non-technical founders can get live without touching code.
+          </p>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {setupSteps.map((step) => (
+              <div key={step.number} className="border border-border/40 rounded-lg p-4 sm:p-5">
+                <span className="font-mono text-xs text-muted-foreground/50 mb-2 block">{step.number}</span>
+                <p className="text-sm font-medium mb-2">{step.title}</p>
+                {step.command && (
+                  <div className="font-mono text-[10px] sm:text-xs bg-secondary/50 border border-border/30 rounded px-2.5 py-2 text-muted-foreground overflow-x-auto">
+                    <span className="text-foreground/60 select-none">$ </span>
+                    {step.command}
+                  </div>
+                )}
+                {step.detail && (
+                  <p className="text-[10px] sm:text-xs text-muted-foreground mt-2 leading-relaxed">{step.detail}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      
 
       {/* Tech Stack — full list */}
       {/* <section id="tech-stack" className="border-t border-border/50">
@@ -462,7 +491,7 @@ export default function MarketingPage() {
             </span>
           </div>
           <h2 className="text-lg sm:text-xl font-semibold tracking-tight mb-6">
-            Everything included.
+            What you get out of the box.
           </h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {outOfTheBox.map((item, i) => (
@@ -490,10 +519,10 @@ export default function MarketingPage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
             <div>
               <h2 className="text-lg sm:text-xl font-semibold tracking-tight mb-1">
-                One-time purchase
+                One-time purchase. No subscription.
               </h2>
               <p className="text-[11px] sm:text-xs text-muted-foreground">
-                Pay once. Get lifetime access to the codebase.
+                Pay once. Get lifetime access to the full codebase. No recurring fees.
               </p>
             </div>
             <div className="flex items-baseline gap-1">
@@ -518,7 +547,7 @@ export default function MarketingPage() {
             </span>
           </div>
           <h2 className="text-xl sm:text-2xl font-semibold tracking-tight mb-6 sm:mb-8">
-            Everything your startup needs. Crafted out of the box.
+            Auth, payments, admin — all built in.
           </h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {builtInFeatures.map((f, i) => (
@@ -537,28 +566,28 @@ export default function MarketingPage() {
 
       {/* Expandable Sections */}
       <div id="setup" className="mt-[6vh] border-t border-border/50">
-        <ExpandableSection number="01" label="Vibe Coding" title="Describe your product. Your AI builds it." open={openSection === "01"} onToggle={() => setOpenSection(openSection === "01" ? null : "01")}>
+        <ExpandableSection number="01" label="Works with AI" title="Describe your product. Your AI builds it." open={openSection === "01"} onToggle={() => setOpenSection(openSection === "01" ? null : "01")}>
           <div className="max-w-2xl">
             <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mb-6 sm:mb-8">
-              You don&apos;t need to be technical. Open Cursor or Claude, describe what you want — the AI writes the code. Batman gives you a solid, production-grade foundation. Not a random vibe-coded prototype. A codebase that scales. Auth, admin, payments — all wired. Your AI knows where everything goes. Describe your feature. Ship your startup.
+              Use Cursor, Claude, or Codex and describe what you want — the AI writes the code. Batman gives you a solid foundation: auth, admin, payments, everything wired. No random prototype. A real codebase that scales. AI tools know where to add features. Describe your idea. Ship your startup.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-6">
               <div className="space-y-1.5 sm:space-y-2">
                 <p className="text-sm font-medium">For founders</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Technical or non-technical. Describe your product. The architecture is there. Your AI builds on a real foundation.
+                  Technical or not. Describe your product. The structure is there. AI builds on a real foundation.
                 </p>
               </div>
               <div className="space-y-1.5 sm:space-y-2">
                 <p className="text-sm font-medium">Production code</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Solid codebase. Scales to millions. Not a hacky prototype. Everything crafted for real startups.
+                  Solid codebase. Scales to millions. Not a hacky prototype. Built for real startups.
                 </p>
               </div>
               <div className="space-y-1.5 sm:space-y-2">
                 <p className="text-sm font-medium">Ship in hours</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Guided Setup Wizard. One admin dashboard. Describe your feature. Your startup is live.
+                  Guided Setup Wizard. One admin dashboard. Describe your feature. Go live.
                 </p>
               </div>
             </div>
@@ -622,10 +651,10 @@ export default function MarketingPage() {
             &ldquo;{nightQuotes[1]}&rdquo;
           </p>
           <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight mb-3">
-            For founders who want to ship.
+            Ready to ship your startup?
           </h2>
           <p className="text-xs sm:text-sm text-muted-foreground mb-6 sm:mb-8 max-w-lg mx-auto">
-            Production-grade codebase. One admin dashboard. Everything crafted out of the box. Technical or non-technical — ship your startup in hours. Get Batman.
+            Full-stack template with auth, payments, and admin. One-time purchase. Guided setup. No config headaches. Get Batman.
           </p>
           <a href="/api/checkout/marketing">
             <Button className="h-11 px-8 text-sm font-medium bg-foreground text-background hover:bg-foreground/90">

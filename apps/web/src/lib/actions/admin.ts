@@ -40,6 +40,9 @@ export async function updateAppSettings(data: {
   appName?: string;
   appDescription?: string;
   appUrl?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  ogImage?: string;
   emailVerificationEnabled?: boolean;
   forgotPasswordEnabled?: boolean;
   socialLoginEnabled?: boolean;
