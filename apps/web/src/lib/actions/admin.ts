@@ -1,9 +1,33 @@
 "use server";
 
+import { readFile } from "fs/promises";
+import { dirname, resolve } from "path";
+import { fileURLToPath } from "url";
+
 import { auth } from "@Batman/auth";
 import prisma from "@Batman/db";
 import { headers } from "next/headers";
 import geoip from "geoip-country";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const ENV_PATH = resolve(__dirname, "../../../.env");
+
+async function readEnvVars(): Promise<Record<string, string>> {
+  try {
+    const content = await readFile(ENV_PATH, "utf-8");
+    const vars: Record<string, string> = {};
+    for (const line of content.split("\n").filter((l) => l.trim() && !l.startsWith("#"))) {
+      const eqIdx = line.indexOf("=");
+      if (eqIdx === -1) continue;
+      const key = line.slice(0, eqIdx).trim();
+      const val = line.slice(eqIdx + 1).trim().replace(/^["']|["']$/g, "");
+      vars[key] = val;
+    }
+    return vars;
+  } catch {
+    return {};
+  }
+}
 
 async function requireAdmin() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -87,51 +111,55 @@ export async function updateAppSettings(data: {
 export async function getApiKeys() {
   await requireAdmin();
 
-  const settings = await prisma.appSettings.findUnique({
-    where: { id: "default" },
-    select: {
-      supabaseUrl: true,
-      supabaseAnonKey: true,
-      supabaseServiceRoleKey: true,
-      resendApiKey: true,
-      resendFromEmail: true,
-      googleClientId: true,
-      googleClientSecret: true,
-      polarAccessToken: true,
-      polarOrganizationId: true,
-      polarWebhookSecret: true,
-      polarSandboxMode: true,
-    },
-  });
+  const [settings, env] = await Promise.all([
+    prisma.appSettings.findUnique({
+      where: { id: "default" },
+      select: {
+        supabaseUrl: true,
+        supabaseAnonKey: true,
+        supabaseServiceRoleKey: true,
+        resendApiKey: true,
+        resendFromEmail: true,
+        googleClientId: true,
+        googleClientSecret: true,
+        polarAccessToken: true,
+        polarOrganizationId: true,
+        polarWebhookSecret: true,
+        polarSandboxMode: true,
+      },
+    }),
+    readEnvVars(),
+  ]);
 
-  if (!settings) {
-    return {
-      supabaseUrl: "",
-      supabaseAnonKey: "",
-      supabaseServiceRoleKey: "",
-      resendApiKey: "",
-      resendFromEmail: "noreply@updates.yourdomain.com",
-      googleClientId: "",
-      googleClientSecret: "",
-      polarAccessToken: "",
-      polarOrganizationId: "",
-      polarWebhookSecret: "",
-      polarSandboxMode: false,
-    };
-  }
+  const supabaseUrl =
+    settings?.supabaseUrl ?? env.SUPABASE_URL ?? env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+  const supabaseAnonKey = settings?.supabaseAnonKey ?? env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+  const supabaseServiceRoleKey =
+    settings?.supabaseServiceRoleKey ?? env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+  const resendApiKey = settings?.resendApiKey ?? env.RESEND_API_KEY ?? "";
+  const resendFromEmail =
+    settings?.resendFromEmail ?? env.RESEND_FROM_EMAIL ?? "noreply@updates.yourdomain.com";
+  const googleClientId = settings?.googleClientId ?? env.GOOGLE_CLIENT_ID ?? "";
+  const googleClientSecret = settings?.googleClientSecret ?? env.GOOGLE_CLIENT_SECRET ?? "";
+  const polarAccessToken = settings?.polarAccessToken ?? env.POLAR_ACCESS_TOKEN ?? "";
+  const polarOrganizationId =
+    settings?.polarOrganizationId ?? env.POLAR_ORGANIZATION_ID ?? "";
+  const polarWebhookSecret = settings?.polarWebhookSecret ?? env.POLAR_WEBHOOK_SECRET ?? "";
+  const polarSandboxMode =
+    settings?.polarSandboxMode ?? env.POLAR_SANDBOX_MODE === "true";
 
   return {
-    supabaseUrl: settings.supabaseUrl ?? "",
-    supabaseAnonKey: mask(settings.supabaseAnonKey),
-    supabaseServiceRoleKey: mask(settings.supabaseServiceRoleKey),
-    resendApiKey: mask(settings.resendApiKey),
-    resendFromEmail: settings.resendFromEmail ?? "noreply@updates.yourdomain.com",
-    googleClientId: settings.googleClientId ?? "",
-    googleClientSecret: mask(settings.googleClientSecret),
-    polarAccessToken: mask(settings.polarAccessToken),
-    polarOrganizationId: settings.polarOrganizationId ?? "",
-    polarWebhookSecret: mask(settings.polarWebhookSecret),
-    polarSandboxMode: settings.polarSandboxMode ?? false,
+    supabaseUrl,
+    supabaseAnonKey: mask(supabaseAnonKey),
+    supabaseServiceRoleKey: mask(supabaseServiceRoleKey),
+    resendApiKey: mask(resendApiKey),
+    resendFromEmail,
+    googleClientId,
+    googleClientSecret: mask(googleClientSecret),
+    polarAccessToken: mask(polarAccessToken),
+    polarOrganizationId,
+    polarWebhookSecret: mask(polarWebhookSecret),
+    polarSandboxMode,
   };
 }
 

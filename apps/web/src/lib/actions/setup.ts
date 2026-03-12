@@ -261,9 +261,12 @@ export async function saveSetup(data: SetupData) {
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    const stderr = err && typeof err === "object" && "stderr" in err ? String((err as { stderr?: string }).stderr) : "";
+    const execErr = err as { stderr?: string; stdout?: string };
+    const stderr = execErr?.stderr ? String(execErr.stderr).trim() : "";
+    const stdout = execErr?.stdout ? String(execErr.stdout).trim() : "";
+    const output = [stderr, stdout].filter(Boolean).join("\n");
     throw new Error(
-      `Database setup failed. .env was saved. Run \`pnpm db:push\` manually from the project root. ${msg}${stderr ? `\n\n${stderr}` : ""}`
+      `Database setup failed. .env was saved. Run \`pnpm db:push\` manually from the project root.\n\n${output || msg}`
     );
   }
 
@@ -283,14 +286,18 @@ export async function saveSetup(data: SetupData) {
 
   const hasGoogle = !!(data.googleClientId && data.googleClientSecret);
   const hasSocial = hasGoogle;
+  const hasPolar =
+    data.polarAccessToken ||
+    data.polarOrganizationId ||
+    data.polarWebhookSecret ||
+    data.polarSandboxMode !== undefined;
   const hasAuthSettings =
     hasSocial ||
     data.resendApiKey ||
     data.resendFromEmail ||
     data.emailVerificationEnabled !== undefined ||
     data.forgotPasswordEnabled !== undefined ||
-    data.polarAccessToken ||
-    data.polarWebhookSecret;
+    hasPolar;
 
   if (hasAuthSettings) {
     try {
@@ -314,14 +321,12 @@ export async function saveSetup(data: SetupData) {
           ...(data.forgotPasswordEnabled !== undefined && {
             forgotPasswordEnabled: data.forgotPasswordEnabled,
           }),
-          ...(data.polarAccessToken || data.polarWebhookSecret
-            ? {
-                polarAccessToken: data.polarAccessToken || null,
-                polarOrganizationId: data.polarOrganizationId || null,
-                polarWebhookSecret: data.polarWebhookSecret || null,
-                polarSandboxMode: data.polarSandboxMode ?? undefined,
-              }
-            : {}),
+          ...(hasPolar && {
+            polarAccessToken: data.polarAccessToken || null,
+            polarOrganizationId: data.polarOrganizationId || null,
+            polarWebhookSecret: data.polarWebhookSecret || null,
+            polarSandboxMode: data.polarSandboxMode ?? undefined,
+          }),
         },
         create: {
           id: "default",
