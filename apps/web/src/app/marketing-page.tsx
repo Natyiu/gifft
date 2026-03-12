@@ -68,6 +68,7 @@ const nightQuotes = [
   "The night is darkest just before the deploy.",
   "It's not who you are underneath, it's what you ship that defines you.",
   "Founders ship. Batman gives you the codebase.",
+  "The codebase you reach for when you have an idea at 3am.",
 ];
 
 const setupSteps = [
@@ -283,7 +284,7 @@ export default function MarketingPage() {
               <BatLogo className="h-4 sm:h-5 w-auto text-foreground" />
               <div className="flex flex-col leading-none">
                 <span className="font-semibold text-xs sm:text-sm tracking-widest uppercase">Batman</span>
-                <span className="hidden sm:block text-[9px] tracking-[0.25em] uppercase text-muted-foreground">Full-stack startup template — auth, payments, admin</span>
+                <span className="hidden sm:block text-[9px] tracking-[0.25em] uppercase text-muted-foreground">The founder&apos;s codebase — ship your startup in hours</span>
               </div>
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2">
@@ -325,11 +326,11 @@ export default function MarketingPage() {
               </span>
               <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                 <span className="text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-muted-foreground/50">
-                  What is Batman?
+                  For founders
                 </span>
                 <div className="h-px flex-1 bg-border/30" />
                 {/* <span className="text-sm sm:text-base font-semibold tracking-tight text-foreground">
-                  Full-stack template. Auth, payments, admin. Setup in 4 steps.
+                  Solid codebase. End-to-end configured. Built for startups.
                 </span> */}
               </div>
             </div>
@@ -352,7 +353,7 @@ export default function MarketingPage() {
               <div className="absolute inset-0 bg-linear-to-r from-transparent to-background/40" />
               <div className="absolute bottom-4 left-5 right-5">
                 <p className="text-xs font-mono text-foreground/60 italic">
-                  &ldquo;{nightQuotes[0]}&rdquo;
+                  &ldquo;{nightQuotes[3]}&rdquo;
                 </p>
               </div>
             </div>
@@ -363,19 +364,17 @@ export default function MarketingPage() {
             <div className="flex items-center gap-2 mb-3 sm:mb-4">
               <div className="h-px w-6 sm:w-8 bg-foreground" />
               <span className="text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-muted-foreground/50">
-                Save months of building
+                For founders who mean it
               </span>
             </div>
 
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight leading-[1.15] mb-3 sm:mb-4">
-              Everything your startup needs,<br />
-              <span className="text-muted-foreground/50">ready in 4 steps.</span>
+              You had an idea at 3am.<br />
+              <span className="text-muted-foreground/50">Ship it in hours.</span>
             </h1>
 
             <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-md mb-6 sm:mb-7">
-            Batman is a full-stack template with auth, payments, admin dashboard, and user management already 
-              built. No need to wire up login, checkout, or an admin panel — it&apos;s all there. One-time 
-              purchase. Clone, run the guided setup, and go live.
+              Not just a tech stack. A founder-first codebase — auth, payments, admin, everything configured. One purchase. Guided setup. Build your product.
             </p>
 
             {/* CTA */}
@@ -394,7 +393,7 @@ export default function MarketingPage() {
 
             {/* Mobile quote */}
             <p className="mt-4 text-xs text-muted-foreground/40 italic md:hidden">
-              &ldquo;{nightQuotes[0]}&rdquo;
+              &ldquo;{nightQuotes[3]}&rdquo;
             </p>
           </div>
         </div>
@@ -434,7 +433,7 @@ export default function MarketingPage() {
             Four steps. No config files to edit.
           </h2>
           <p className="text-xs sm:text-sm text-muted-foreground mb-8 max-w-xl">
-            A guided Setup Wizard walks you through everything. Non-technical founders can get live without touching code.
+            Built for founders. A guided Setup Wizard walks you through everything — database, auth, payments. Configure and go live. No coding required.
           </p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {setupSteps.map((step) => (
@@ -490,9 +489,12 @@ export default function MarketingPage() {
               Out of the box
             </span>
           </div>
-          <h2 className="text-lg sm:text-xl font-semibold tracking-tight mb-6">
-            What you get out of the box.
+          <h2 className="text-lg sm:text-xl font-semibold tracking-tight mb-2">
+            Everything a founder needs to configure and build.
           </h2>
+          <p className="text-xs sm:text-sm text-muted-foreground mb-6 max-w-xl">
+            Not a generic scaffold. Tailored for startups — solid codebase, end-to-end configured. Configure your product. Build your product.
+          </p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {outOfTheBox.map((item, i) => (
               <div
@@ -547,7 +549,7 @@ export default function MarketingPage() {
             </span>
           </div>
           <h2 className="text-xl sm:text-2xl font-semibold tracking-tight mb-6 sm:mb-8">
-            Auth, payments, admin — all built in.
+            Built for startups. Auth, payments, admin — all configured.
           </h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {builtInFeatures.map((f, i) => (
@@ -569,7 +571,7 @@ export default function MarketingPage() {
         <ExpandableSection number="01" label="Works with AI" title="Describe your product. Your AI builds it." open={openSection === "01"} onToggle={() => setOpenSection(openSection === "01" ? null : "01")}>
           <div className="max-w-2xl">
             <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mb-6 sm:mb-8">
-              Use Cursor, Claude, or Codex and describe what you want — the AI writes the code. Batman gives you a solid foundation: auth, admin, payments, everything wired. No random prototype. A real codebase that scales. AI tools know where to add features. Describe your idea. Ship your startup.
+              Batman isn&apos;t just a tech stack — it&apos;s built for founders. Use Cursor, Claude, or Codex and describe what you want. AI writes the code on a solid foundation: auth, admin, payments, everything wired. A real startup codebase that scales. Describe your idea. Ship.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-6">
               <div className="space-y-1.5 sm:space-y-2">
@@ -651,10 +653,10 @@ export default function MarketingPage() {
             &ldquo;{nightQuotes[1]}&rdquo;
           </p>
           <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight mb-3">
-            Ready to ship your startup?
+            For founders ready to ship.
           </h2>
           <p className="text-xs sm:text-sm text-muted-foreground mb-6 sm:mb-8 max-w-lg mx-auto">
-            Full-stack template with auth, payments, and admin. One-time purchase. Guided setup. No config headaches. Get Batman.
+            Solid codebase. End-to-end configured. One-time purchase. The founder&apos;s codebase when you have an idea and need to move.
           </p>
           <a href="/api/checkout/marketing">
             <Button className="h-11 px-8 text-sm font-medium bg-foreground text-background hover:bg-foreground/90">
