@@ -1,1 +1,12 @@
+model MarketingPurchase {
+  id           String   @id @default(cuid())
+  email        String
+  polarOrderId String   @unique
+  downloadToken String  @unique
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
 
+  @@index([downloadToken])
+  @@index([email])
+  @@map("marketing_purchase")
+}
