@@ -1,11 +1,3 @@
-/**
- * Webhook for marketing Polar org (one-time codebase purchases).
- * Configure this URL in your marketing Polar dashboard if you use a separate
- * Polar org from the main boilerplate's Polar config.
- *
- * URL: https://yoursite.com/api/webhooks/polar-marketing
- * Secret: POLAR_MARKETING_WEBHOOK_SECRET or POLAR_WEBHOOK_SECRET
- */
 import { NextRequest, NextResponse } from "next/server";
 import { validateEvent, WebhookVerificationError } from "@polar-sh/sdk/webhooks";
 
@@ -62,13 +54,12 @@ export async function POST(req: NextRequest) {
     const productId = extractProductId(data);
     const billingReason = extractBillingReason(data);
 
-    // Safety: marketing webhook should only receive one-time purchases, but guard anyway
     if (
       billingReason === "subscription_create" ||
       billingReason === "subscription_cycle" ||
       billingReason === "subscription_update"
     ) {
-      return NextResponse.json({ received: true }); // Subscription order — wrong webhook, ignore
+      return NextResponse.json({ received: true });
     }
 
     if (!email) {
@@ -84,7 +75,7 @@ export async function POST(req: NextRequest) {
       email,
       polarOrderId: orderId,
       productId,
-      forceMarketing: true, // Dedicated marketing webhook — all orders are codebase purchases
+      forceMarketing: true,
       billingReason,
     });
 

@@ -1,12 +1,11 @@
 import path from "node:path";
 import { config } from "dotenv";
 
-// Load .env: try apps/web/.env when running from monorepo root, else .env in cwd
+// Load .env: try apps/web and apps/marketing when running from monorepo root
 const cwd = process.cwd();
-const webEnvPath = path.resolve(cwd, "apps/web/.env");
-const localEnvPath = path.resolve(cwd, ".env");
-config({ path: webEnvPath });
-config({ path: localEnvPath }); // overrides when running from apps/web (same file)
+[path.resolve(cwd, "apps/web/.env"), path.resolve(cwd, "apps/marketing/.env"), path.resolve(cwd, ".env")].forEach(
+  (p) => config({ path: p })
+);
 
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
@@ -15,8 +14,9 @@ export const env = createEnv({
   server: {
     DATABASE_URL: z.string().min(1),
     BETTER_AUTH_SECRET: z.string().min(32),
-    BETTER_AUTH_URL: z.url(),
-    CORS_ORIGIN: z.url(),
+    // Allow any non-empty string here so local/dev setups with custom hosts still work
+    BETTER_AUTH_URL: z.string().min(1),
+    CORS_ORIGIN: z.string().min(1),
     NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
     // All keys below are optional fallbacks — prefer configuring via Admin > Settings > API Keys
     SUPABASE_URL: z.string().url().optional(),

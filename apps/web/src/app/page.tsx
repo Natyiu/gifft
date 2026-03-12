@@ -12,11 +12,6 @@ import { SetupWizard } from "@/components/setup-wizard";
 import { getSetupStatus } from "@/lib/actions/setup";
 import { getAppSettings } from "@/lib/actions/user";
 import { getSiteSettings } from "@/lib/actions/site-settings";
-import { isMarketing } from "@/lib/marketing";
-
-const MarketingPage = dynamic(() => import("./marketing-page"), {
-  ssr: true,
-});
 
 const WaitlistPage = dynamic(() => import("./waitlist-page").then((m) => ({ default: m.WaitlistPage })), {
   ssr: true,
@@ -54,13 +49,6 @@ export default function Page() {
   }
   if (siteSettings?.waitlist) {
     return <WaitlistPage settings={siteSettings.waitlist} />;
-  }
-  if (isMarketing) {
-    return (
-      <Suspense fallback={null}>
-        <MarketingPage />
-      </Suspense>
-    );
   }
   return <StarterPage />;
 }

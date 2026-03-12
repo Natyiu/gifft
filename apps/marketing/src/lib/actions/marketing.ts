@@ -9,65 +9,44 @@ export function isMarketingProduct(productId: string | undefined): boolean {
   return !!MARKETING_PRODUCT_ID && productId === MARKETING_PRODUCT_ID;
 }
 
-/**
- * Marketing = one-time codebase purchase (Batman.zip download).
- * Boilerplate = Pro subscription (dashboard/pro access).
- * These must never clash: subscription payments must NOT trigger download links.
- */
 export async function grantCodebaseAccess(params: {
   email: string;
   polarOrderId: string;
   productId?: string;
-  /** When true (e.g. from polar-marketing webhook), skip product ID check — all orders are marketing */
   forceMarketing?: boolean;
-  /** Polar billing_reason: "purchase" = one-time, "subscription_create"|"subscription_cycle"|"subscription_update" = subscription. Never grant download for subscription. */
   billingReason?: string;
 }): Promise<{ ok: boolean; error?: string }> {
   const { email, polarOrderId, productId, forceMarketing, billingReason } = params;
 
-  // Never grant codebase access for subscription payments (boilerplate Pro tier)
   const isSubscriptionOrder =
     billingReason === "subscription_create" ||
     billingReason === "subscription_cycle" ||
     billingReason === "subscription_update";
-  if (isSubscriptionOrder) {
-    return { ok: true }; // Boilerplate subscription — ignore
-  }
+  if (isSubscriptionOrder) return { ok: true };
 
-  if (!forceMarketing && !isMarketingProduct(productId)) {
-    return { ok: true }; // Not our product, ignore
-  }
+  if (!forceMarketing && !isMarketingProduct(productId)) return { ok: true };
 
   const emailNorm = email?.toLowerCase().trim();
-  if (!emailNorm) {
-    return { ok: false, error: "No customer email" };
-  }
+  if (!emailNorm) return { ok: false, error: "No customer email" };
 
   const downloadToken = randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + DOWNLOAD_LINK_EXPIRY_HOURS * 60 * 60 * 1000);
 
   try {
     await prisma.marketingPurchase.create({
-      data: {
-        email: emailNorm,
-        polarOrderId,
-        downloadToken,
-        expiresAt,
-      },
+      data: { email: emailNorm, polarOrderId, downloadToken, expiresAt },
     });
   } catch (e) {
-    // Duplicate order - already processed
-    if (e && typeof e === "object" && "code" in e && e.code === "P2002") {
-      return { ok: true };
-    }
+    if (e && typeof e === "object" && "code" in e && e.code === "P2002") return { ok: true };
     console.error("[Marketing] Failed to create purchase:", e);
     return { ok: false, error: "Database error" };
   }
 
   const baseUrl =
+    process.env.MARKETING_URL ||
     process.env.BETTER_AUTH_URL ||
     process.env.CORS_ORIGIN ||
-    "http://localhost:3001";
+    "http://localhost:3002";
   const root = baseUrl.replace(/\/$/, "");
   const downloadUrl = `${root}/api/download/access?token=${downloadToken}`;
 
@@ -81,15 +60,10 @@ export async function grantCodebaseAccess(params: {
     <p>If you have any questions, reply to this email.</p>
   `;
 
-  const sent = await sendEmail(
-    emailNorm,
-    "Your Batman codebase download",
-    html
-  );
+  const sent = await sendEmail(emailNorm, "Your Batman codebase download", html);
 
   if (!sent) {
-    console.error("[Marketing] Email failed to send for order", polarOrderId, "— check RESEND_API_KEY in Vercel env");
-    // Purchase is recorded; user can contact support for link
+    console.error("[Marketing] Email failed to send for order", polarOrderId, "— check RESEND_API_KEY");
   } else {
     console.log("[Marketing] Download email sent to", emailNorm, "for order", polarOrderId);
   }

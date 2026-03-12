@@ -41,7 +41,8 @@ This file provides context about the project for AI assistants.
 ```
 Batman/
 ├── apps/
-│   ├── web/         # Frontend application
+│   ├── marketing/   # Marketing landing & purchase flow (seller-only, excluded from boilerplate)
+│   └── web/         # Frontend application (boilerplate)
 ├── packages/
 │   ├── auth/        # Authentication
 │   └── db/          # Database schema
