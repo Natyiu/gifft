@@ -27,19 +27,19 @@ const ALL_STEPS: StepDef[] = [
 
 const STEP_TUTORIALS: Partial<Record<StepId, { title: string; duration: string; videoUrl: string }>> = {
   supabase: {
-    title: "Setting up Supabase",
+    title: "Supabase setup (DB & Storage)",
     duration: "2:30",
-    videoUrl: "",
+    videoUrl: "https://www.youtube.com/embed/yCdNshaLcP4",
   },
   auth: {
-    title: "Configuring Auth",
+    title: "Auth setup",
     duration: "3:00",
-    videoUrl: "",
+    videoUrl: "https://www.youtube.com/embed/oDNGVo7Jc4Q",
   },
   payment: {
-    title: "Configuring Polar for Payments",
+    title: "Payment setup (Polar)",
     duration: "2:30",
-    videoUrl: "",
+    videoUrl: "https://www.youtube.com/embed/gZ28ejEOseo",
   },
   review: {
     title: "Review & Launch",
@@ -944,16 +944,23 @@ function VideoTutorial({
         <button
           type="button"
           onClick={onToggle}
-          className="group flex items-center gap-2 text-[10px] text-muted-foreground/50 hover:text-muted-foreground transition-colors cursor-pointer"
+          className="group w-full flex items-center gap-3 rounded-lg border border-border/40 bg-muted/20 hover:bg-muted/30 hover:border-foreground/20 px-3 py-2.5 text-left transition-colors cursor-pointer"
         >
-          <div className="w-5 h-5 border border-border/40 group-hover:border-foreground/20 flex items-center justify-center transition-colors">
-            <Play className="w-2.5 h-2.5 ml-px" />
+          <div className="w-10 h-10 shrink-0 rounded border border-border/40 bg-foreground/5 group-hover:bg-foreground/10 flex items-center justify-center transition-colors">
+            <Play className="w-4 h-4 ml-0.5 text-foreground/60 group-hover:text-foreground" />
           </div>
-          <span>Watch: {tutorial.title}</span>
-          <span className="text-muted-foreground/30">{tutorial.duration}</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 mb-0.5">
+              Video tutorial
+            </p>
+            <p className="text-xs font-medium text-foreground/80 group-hover:text-foreground">
+              {tutorial.title}
+            </p>
+          </div>
+          <span className="text-[10px] text-muted-foreground/50 shrink-0">{tutorial.duration}</span>
         </button>
       ) : (
-        <div className="border border-border/40">
+        <div className="rounded-lg border border-border/40 overflow-hidden shadow-sm">
           <div className="flex items-center justify-between px-3 py-2 border-b border-border/30">
             <div className="flex items-center gap-2">
               <Play className="w-2.5 h-2.5 text-foreground/40" />
@@ -969,26 +976,39 @@ function VideoTutorial({
             </button>
           </div>
 
-          {/* Video placeholder */}
-          <div className="relative bg-foreground/3 aspect-video flex items-center justify-center">
-            <div className="absolute inset-0">
-              <svg className="w-full h-full opacity-30" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <pattern id="vidDots" x="0" y="0" width="12" height="12" patternUnits="userSpaceOnUse">
-                    <circle cx="6" cy="6" r="0.5" className="fill-foreground/10" />
-                  </pattern>
-                </defs>
-                <rect width="100%" height="100%" fill="url(#vidDots)" />
-              </svg>
-            </div>
-            <div className="relative flex flex-col items-center gap-2">
-              <div className="w-10 h-10 border border-foreground/10 flex items-center justify-center">
-                <Play className="w-4 h-4 text-foreground/20 ml-0.5" />
+          {/* Video embed or placeholder */}
+          <div className="relative bg-foreground/3 aspect-video">
+            {tutorial.videoUrl ? (
+              <iframe
+                src={tutorial.videoUrl}
+                title={tutorial.title}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerPolicy="strict-origin-when-cross-origin"
+                allowFullScreen
+                className="absolute inset-0 w-full h-full"
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="absolute inset-0">
+                  <svg className="w-full h-full opacity-30" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                      <pattern id="vidDots" x="0" y="0" width="12" height="12" patternUnits="userSpaceOnUse">
+                        <circle cx="6" cy="6" r="0.5" className="fill-foreground/10" />
+                      </pattern>
+                    </defs>
+                    <rect width="100%" height="100%" fill="url(#vidDots)" />
+                  </svg>
+                </div>
+                <div className="relative flex flex-col items-center gap-2">
+                  <div className="w-10 h-10 border border-foreground/10 flex items-center justify-center">
+                    <Play className="w-4 h-4 text-foreground/20 ml-0.5" />
+                  </div>
+                  <p className="text-[9px] text-muted-foreground/30">
+                    Video tutorial coming soon
+                  </p>
+                </div>
               </div>
-              <p className="text-[9px] text-muted-foreground/30">
-                Video tutorial coming soon
-              </p>
-            </div>
+            )}
           </div>
         </div>
       )}

@@ -136,7 +136,7 @@ function ReadyPage({ onRerunSetup }: { onRerunSetup: () => void }) {
           <div className="mb-8">
             <BatLogo className="h-6 w-auto text-foreground mb-6" />
             <h1 className="text-xl font-semibold tracking-tight mb-2">
-              Your app starts here.
+              Your app starts here. ( landing page )
             </h1>
             <p className="text-xs text-muted-foreground leading-relaxed">
               Auth, database, file storage, notifications, admin dashboard —
