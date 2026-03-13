@@ -151,7 +151,7 @@ function ExpandableSection({
   return (
     <div className="border-b border-border/50">
       <button onClick={onToggle} className="w-full group cursor-pointer">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-5 flex items-center gap-4 sm:gap-6">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-5 flex items-center gap-3 sm:gap-6">
           <span className="font-mono text-xs sm:text-sm text-muted-foreground/30 shrink-0 w-6 sm:w-8 text-right">{number}</span>
           <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
             <span className="text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-muted-foreground/50">{label}</span>
@@ -199,7 +199,7 @@ function ThemeToggle() {
 
 function MarketingContent() {
   const scrollRef = useScrollReveal();
-  const [openSection, setOpenSection] = useState<string | null>("01");
+  const [openSection, setOpenSection] = useState<string | null>(null);
   const searchParams = useSearchParams();
   const checkoutError = searchParams.get("error");
   const checkoutSuccess = searchParams.get("checkout") === "success";
@@ -220,7 +220,7 @@ function MarketingContent() {
       )}
       <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/90 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="flex h-14 items-center justify-between">
+          <div className="flex h-12 sm:h-14 items-center justify-between">
             <div className="flex items-center gap-2">
               <BatLogo className="h-4 sm:h-5 w-auto text-foreground" />
               <div className="flex flex-col leading-none">
@@ -229,13 +229,13 @@ function MarketingContent() {
               </div>
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <a href="#how-it-works">
+              <a href="#how-it-works" className="hidden sm:inline-block">
                 <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground hover:bg-secondary h-8 px-2 sm:px-3">How it works</Button>
               </a>
-              <a href="#features">
+              <a href="#features" className="hidden sm:inline-block">
                 <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground hover:bg-secondary h-8 px-2 sm:px-3">Features</Button>
               </a>
-              <a href="#pricing">
+              <a href="#pricing" className="hidden sm:inline-block">
                 <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground hover:bg-secondary h-8 px-2 sm:px-3">Pricing</Button>
               </a>
               <ThemeToggle />
@@ -244,7 +244,51 @@ function MarketingContent() {
         </div>
       </header>
 
-      <section className="pt-14">
+      {/* ========== MOBILE HERO (md: hidden) ========== */}
+      <section className="pt-12 md:hidden">
+        <div className="flex flex-col min-h-[calc(100svh-3rem)]">
+          {/* Image */}
+          <div className="relative aspect-4/5 w-full shrink-0 overflow-hidden border-0">
+            <Image src="/bat.jpeg" alt="Batman" fill className="object-cover object-top border-0" priority />
+            <div className="absolute inset-0 bg-linear-to-t from-background via-background/30 to-transparent" />
+          </div>
+
+          {/* Content */}
+          <div className="flex flex-1 flex-col px-4 pb-4 -mt-6 relative z-10">
+            <h1 className="text-2xl font-semibold tracking-tight leading-[1.15] mb-2">
+              You had an idea at 3am.<br />
+              <span className="text-muted-foreground/60">Ship it in hours.</span>
+            </h1>
+            <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+              Not just a tech stack. A founder-first codebase — auth, payments, admin, everything configured. One purchase. Guided setup. Build your product.
+            </p>
+            <p className="text-xs text-muted-foreground/50 italic mb-4">&ldquo;{nightQuotes[3]}&rdquo;</p>
+            <div className="flex flex-col gap-2 mb-5">
+              <a href="/api/checkout/marketing">
+                <Button className="h-10 w-full text-sm bg-foreground text-background hover:bg-foreground/90">Get Batman — $49.99</Button>
+              </a>
+              <Link href="#mobile-explore">
+                <Button variant="ghost" className="h-9 w-full text-sm text-muted-foreground">Explore what&apos;s included</Button>
+              </Link>
+            </div>
+
+            {/* Tech stack marquee - inside hero */}
+            <div className="relative overflow-hidden py-2 -mx-4 border-y border-border/40">
+              <div className="flex shrink-0 animate-marquee-mobile items-center gap-6 px-4">
+                {[...techStack, ...techStack].map((f, i) => (
+                  <div key={i} className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-xs font-medium text-foreground whitespace-nowrap">{f.label}</span>
+                    <span className="text-[10px] text-muted-foreground/70 whitespace-nowrap">{f.desc}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ========== DESKTOP HERO (hidden on mobile) ========== */}
+      <section className="pt-14 hidden md:block">
         <div className="border-b border-border/50">
           <div className="max-w-6xl mx-auto px-4 sm:px-6">
             <div className="flex items-center gap-4 sm:gap-6 py-3 sm:py-4">
@@ -258,9 +302,9 @@ function MarketingContent() {
         </div>
 
         <div className="md:flex border-b border-border/50 min-h-[50vh]">
-          <div className="relative hidden md:block md:w-1/2">
-            <div className="relative h-full overflow-hidden">
-              <Image src="/bat.jpeg" alt="Batman" fill className="object-cover" priority />
+          <div className="relative md:w-1/2 min-h-[40vh] border-0">
+            <div className="absolute inset-0 overflow-hidden border-0">
+              <Image src="/bat.jpeg" alt="Batman" fill className="object-cover border-0" priority />
               <div className="absolute inset-0 bg-linear-to-t from-background via-background/20 to-transparent" />
               <div className="absolute inset-0 bg-linear-to-r from-transparent to-background/40" />
               <div className="absolute bottom-4 left-5 right-5">
@@ -269,32 +313,31 @@ function MarketingContent() {
             </div>
           </div>
 
-          <div className="py-6 sm:py-8 md:py-8 md:w-1/2 px-4 sm:px-6 md:px-0 md:pl-10 lg:pl-12 md:pr-5 lg:pr-8 flex flex-col justify-center md:border-l md:border-border/50">
-            <div className="flex items-center gap-2 mb-3 sm:mb-4">
+          <div className="py-8 md:w-1/2 px-4 sm:px-6 md:px-0 md:pl-10 lg:pl-12 md:pr-5 lg:pr-8 flex flex-col justify-center md:border-l md:border-border/50">
+            <div className="flex items-center gap-2 mb-4">
               <div className="h-px w-6 sm:w-8 bg-foreground" />
               <span className="text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-muted-foreground/50">For founders who mean it</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight leading-[1.15] mb-3 sm:mb-4">
+            <h1 className="text-3xl md:text-4xl font-semibold tracking-tight leading-[1.15] mb-4">
               You had an idea at 3am.<br />
               <span className="text-muted-foreground/50">Ship it in hours.</span>
             </h1>
-            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-md mb-6 sm:mb-7">
+            <p className="text-sm text-muted-foreground leading-relaxed max-w-md mb-7">
               Not just a tech stack. A founder-first codebase — auth, payments, admin, everything configured. One purchase. Guided setup. Build your product.
             </p>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+            <div className="flex flex-row items-center gap-3">
               <a href="/api/checkout/marketing">
-                <Button className="h-9 w-full sm:w-auto px-5 text-sm bg-foreground text-background hover:bg-foreground/90">Get Batman — $49.99</Button>
+                <Button className="h-9 px-5 text-sm bg-foreground text-background hover:bg-foreground/90">Get Batman — $49.99</Button>
               </a>
               <Link href="#how-it-works">
-                <Button variant="ghost" className="h-9 w-full sm:w-auto px-5 text-sm text-muted-foreground hover:text-foreground">See how easy setup is</Button>
+                <Button variant="ghost" className="h-9 px-5 text-sm text-muted-foreground hover:text-foreground">See how easy setup is</Button>
               </Link>
             </div>
-            <p className="mt-4 text-xs text-muted-foreground/40 italic md:hidden">&ldquo;{nightQuotes[3]}&rdquo;</p>
           </div>
         </div>
       </section>
 
-      <section className="border-y border-border/50 py-2.5 sm:py-3 overflow-hidden">
+      <section className="border-y border-border/50 py-2.5 sm:py-3 overflow-hidden hidden md:block">
         <div className="relative flex">
           <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-16 sm:w-24 z-10 bg-linear-to-r from-background to-transparent" />
           <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-16 sm:w-24 z-10 bg-linear-to-l from-background to-transparent" />
@@ -311,17 +354,156 @@ function MarketingContent() {
         </div>
       </section>
 
-      <section id="how-it-works" className="border-b border-border/50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
-          <div className="flex items-center gap-2 mb-6">
+      {/* ========== MOBILE EXPLORE (md: hidden) ========== */}
+      <section id="mobile-explore" className="md:hidden border-t border-border/40">
+        <div className="sticky top-12 z-20 bg-background/95 backdrop-blur-sm border-b border-border/40 px-4 py-4">
+          <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 scrollbar-hide" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+            {["Why Batman", "How it works", "Features", "Pricing", "Out of the box", "Setup"].map((tab, i) => (
+              <button
+                key={tab}
+                onClick={() => { const el = document.getElementById(`mobile-slide-${i}`); el?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
+                className="shrink-0 px-3 py-2 text-xs font-medium rounded-full border border-border/50 bg-muted/30 text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="divide-y divide-border/40">
+          {/* Why Batman */}
+          <div id="mobile-slide-0" className="px-4 py-10">
+            <p className="text-[10px] font-mono tracking-widest uppercase text-muted-foreground/50 mb-3">Why Batman</p>
+            <h3 className="text-xl font-semibold tracking-tight mb-6">You have an idea. Building from scratch kills it.</h3>
+            <ul className="space-y-4">
+              <li className="flex gap-3">
+                <span className="text-muted-foreground/40 shrink-0">—</span>
+                <p className="text-sm text-muted-foreground">Auth, payments, admin — months of plumbing before you build your product.</p>
+              </li>
+              <li className="flex gap-3">
+                <span className="text-muted-foreground/40 shrink-0">—</span>
+                <p className="text-sm text-muted-foreground">Batman gives you a production codebase. Configure it. Build on it. Ship.</p>
+              </li>
+              <li className="flex gap-3">
+                <span className="text-muted-foreground/40 shrink-0">—</span>
+                <p className="text-sm text-muted-foreground">One purchase. Guided setup. No coding required to go live.</p>
+              </li>
+            </ul>
+          </div>
+
+          {/* How it works */}
+          <div id="mobile-slide-1" className="px-4 py-10">
+            <p className="text-[10px] font-mono tracking-widest uppercase text-muted-foreground/50 mb-3">How it works</p>
+            <h3 className="text-xl font-semibold tracking-tight mb-6">Four steps. Zero config editing.</h3>
+            <div className="space-y-5">
+              {[
+                { num: "01", title: "Pay and get access", line: "Download link by email. Expires in 48h." },
+                { num: "02", title: "Download and extract", cmd: "unzip Batman.zip && cd Batman" },
+                { num: "03", title: "Install and run", cmd: "pnpm install && pnpm dev", line: "Setup Wizard appears at localhost:3001." },
+                { num: "04", title: "Complete onboarding", line: "Database, auth, payments. Wizard generates config. You're live." },
+              ].map((step) => (
+                <div key={step.num} className="flex gap-4">
+                  <span className="font-mono text-xs text-muted-foreground/40 shrink-0 w-5">{step.num}</span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">{step.title}</p>
+                    {step.cmd && (
+                      <code className="mt-1.5 block font-mono text-[10px] text-muted-foreground/80 bg-muted/50 rounded px-2 py-1.5 overflow-x-auto">
+                        $ {step.cmd}
+                      </code>
+                    )}
+                    {step.line && <p className="text-[11px] text-muted-foreground/80 mt-1">{step.line}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Features */}
+          <div id="mobile-slide-2" className="px-4 py-10">
+            <p className="text-[10px] font-mono tracking-widest uppercase text-muted-foreground/50 mb-3">What&apos;s included</p>
+            <h3 className="text-xl font-semibold tracking-tight mb-2">Production-ready. Not a template.</h3>
+            <p className="text-sm text-muted-foreground mb-6">Auth, payments, admin, storage, blog — wired and configured.</p>
+            <div className="flex flex-wrap gap-2">
+              {builtInFeatures.map((f, i) => (
+                <div key={i} className="inline-flex items-center gap-1.5 rounded-full border border-border/50 px-3 py-1.5">
+                  <span className="text-sm">{f.icon}</span>
+                  <span className="text-xs font-medium">{f.title}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Pricing */}
+          <div id="mobile-slide-3" className="px-4 py-10">
+            <p className="text-[10px] font-mono tracking-widest uppercase text-muted-foreground/50 mb-3">Pricing</p>
+            <h3 className="text-xl font-semibold tracking-tight mb-1">Pay once. Own forever.</h3>
+            <p className="text-sm text-muted-foreground mb-4">No subscription. No recurring fees.</p>
+            <div className="flex items-baseline gap-1">
+              <span className="text-3xl font-bold tracking-tight">$49.99</span>
+            </div>
+          </div>
+
+          {/* Out of the box */}
+          <div id="mobile-slide-4" className="px-4 py-10">
+            <p className="text-[10px] font-mono tracking-widest uppercase text-muted-foreground/50 mb-3">Out of the box</p>
+            <h3 className="text-xl font-semibold tracking-tight mb-2">Ship without building the plumbing.</h3>
+            <p className="text-sm text-muted-foreground mb-6">One codebase. Everything configured.</p>
+            <ul className="space-y-3">
+              {[
+                { title: "Auth", line: "Sign up, login, Google. Ready to use." },
+                { title: "Admin", line: "Users, analytics, blog, notifications." },
+                { title: "Payments", line: "Polar. Subscriptions from day one." },
+                { title: "User dashboard", line: "Settings, teams, invitations." },
+                { title: "Storage & blog", line: "Supabase uploads. Rich text CMS." },
+                { title: "Setup Wizard", line: "Guided config. No manual editing." },
+              ].map((item, i) => (
+                <li key={i} className="flex gap-3">
+                  <span className="text-muted-foreground/40 shrink-0 mt-0.5">—</span>
+                  <div>
+                    <p className="text-sm font-medium">{item.title}</p>
+                    <p className="text-[11px] text-muted-foreground/80 mt-0.5">{item.line}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Setup / AI */}
+          <div id="mobile-slide-5" className="px-4 py-10">
+            <p className="text-[10px] font-mono tracking-widest uppercase text-muted-foreground/50 mb-3">Setup & AI</p>
+            <h3 className="text-xl font-semibold tracking-tight mb-6">Describe it. AI builds it.</h3>
+            <ul className="space-y-4">
+              <li className="flex gap-3">
+                <span className="text-muted-foreground/40 shrink-0">—</span>
+                <p className="text-sm text-muted-foreground">Guided Setup Wizard. Database, auth, payments — no config editing.</p>
+              </li>
+              <li className="flex gap-3">
+                <span className="text-muted-foreground/40 shrink-0">—</span>
+                <p className="text-sm text-muted-foreground">Use Cursor, Claude, or Codex. Describe your feature. Ship.</p>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Mobile footer CTA */}
+        <div className="bg-background border-t border-border/50 px-4 py-4">
+          <a href="/api/checkout/marketing">
+            <Button className="w-full h-11 text-sm font-medium bg-foreground text-background hover:bg-foreground/90">Get Batman — $49.99</Button>
+          </a>
+        </div>
+      </section>
+
+      <section id="how-it-works" className="border-b border-border/50 hidden md:block">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-14">
+          <div className="flex items-center gap-2 mb-4 sm:mb-6">
             <div className="h-px w-6 sm:w-8 bg-foreground" />
             <span className="text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-muted-foreground/50">How easy is setup?</span>
           </div>
-          <h2 className="text-lg sm:text-xl font-semibold tracking-tight mb-2">Four steps. No config files to edit.</h2>
-          <p className="text-xs sm:text-sm text-muted-foreground mb-8 max-w-xl">
+          <h2 className="text-base sm:text-xl font-semibold tracking-tight mb-1 sm:mb-2">Four steps. No config files to edit.</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground mb-6 sm:mb-8 max-w-xl hidden sm:block">
             Built for founders. A guided Setup Wizard walks you through everything — database, auth, payments. Configure and go live. No coding required.
           </p>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
             {setupSteps.map((step) => (
               <div key={step.number} className="border border-border/40 rounded-lg p-4 sm:p-5">
                 <span className="font-mono text-xs text-muted-foreground/50 mb-2 block">{step.number}</span>
@@ -339,19 +521,19 @@ function MarketingContent() {
         </div>
       </section>
 
-      <section id="why" className="border-t border-border/50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
-          <div className="flex items-center gap-2 mb-4">
+      <section id="why" className="border-t border-border/50 hidden md:block">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-14">
+          <div className="flex items-center gap-2 mb-3 sm:mb-4">
             <div className="h-px w-6 sm:w-8 bg-foreground" />
             <span className="text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-muted-foreground/50">Out of the box</span>
           </div>
-          <h2 className="text-lg sm:text-xl font-semibold tracking-tight mb-2">Everything a founder needs to configure and build.</h2>
-          <p className="text-xs sm:text-sm text-muted-foreground mb-6 max-w-xl">
+          <h2 className="text-base sm:text-xl font-semibold tracking-tight mb-1 sm:mb-2">Everything a founder needs.</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-6 max-w-xl hidden sm:block">
             Not a generic scaffold. Tailored for startups — solid codebase, end-to-end configured. Configure your product. Build your product.
           </p>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {outOfTheBox.map((item, i) => (
-              <div key={i} className="pl-4 border-l-2 border-foreground/20 py-1">
+              <div key={i} className={`pl-4 border-l-2 border-foreground/20 py-1 ${i >= 3 ? "hidden sm:block" : ""}`}>
                 <p className="text-xs sm:text-sm font-medium text-foreground mb-1">{item.title}</p>
                 <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed">{item.detail}</p>
               </div>
@@ -360,8 +542,8 @@ function MarketingContent() {
         </div>
       </section>
 
-      <section id="pricing" className="border-t border-border/50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+      <section id="pricing" className="border-t border-border/50 hidden md:block">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-14">
           <div className="flex items-center gap-2 mb-4">
             <div className="h-px w-6 sm:w-8 bg-foreground" />
             <span className="text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-muted-foreground/50">Pricing</span>
@@ -381,16 +563,16 @@ function MarketingContent() {
         </div>
       </section>
 
-      <section id="features" className="border-t border-border/50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
-          <div className="flex items-center gap-2 mb-8 sm:mb-10">
+      <section id="features" className="border-t border-border/50 hidden md:block">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-16">
+          <div className="flex items-center gap-2 mb-4 sm:mb-10">
             <div className="h-px w-6 sm:w-8 bg-foreground" />
             <span className="text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-muted-foreground/50">What&apos;s included</span>
           </div>
-          <h2 className="text-xl sm:text-2xl font-semibold tracking-tight mb-6 sm:mb-8">Built for startups. Auth, payments, admin — all configured.</h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <h2 className="text-base sm:text-2xl font-semibold tracking-tight mb-4 sm:mb-8">Auth, payments, admin — all configured.</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
             {builtInFeatures.map((f, i) => (
-              <div key={i} className="border border-border/40 rounded-lg p-4 sm:p-5 hover:border-border/70 transition-colors">
+              <div key={i} className={`border border-border/40 rounded-lg p-3 sm:p-5 hover:border-border/70 transition-colors ${i >= 4 ? "hidden sm:block" : ""}`}>
                 <span className="text-base sm:text-lg mb-2 block">{f.icon}</span>
                 <p className="text-sm font-medium text-foreground mb-1.5">{f.title}</p>
                 <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed">{f.desc}</p>
@@ -400,7 +582,7 @@ function MarketingContent() {
         </div>
       </section>
 
-      <div id="setup" className="mt-[6vh] border-t border-border/50">
+      <div id="setup" className="mt-6 sm:mt-[6vh] border-t border-border/50 hidden md:block">
         <ExpandableSection number="01" label="Works with AI" title="Describe your product. Your AI builds it." open={openSection === "01"} onToggle={() => setOpenSection(openSection === "01" ? null : "01")}>
           <div className="max-w-2xl">
             <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mb-6 sm:mb-8">
@@ -468,16 +650,16 @@ function MarketingContent() {
         </ExpandableSection>
       </div>
 
-      <section className="py-12 sm:py-16 border-t border-border/50">
+      <section className="py-8 sm:py-16 border-t border-border/50 hidden md:block">
         <div data-reveal className="max-w-6xl mx-auto px-4 sm:px-6 text-center reveal-section">
-          <BatLogo className="h-6 sm:h-8 w-auto text-foreground mx-auto mb-4 sm:mb-6 opacity-60" />
-          <p className="text-xs sm:text-sm text-muted-foreground/60 italic mb-4 sm:mb-6 max-w-md mx-auto">&ldquo;{nightQuotes[1]}&rdquo;</p>
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight mb-3">For founders ready to ship.</h2>
-          <p className="text-xs sm:text-sm text-muted-foreground mb-6 sm:mb-8 max-w-lg mx-auto">
+          <BatLogo className="h-5 sm:h-8 w-auto text-foreground mx-auto mb-3 sm:mb-6 opacity-60" />
+          <p className="text-xs sm:text-sm text-muted-foreground/60 italic mb-3 sm:mb-6 max-w-md mx-auto hidden sm:block">&ldquo;{nightQuotes[1]}&rdquo;</p>
+          <h2 className="text-lg sm:text-2xl md:text-3xl font-bold tracking-tight mb-2 sm:mb-3">For founders ready to ship.</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-8 max-w-lg mx-auto hidden sm:block">
             Solid codebase. End-to-end configured. One-time purchase. The founder&apos;s codebase when you have an idea and need to move.
           </p>
           <a href="/api/checkout/marketing">
-            <Button className="h-11 px-8 text-sm font-medium bg-foreground text-background hover:bg-foreground/90">Get Batman — $49.99</Button>
+            <Button className="h-10 sm:h-11 px-6 sm:px-8 text-sm font-medium bg-foreground text-background hover:bg-foreground/90">Get Batman — $49.99</Button>
           </a>
         </div>
       </section>

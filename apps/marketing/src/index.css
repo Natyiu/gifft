@@ -101,7 +101,31 @@
   transform: translateY(0);
 }
 
+@keyframes marquee-mobile {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-marquee-mobile {
+  animation: marquee-mobile 40s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-marquee { animation: none; }
+  .animate-marquee-mobile { animation: none; }
   .reveal-section { opacity: 1; transform: none; transition: none; }
+}
+
+/* Mobile horizontal scroll snap */
+.mobile-snap-scroll {
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+.mobile-snap-item {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+/* Hide scrollbar */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
