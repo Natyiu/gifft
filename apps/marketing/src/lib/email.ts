@@ -16,11 +16,18 @@ export async function sendEmail(to: string, subject: string, html: string): Prom
       return false;
     }
     const resend = new Resend(apiKey);
-    const customFrom = settings?.resendFromEmail?.trim() || env.RESEND_FROM_EMAIL?.trim();
-    const from = customFrom && !customFrom.includes("yourdomain.com") ? customFrom : RESEND_DEFAULT_FROM;
+    // Prefer env so marketing deployment can set its own from (DB may have web app placeholder)
+    const customFrom =
+      env.RESEND_FROM_EMAIL?.trim() ||
+      settings?.resendFromEmail?.trim();
+    const from =
+      customFrom && !customFrom.includes("yourdomain.com")
+        ? customFrom
+        : RESEND_DEFAULT_FROM;
+    console.log("[Email] Sending from:", from);
     const { error } = await resend.emails.send({ from, to, subject, html });
     if (error) {
-      console.error("[Email] Resend error:", JSON.stringify(error));
+      console.error("[Email] Resend error:", JSON.stringify(error), "| from:", from);
       return false;
     }
     return true;
