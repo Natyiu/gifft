@@ -298,14 +298,6 @@ export default function AdminGeneralPage() {
             className="h-8 text-xs"
           />
         </FieldRow>
-        <FieldRow label="App URL" hint="The primary URL of your application">
-          <Input
-            value={s.appUrl}
-            onChange={(e) => update("appUrl", e.target.value)}
-            placeholder="https://yourapp.com"
-            className="h-8 text-xs"
-          />
-        </FieldRow>
       </SectionCard>
 
       {/* Social Preview */}

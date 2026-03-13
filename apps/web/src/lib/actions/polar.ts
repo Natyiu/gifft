@@ -21,7 +21,7 @@ async function getPolarClient() {
   });
 
   const token = (settings?.polarAccessToken || process.env.POLAR_ACCESS_TOKEN)?.trim();
-  const sandbox = settings?.polarSandboxMode ?? process.env.POLAR_SANDBOX_MODE === "true";
+  const sandbox = settings?.polarSandboxMode ?? (process.env.POLAR_SANDBOX_MODE === "false" ? false : true);
 
   if (!token?.trim()) {
     throw new Error("Polar is not configured. Add your access token in Admin → API Keys.");
@@ -42,7 +42,7 @@ async function getPolarClientForCheckout() {
   });
 
   const token = (settings?.polarAccessToken || process.env.POLAR_ACCESS_TOKEN)?.trim();
-  const sandbox = settings?.polarSandboxMode ?? process.env.POLAR_SANDBOX_MODE === "true";
+  const sandbox = settings?.polarSandboxMode ?? (process.env.POLAR_SANDBOX_MODE === "false" ? false : true);
 
   if (!token?.trim()) {
     return null;

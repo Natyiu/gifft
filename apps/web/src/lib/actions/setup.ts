@@ -340,7 +340,7 @@ export async function saveSetup(data: SetupData) {
           polarAccessToken: data.polarAccessToken || null,
           polarOrganizationId: data.polarOrganizationId || null,
           polarWebhookSecret: data.polarWebhookSecret || null,
-          polarSandboxMode: data.polarSandboxMode ?? false,
+          polarSandboxMode: data.polarSandboxMode ?? true,
         },
       });
     } catch {

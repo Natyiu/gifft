@@ -43,7 +43,7 @@ const DEFAULT_APP_SETTINGS = {
   polarAccessToken: null as string | null,
   polarOrganizationId: null as string | null,
   polarWebhookSecret: null as string | null,
-  polarSandboxMode: false,
+  polarSandboxMode: true,
   waitlistMode: false,
   waitlistTitle: "Join the waitlist",
   waitlistHeadline: "Be the first to know when we launch",
@@ -193,5 +193,6 @@ export async function getAuthConfig() {
     forgotPasswordEnabled: settings.forgotPasswordEnabled ?? true,
     organizationsEnabled: settings.organizationsEnabled,
     invitesEnabled: settings.invitesEnabled,
+    signupsEnabled: settings.signupsEnabled ?? true,
   };
 }

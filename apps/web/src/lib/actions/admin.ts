@@ -4,7 +4,7 @@ import { readFile } from "fs/promises";
 import { dirname, resolve } from "path";
 import { fileURLToPath } from "url";
 
-import { auth } from "@Batman/auth";
+import { auth, invalidateSettingsCache } from "@Batman/auth";
 import prisma from "@Batman/db";
 import { headers } from "next/headers";
 import geoip from "geoip-country";
@@ -105,6 +105,8 @@ export async function updateAppSettings(data: {
     create: { id: "default", ...data },
   });
 
+  invalidateSettingsCache();
+
   return settings;
 }
 
@@ -146,7 +148,7 @@ export async function getApiKeys() {
     settings?.polarOrganizationId ?? env.POLAR_ORGANIZATION_ID ?? "";
   const polarWebhookSecret = settings?.polarWebhookSecret ?? env.POLAR_WEBHOOK_SECRET ?? "";
   const polarSandboxMode =
-    settings?.polarSandboxMode ?? env.POLAR_SANDBOX_MODE === "true";
+    settings?.polarSandboxMode ?? (env.POLAR_SANDBOX_MODE === "false" ? false : true);
 
   return {
     supabaseUrl,

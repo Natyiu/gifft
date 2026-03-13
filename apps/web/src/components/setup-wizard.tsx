@@ -88,7 +88,7 @@ const defaultForm: FormData = {
   polarAccessToken: "",
   polarOrganizationId: "",
   polarWebhookSecret: "",
-  polarSandboxMode: false,
+  polarSandboxMode: true,
   wantGoogle: false,
   emailVerificationEnabled: true,
   forgotPasswordEnabled: true,

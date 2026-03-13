@@ -31,7 +31,7 @@ export default async function AuthLayout({
   if (session?.user) {
     const settings = await prisma.appSettings.findUnique({
       where: { id: "default" },
-      select: { emailVerificationEnabled: true },
+      select: { emailVerificationEnabled: true, maintenanceMode: true },
     });
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
@@ -39,6 +39,12 @@ export default async function AuthLayout({
     });
     if (settings?.emailVerificationEnabled && user && !user.emailVerified) {
       redirect("/verify-email");
+    }
+    if (
+      settings?.maintenanceMode &&
+      (session.user.role as string) !== "admin"
+    ) {
+      redirect("/maintenance");
     }
     redirect("/dashboard");
   }

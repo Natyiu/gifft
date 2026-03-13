@@ -1,9 +1,14 @@
-"use client";
-
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getAuthConfig } from "@/lib/actions/user";
 import { SignUpForm } from "@/components/sign-up-form";
 
-export default function SignUpPage() {
+export default async function SignUpPage() {
+  const authConfig = await getAuthConfig();
+  if (!authConfig.signupsEnabled) {
+    redirect("/login?message=signups-disabled");
+  }
+
   return (
     <div>
       <div className="mb-6">

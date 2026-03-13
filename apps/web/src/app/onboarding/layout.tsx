@@ -53,6 +53,13 @@ export default async function OnboardingLayout({
     redirect("/dashboard");
   }
 
+  if (
+    settings.maintenanceMode &&
+    (session.user.role as string) !== "admin"
+  ) {
+    redirect("/maintenance" as never);
+  }
+
   return (
     <div className="min-h-screen flex bg-background">
       <div className="w-full lg:w-[45%] xl:w-[40%] flex flex-col min-h-screen">

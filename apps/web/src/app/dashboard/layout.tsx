@@ -33,6 +33,13 @@ export default async function DashboardLayout({
   });
 
   if (
+    settings.maintenanceMode &&
+    (session.user.role as string) !== "admin"
+  ) {
+    redirect("/maintenance" as never);
+  }
+
+  if (
     settings.emailVerificationEnabled &&
     user &&
     !user.emailVerified

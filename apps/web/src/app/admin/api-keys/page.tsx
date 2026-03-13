@@ -38,7 +38,7 @@ const emptyKeys: ApiKeysData = {
   polarAccessToken: "",
   polarOrganizationId: "",
   polarWebhookSecret: "",
-  polarSandboxMode: false,
+  polarSandboxMode: true,
 };
 
 export default function AdminApiKeysPage() {

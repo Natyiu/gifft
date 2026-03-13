@@ -19,6 +19,7 @@ import {
   Moon,
   CreditCard,
   Globe,
+  Rocket,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -34,6 +35,7 @@ const adminNav = [
   { name: "Site Settings", href: "/admin/site-settings", icon: Globe },
   { name: "Features", href: "/admin/features", icon: ToggleRight },
   { name: "API Keys", href: "/admin/api-keys", icon: Key },
+  { name: "Deployment", href: "/admin/deployment", icon: Rocket },
 ];
 
 function ThemeToggle() {

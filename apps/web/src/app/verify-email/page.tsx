@@ -22,8 +22,15 @@ export default async function VerifyEmailPage() {
 
   const settings = await prisma.appSettings.findUnique({
     where: { id: "default" },
-    select: { emailVerificationEnabled: true },
+    select: { emailVerificationEnabled: true, maintenanceMode: true },
   });
+
+  if (
+    settings?.maintenanceMode &&
+    (session.user.role as string) !== "admin"
+  ) {
+    redirect("/maintenance");
+  }
 
   if (!settings?.emailVerificationEnabled || user?.emailVerified) {
     redirect("/dashboard");
