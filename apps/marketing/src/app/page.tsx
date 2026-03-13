@@ -288,6 +288,11 @@ function MarketingContent() {
               <Link href="#how-it-works">
                 <Button variant="ghost" className="h-9 w-full sm:w-auto px-5 text-sm text-muted-foreground hover:text-foreground">See how easy setup is</Button>
               </Link>
+              <a href="/api/download/test" className="sm:ml-2">
+                <Button variant="outline" size="sm" className="h-9 text-xs text-muted-foreground border-dashed">
+                  Test download (dev)
+                </Button>
+              </a>
             </div>
             <p className="mt-4 text-xs text-muted-foreground/40 italic md:hidden">&ldquo;{nightQuotes[3]}&rdquo;</p>
           </div>
