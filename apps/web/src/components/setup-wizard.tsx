@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Check, ChevronRight, ChevronDown, ExternalLink, Eye, EyeOff, Loader2, ArrowLeft, Play, X, AlertTriangle } from "lucide-react";
+import { Check, ChevronRight, ChevronDown, ExternalLink, Eye, EyeOff, Loader2, ArrowLeft, Play, X, AlertTriangle, AlertCircle, Wrench } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,6 +49,63 @@ const STEP_TUTORIALS: Partial<Record<StepId, { title: string; duration: string; 
 };
 
 const RESEND_DEFAULT_FROM = "Batman <onboarding@resend.dev>";
+
+/** Parse setup errors to extract friendly hints */
+function parseSetupError(message: string): {
+  summary: string;
+  hints: string[];
+  rawOutput: string;
+} {
+  const rawOutput = message;
+  const lower = message.toLowerCase();
+
+  // Extract the part after "Run `pnpm db:push`" if it's a DB error
+  const dbFailedMatch = message.match(/Database setup failed\. .+?\n\n([\s\S]*)/);
+  const technicalOutput = dbFailedMatch ? dbFailedMatch[1].trim() : message;
+
+  const hints: string[] = [];
+
+  if (lower.includes("password") && (lower.includes("auth") || lower.includes("failed"))) {
+    hints.push("Double-check your database password. Make sure you replaced [YOUR-PASSWORD] with the actual password from Supabase.");
+  }
+  if (lower.includes("connection refused") || lower.includes("econnrefused")) {
+    hints.push("The database server couldn't be reached. Check that your Supabase project is running and the connection URL is correct.");
+  }
+  if (lower.includes("timeout") || lower.includes("etimedout")) {
+    hints.push("Connection timed out. Your network or firewall may be blocking the connection. Try from a different network.");
+  }
+  if (lower.includes("ssl") || lower.includes("certificate")) {
+    hints.push("SSL/TLS issue. Supabase uses SSL by default — ensure your connection string includes the correct parameters.");
+  }
+  if (lower.includes("does not exist") || lower.includes("unknown database")) {
+    hints.push("The database name in your URL might be wrong. Supabase uses 'postgres' as the default database.");
+  }
+  if (lower.includes("invalid") && lower.includes("url")) {
+    hints.push("The connection string format may be incorrect. Copy the Transaction and Direct URLs from Supabase Dashboard → Settings → Database.");
+  }
+  if (lower.includes("pooler") || lower.includes("6543") || lower.includes("5432")) {
+    hints.push("Use port 6543 for the Transaction URL (pooler) and port 5432 for the Direct URL. Don't mix them up.");
+  }
+  if (lower.includes("schema") || lower.includes("migration")) {
+    hints.push("There may be a schema conflict. If you've changed the database elsewhere, try running pnpm db:push from the project root in a terminal.");
+  }
+
+  // Always add the manual fix when it's a DB setup error
+  if (message.includes("Database setup failed")) {
+    hints.push("You can fix this by running pnpm db:push in a terminal from the project root. Your .env is already saved.");
+  }
+
+  // Default hint if we couldn't match anything specific
+  if (hints.length === 0 && technicalOutput) {
+    hints.push("Your .env was saved successfully. Run pnpm db:push in a terminal from the project root to see the full error and retry.");
+  }
+
+  const summary = message.includes("Database setup failed")
+    ? "Database setup didn't complete, but your configuration was saved."
+    : "Something went wrong while saving your setup.";
+
+  return { summary, hints, rawOutput: technicalOutput };
+}
 
 type FormData = {
   databaseUrl: string;
@@ -296,7 +353,7 @@ export function SetupWizard({ onComplete }: { onComplete: () => void }) {
           )}
 
           {errors._form && (
-            <p className="text-xs text-red-500 mt-3">{errors._form}</p>
+            <SetupErrorDisplay message={errors._form} onDismiss={() => setErrors((e) => ({ ...e, _form: undefined }))} />
           )}
 
           {/* Navigation */}
@@ -344,6 +401,61 @@ export function SetupWizard({ onComplete }: { onComplete: () => void }) {
           </div>
         </div>
       </main>
+    </div>
+  );
+}
+
+// -- Setup Error Display --
+
+function SetupErrorDisplay({ message, onDismiss }: { message: string; onDismiss: () => void }) {
+  const [showDetails, setShowDetails] = useState(false);
+  const { summary, hints, rawOutput } = parseSetupError(message);
+
+  return (
+    <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/5 overflow-hidden">
+      <div className="flex gap-3 px-4 py-3">
+        <div className="shrink-0 w-9 h-9 rounded-full bg-amber-500/20 flex items-center justify-center">
+          <Wrench className="w-4 h-4 text-amber-600 dark:text-amber-500" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-foreground">Setup needs a small fix</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{summary}</p>
+          {hints.length > 0 && (
+            <ul className="mt-3 space-y-1.5">
+              {hints.map((hint, i) => (
+                <li key={i} className="flex gap-2 text-xs text-muted-foreground">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-amber-600 dark:text-amber-500" />
+                  <span>{hint}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {rawOutput && (
+            <button
+              type="button"
+              onClick={() => setShowDetails(!showDetails)}
+              className="mt-3 flex items-center gap-1.5 text-[10px] text-amber-700 dark:text-amber-400 hover:underline"
+            >
+              <ChevronDown className={`w-3 h-3 transition-transform ${showDetails ? "rotate-0" : "-rotate-90"}`} />
+              {showDetails ? "Hide" : "Show"} technical details
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onDismiss}
+            className="mt-2 text-[10px] text-muted-foreground hover:text-foreground"
+          >
+            Dismiss
+          </button>
+        </div>
+      </div>
+      {showDetails && rawOutput && (
+        <div className="border-t border-amber-500/20 px-4 py-3">
+          <pre className="text-[10px] font-mono text-muted-foreground overflow-x-auto whitespace-pre-wrap max-h-40 overflow-y-auto break-words">
+            {rawOutput}
+          </pre>
+        </div>
+      )}
     </div>
   );
 }

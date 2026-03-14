@@ -23,7 +23,7 @@ import {
   Settings,
   Building2,
   Code,
-  ChevronRight,
+  ArrowUpRight,
   MessageSquarePlus,
   Sun,
   Moon,
@@ -95,14 +95,14 @@ export function DashboardShell({
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur-sm">
-        <div className="max-w-5xl mx-auto flex h-11 items-center justify-between px-4 md:px-6">
+      <header className="sticky top-0 z-30 border-b border-border/40 bg-background/95 backdrop-blur-sm">
+        <div className="max-w-6xl mx-auto flex h-11 items-center justify-between px-4 md:px-6">
           <div className="flex items-center gap-4">
             <Link href="/dashboard" className="flex items-center gap-2">
-              <BatLogo className="h-3 w-auto text-foreground" />
+              <BatLogo className="h-4 w-auto text-foreground" />
             </Link>
             {!isHome && (
-              <nav className="hidden sm:flex items-center gap-0.5 text-[11px]">
+              <nav className="hidden sm:flex items-center gap-0.5 text-xs">
                 <Link
                   href={"/dashboard" as never}
                   className="text-muted-foreground hover:text-foreground transition-colors px-2 py-1"
@@ -118,7 +118,7 @@ export function DashboardShell({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 text-[11px] text-muted-foreground hover:text-foreground"
+                className="h-7 text-xs text-muted-foreground hover:text-foreground"
               >
                 Pricing
               </Button>
@@ -132,7 +132,7 @@ export function DashboardShell({
                 <Bell className="h-3.5 w-3.5" />
               </Button>
               {unreadNotifications > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 h-3.5 min-w-[14px] flex items-center justify-center bg-primary text-primary-foreground text-[8px] font-bold px-0.5">
+                <span className="absolute -top-0.5 -right-0.5 h-3.5 min-w-[14px] flex items-center justify-center bg-primary text-primary-foreground text-[10px] font-bold px-0.5">
                   {unreadNotifications > 99 ? "99+" : unreadNotifications}
                 </span>
               )}
@@ -148,11 +148,11 @@ export function DashboardShell({
                   <button className="flex items-center gap-1.5 py-1 px-1 hover:bg-muted/50 transition-colors rounded-sm cursor-pointer outline-none">
                     <Avatar className="h-6 w-6">
                       <AvatarImage src={userImage ?? undefined} />
-                      <AvatarFallback className="text-[9px] font-bold bg-primary/10 text-primary">
+                      <AvatarFallback className="text-[11px] font-bold bg-primary/10 text-primary">
                         {initial}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="hidden sm:inline text-[11px] font-medium max-w-[100px] truncate">
+                    <span className="hidden sm:inline text-xs font-medium max-w-[100px] truncate">
                       {userName}
                     </span>
                   </button>
@@ -162,8 +162,8 @@ export function DashboardShell({
                 <DropdownMenuGroup>
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col gap-0.5">
-                      <p className="text-xs font-medium truncate">{userName}</p>
-                      <p className="text-[10px] text-muted-foreground truncate">
+                      <p className="text-sm font-medium truncate">{userName}</p>
+                      <p className="text-xs text-muted-foreground truncate">
                         {userEmail}
                       </p>
                     </div>
@@ -233,7 +233,7 @@ export function DashboardShell({
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 md:px-6 py-6 md:py-10">
+      <main className="max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-10">
         {children}
       </main>
     </div>
@@ -281,12 +281,12 @@ export function DashboardHome({
   ];
 
   return (
-    <div className="max-w-xl">
-      <div className="mb-10">
-        <p className="text-xs text-muted-foreground/50 font-medium uppercase tracking-widest mb-2">
+    <div className="max-w-4xl relative">
+      <div className="mb-6">
+        <p className="text-[10px] text-muted-foreground/50 font-medium uppercase tracking-widest mb-1">
           User Dashboard
         </p>
-        <h1 className="text-lg font-semibold tracking-tight">
+        <h1 className="text-xl font-semibold tracking-tight">
           Hey, {firstName}
         </h1>
         <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
@@ -295,57 +295,60 @@ export function DashboardHome({
         </p>
       </div>
 
-      <div className="mb-8">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50 mb-2">
+      <div className="mb-6">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50 mb-3">
           Features included
         </p>
-        <div className="divide-y divide-border/30">
+        <div
+          className="grid gap-3"
+          style={{ gridTemplateColumns: `repeat(${features.length}, minmax(0, 1fr))` }}
+        >
           {features.map((f) => (
             <Link
               key={f.href}
               href={f.href as never}
-              className="flex items-center gap-3.5 py-3 group"
+              className="flex flex-col justify-between gap-2 p-3 group border border-dashed border-border/40 hover:bg-muted/50 transition-colors"
             >
-              <div className="h-7 w-7 border border-border/40 flex items-center justify-center shrink-0 group-hover:border-foreground/20 transition-colors">
-                <f.icon className="h-3.5 w-3.5 text-muted-foreground/60 group-hover:text-foreground/70 transition-colors" />
+              <div className="flex items-center justify-between">
+                <f.icon className="h-4 w-4 text-muted-foreground/50 group-hover:text-foreground/70 transition-colors" />
+                <ArrowUpRight className="h-3 w-3 text-muted-foreground/30 group-hover:text-foreground/80 transition-colors" />
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[11px] font-medium group-hover:text-foreground transition-colors">
+              <div>
+                <p className="text-xs font-medium group-hover:text-foreground transition-colors">
                   {f.label}
                 </p>
-                <p className="text-[10px] text-muted-foreground/60">
+                <p className="text-[10px] text-muted-foreground/60 mt-0.5 leading-snug">
                   {f.desc}
                 </p>
               </div>
-              <ChevronRight className="h-3 w-3 text-muted-foreground/20 group-hover:text-muted-foreground/50 transition-colors" />
             </Link>
           ))}
         </div>
       </div>
 
-      <div className="mb-8">
-        <div className="flex items-center gap-2">
-          <MessageSquarePlus className="h-3 w-3 text-muted-foreground/40" />
-          <FeedbackDialog />
-        </div>
-      </div>
-
-      <div className="border border-dashed border-border/40 px-4 py-5">
-        <div className="flex items-start gap-2.5">
-          <Code className="h-3.5 w-3.5 text-muted-foreground/30 mt-0.5 shrink-0" />
+      <div className="border border-dashed border-border/40 px-4 py-4 mb-16">
+        <div className="flex items-start gap-2">
+          <Code className="h-4 w-4 text-muted-foreground/30 shrink-0 mt-0.5" />
           <div>
-            <p className="text-[11px] font-medium text-muted-foreground/60">
+            <p className="text-xs font-medium text-foreground/80">
               Start building
             </p>
-            <p className="text-[10px] text-muted-foreground/40 mt-1 leading-relaxed">
+            <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
               Edit{" "}
-              <code className="bg-muted/50 px-1 py-px font-mono text-[9px]">
+              <code className="bg-muted px-1.5 py-0.5 rounded-sm font-mono text-xs">
                 app/dashboard/page.tsx
               </code>{" "}
               to replace this page with your product&apos;s home experience.
               The layout, auth, and features above are ready to use.
             </p>
           </div>
+        </div>
+      </div>
+
+      {/* Floating Action Button for Feedback */}
+      <div className="fixed bottom-6 right-6 md:bottom-10 md:right-10 z-50">
+        <div className="bg-background border border-border/40 shadow-xl overflow-hidden flex items-center">
+          <FeedbackDialog />
         </div>
       </div>
     </div>

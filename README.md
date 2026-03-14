@@ -90,6 +90,8 @@ DIRECT_URL=
 | `DIRECT_URL` | Supabase **Session** connection string (port `5432`) |
 
 > **That's it for `.env`.** All other API keys (Supabase, Resend, Google OAuth, GitHub OAuth) are configured from **Admin > API Keys** — no code or env file changes needed. Keys set in the dashboard are stored in the database and take priority over any `.env` fallbacks.
+>
+> **Full setup guide:** See [docs/ENV_SETUP.md](docs/ENV_SETUP.md) for every variable (db, auth, email, OAuth, payments), where to get each value, and what it controls.
 
 ### 4. Set up the database
 
