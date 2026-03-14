@@ -72,6 +72,20 @@ export async function GET() {
     return NextResponse.json({ error: "Test download disabled" }, { status: 403 });
   }
 
+  const prebuiltPath = path.join(process.cwd(), "Batman.zip");
+  if (fs.existsSync(prebuiltPath)) {
+    const stat = fs.statSync(prebuiltPath);
+    const stream = fs.createReadStream(prebuiltPath);
+    const webStream = Readable.toWeb(stream) as ReadableStream<Uint8Array>;
+    return new Response(webStream, {
+      headers: {
+        "Content-Type": "application/zip",
+        "Content-Disposition": 'attachment; filename="Batman.zip"',
+        "Content-Length": String(stat.size),
+      },
+    });
+  }
+
   const root = getCodebaseRoot();
   const packagesDir = path.join(root, "packages");
   const appsDir = path.join(root, "apps");

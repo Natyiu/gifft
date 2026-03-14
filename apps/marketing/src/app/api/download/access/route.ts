@@ -83,13 +83,30 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Download link has expired" }, { status: 410 });
   }
 
+  const prebuiltPath = path.join(process.cwd(), "Batman.zip");
+  if (fs.existsSync(prebuiltPath)) {
+    const stat = fs.statSync(prebuiltPath);
+    const stream = fs.createReadStream(prebuiltPath);
+    const webStream = Readable.toWeb(stream) as ReadableStream<Uint8Array>;
+    return new Response(webStream, {
+      headers: {
+        "Content-Type": "application/zip",
+        "Content-Disposition": 'attachment; filename="Batman.zip"',
+        "Content-Length": String(stat.size),
+      },
+    });
+  }
+
   const root = getCodebaseRoot();
   const packagesDir = path.join(root, "packages");
   const appsDir = path.join(root, "apps");
 
   if (!fs.existsSync(packagesDir) || !fs.existsSync(appsDir)) {
-    console.error("[Download] Codebase root not found:", root);
-    return NextResponse.json({ error: "Codebase not available" }, { status: 500 });
+    console.error("[Download] Pre-built zip not found and codebase root not available:", root);
+    return NextResponse.json(
+      { error: "Codebase not available. Run marketing build to generate Batman.zip." },
+      { status: 500 }
+    );
   }
 
   const archive = archiver("zip", { zlib: { level: 6 } });

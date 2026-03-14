@@ -83,7 +83,10 @@ function addDir(archive, dirPath, archivePath) {
   }
 }
 
-const outPath = path.join(ROOT, "Batman.zip");
+const outArg = process.argv.find((a) => a.startsWith("--out="));
+const outPath = outArg
+  ? path.resolve(process.cwd(), outArg.slice(6))
+  : path.join(ROOT, "Batman.zip");
 const out = fs.createWriteStream(outPath);
 const archive = archiver("zip", { zlib: { level: 6 } });
 
