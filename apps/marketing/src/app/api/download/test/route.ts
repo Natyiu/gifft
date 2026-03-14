@@ -19,6 +19,7 @@ const EXCLUDE_DIRS = new Set([
   ".nyc_output",
   ".cursor",
   ".alchemy",
+  "___vc", // Distribution platform folder — breaks pnpm workspace
 ]);
 const EXCLUDE_FILES = new Set([".env", ".env.local"]);
 

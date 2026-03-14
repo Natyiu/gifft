@@ -44,9 +44,13 @@ All major features can be toggled on/off from the admin panel (**Admin > Feature
 
 ## Installation
 
-### 1. Clone the repository
+### 1. Clone or extract the project
 
 ```bash
+# If you downloaded the zip:
+unzip Batman.zip && cd Batman
+
+# Or if cloning:
 git clone <your-repo-url>
 cd Batman
 ```

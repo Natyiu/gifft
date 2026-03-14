@@ -48,3 +48,6 @@ coverage
 .cache
 tmp
 temp
+
+# Distribution platform folder (vibecoded etc.) — breaks pnpm workspace
+___vc
