@@ -7,6 +7,7 @@
   ],
   "type": "module",
   "scripts": {
+    "build:download": "node scripts/build-download.mjs",
     "dev": "turbo dev",
     "build": "turbo build",
     "check-types": "turbo check-types",
@@ -25,6 +26,7 @@
   },
   "devDependencies": {
     "@Batman/config": "workspace:*",
+    "archiver": "^7.0.1",
     "@types/node": "^22.13.14",
     "puppeteer": "^24.38.0",
     "turbo": "^2.6.3",

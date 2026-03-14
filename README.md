@@ -47,13 +47,15 @@ All major features can be toggled on/off from the admin panel (**Admin > Feature
 ### 1. Clone or extract the project
 
 ```bash
-# If you downloaded the zip:
+# If you downloaded the zip (from purchase):
 unzip Batman.zip && cd Batman
 
 # Or if cloning:
 git clone <your-repo-url>
 cd Batman
 ```
+
+> **Selling on Vibecoded or similar?** Run `pnpm run build:download` to generate `Batman.zip` with the correct structure (package.json, pnpm-workspace.yaml, apps/web, packages/* — no marketing app). Upload that zip to your distribution platform.
 
 ### 2. Install dependencies
 

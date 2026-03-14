@@ -45,6 +45,7 @@ coverage
 
 # Misc
 *.tgz
+Batman.zip
 .cache
 tmp
 temp
