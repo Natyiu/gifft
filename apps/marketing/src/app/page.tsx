@@ -238,6 +238,9 @@ function MarketingContent() {
               <a href="#pricing" className="hidden sm:inline-block">
                 <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground hover:bg-secondary h-8 px-2 sm:px-3">Pricing</Button>
               </a>
+              <a href="#demo" className="hidden sm:inline-block">
+                <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground hover:bg-secondary h-8 px-2 sm:px-3">Demo</Button>
+              </a>
               <ThemeToggle />
             </div>
           </div>
@@ -354,14 +357,35 @@ function MarketingContent() {
         </div>
       </section>
 
+      {/* ========== DEMO VIDEO ========== */}
+      <section id="demo" className="border-b border-border/50 py-8 sm:py-14 md:py-16">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="flex items-center gap-2 mb-4 sm:mb-6">
+            <div className="h-px w-6 sm:w-8 bg-foreground" />
+            <span className="text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-muted-foreground/50">See it in action</span>
+          </div>
+          <h2 className="text-base sm:text-xl font-semibold tracking-tight mb-4 sm:mb-6">Watch the Batman demo</h2>
+          <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-border/50 bg-muted/30">
+            <iframe
+              src="https://www.youtube.com/embed/AUAUSaie8os"
+              title="Batman Demo"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allowFullScreen
+              className="absolute inset-0 w-full h-full"
+            />
+          </div>
+        </div>
+      </section>
+
       {/* ========== MOBILE EXPLORE (md: hidden) ========== */}
       <section id="mobile-explore" className="md:hidden border-t border-border/40">
         <div className="sticky top-12 z-20 bg-background/95 backdrop-blur-sm border-b border-border/40 px-4 py-4">
           <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 scrollbar-hide" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
-            {["Why Batman", "How it works", "Features", "Pricing", "Out of the box", "Setup"].map((tab, i) => (
+            {["Demo", "Why Batman", "How it works", "Features", "Pricing", "Out of the box", "Setup"].map((tab, i) => (
               <button
                 key={tab}
-                onClick={() => { const el = document.getElementById(`mobile-slide-${i}`); el?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
+                onClick={() => { const el = i === 0 ? document.getElementById("demo") : document.getElementById(`mobile-slide-${i - 1}`); el?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
                 className="shrink-0 px-3 py-2 text-xs font-medium rounded-full border border-border/50 bg-muted/30 text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
               >
                 {tab}
