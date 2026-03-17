@@ -4,7 +4,11 @@ import { fileURLToPath } from "node:url";
 import { defineConfig } from "prisma/config";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const envPath = path.resolve(__dirname, "../../apps/web/.env");
+const envDir = path.resolve(__dirname, "../../apps");
+const envPath =
+  process.env.DB_TARGET === "marketing"
+    ? path.join(envDir, "marketing/.env")
+    : path.join(envDir, "web/.env");
 dotenv.config({ path: envPath });
 
 export default defineConfig({

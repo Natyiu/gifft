@@ -18,7 +18,8 @@
       "persistent": true
     },
     "db:push": {
-      "cache": false
+      "cache": false,
+      "env": ["DB_TARGET"]
     },
     "db:studio": {
       "cache": false,
