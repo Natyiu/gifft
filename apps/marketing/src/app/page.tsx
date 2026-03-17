@@ -319,7 +319,7 @@ function MarketingContent() {
           <div className="py-8 md:w-1/2 px-4 sm:px-6 md:px-0 md:pl-10 lg:pl-12 md:pr-5 lg:pr-8 flex flex-col justify-center md:border-l md:border-border/50">
             <div className="flex items-center gap-2 mb-4">
               <div className="h-px w-6 sm:w-8 bg-foreground" />
-              <span className="text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-muted-foreground/50">For founders who mean it</span>
+              <span className="text-[9px] sm:text-[10px] font-mono tracking-widest uppercase text-muted-foreground/50">For founders who mean it.</span>
             </div>
             <h1 className="text-3xl md:text-4xl font-semibold tracking-tight leading-[1.15] mb-4">
               You had an idea at 3am.<br />
