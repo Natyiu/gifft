@@ -81,10 +81,10 @@ function parseSetupError(message: string): {
     hints.push("The database name in your URL might be wrong. Supabase uses 'postgres' as the default database.");
   }
   if (lower.includes("invalid") && lower.includes("url")) {
-    hints.push("The connection string format may be incorrect. Copy the Transaction and Direct URLs from Supabase Dashboard → Settings → Database.");
+    hints.push("The connection string format may be incorrect. Copy the Transaction and Session URLs from Supabase Dashboard → Settings → Database.");
   }
   if (lower.includes("pooler") || lower.includes("6543") || lower.includes("5432")) {
-    hints.push("Use port 6543 for the Transaction URL (pooler) and port 5432 for the Direct URL. Don't mix them up.");
+    hints.push("Use port 6543 for the Transaction URL (pooler) and port 5432 for the Session URL. Don't mix them up.");
   }
   if (lower.includes("schema") || lower.includes("migration")) {
     hints.push("There may be a schema conflict. If you've changed the database elsewhere, try running pnpm db:push from the project root in a terminal.");
@@ -540,7 +540,7 @@ function SupabaseStep({ form, update, errors, showSecrets, toggleSecret }: StepP
           />
         </FieldGroup>
         <FieldGroup>
-          <FieldLabel htmlFor="directUrl">Direct URL <Required /></FieldLabel>
+          <FieldLabel htmlFor="directUrl">Session URL <Required /></FieldLabel>
           <FieldHint>
             Copy the <strong>Session / Direct</strong> connection string (port 5432). Paste as-is with the{" "}
             <code className="bg-muted/50 px-1 text-[9px]">[YOUR-PASSWORD]</code> placeholder.
@@ -826,7 +826,7 @@ function ReviewStep({ form }: { form: FormData }) {
       title: "Supabase (DB & Storage)",
       items: [
         { label: "Transaction URL", value: form.databaseUrl, masked: true },
-        { label: "Direct URL", value: form.directUrl, masked: true },
+        { label: "Session URL", value: form.directUrl, masked: true },
         { label: "Project URL", value: form.supabaseUrl },
         { label: "Service Role Key", value: form.supabaseServiceRoleKey, masked: true },
       ],
