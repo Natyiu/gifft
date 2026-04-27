@@ -67,7 +67,7 @@ function shouldExclude(name: string): boolean {
 
 export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get("token");
-  if (!token || token.length !== 64) {
+  if (!token) {
     return NextResponse.json({ error: "Invalid or missing token" }, { status: 400 });
   }
 
