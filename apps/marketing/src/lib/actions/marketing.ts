@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
-import prisma from "@Batman/db";
 import { sendEmail } from "@/lib/email";
+import { createMarketingPurchase } from "@/lib/db/marketing-purchase-store";
 
 const DOWNLOAD_LINK_EXPIRY_HOURS = 48;
 const MARKETING_PRODUCT_ID = process.env.POLAR_MARKETING_PRODUCT_ID?.trim();
@@ -33,11 +33,14 @@ export async function grantCodebaseAccess(params: {
   const expiresAt = new Date(Date.now() + DOWNLOAD_LINK_EXPIRY_HOURS * 60 * 60 * 1000);
 
   try {
-    await prisma.marketingPurchase.create({
-      data: { email: emailNorm, polarOrderId, downloadToken, expiresAt },
+    const inserted = await createMarketingPurchase({
+      email: emailNorm,
+      polarOrderId,
+      downloadToken,
+      expiresAt,
     });
+    if (!inserted) return { ok: true };
   } catch (e) {
-    if (e && typeof e === "object" && "code" in e && e.code === "P2002") return { ok: true };
     console.error("[Marketing] Failed to create purchase:", e);
     return { ok: false, error: "Database error" };
   }

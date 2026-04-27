@@ -3,7 +3,7 @@ import path from "node:path";
 import fs from "node:fs";
 import { Readable } from "node:stream";
 import archiver from "archiver";
-import prisma from "@Batman/db";
+import { findMarketingPurchaseByToken } from "@/lib/db/marketing-purchase-store";
 
 const EXCLUDE_DIRS = new Set([
   "node_modules",
@@ -71,9 +71,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Invalid or missing token" }, { status: 400 });
   }
 
-  const purchase = await prisma.marketingPurchase.findUnique({
-    where: { downloadToken: token },
-  });
+  const purchase = await findMarketingPurchaseByToken(token);
 
   if (!purchase) {
     return NextResponse.json({ error: "Invalid or expired token" }, { status: 404 });

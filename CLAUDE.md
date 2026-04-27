@@ -1,4 +1,4 @@
-# Batman boilerplate
+# Batman bo
 
 This file provides context about the project for AI assistants.
 
