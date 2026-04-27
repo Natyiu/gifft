@@ -3,7 +3,7 @@ import path from "node:path";
 import fs from "node:fs";
 import { Readable } from "node:stream";
 import archiver from "archiver";
-import { findMarketingPurchaseByToken } from "@/lib/db/marketing-purchase-store";
+import { verifyDownloadToken } from "@/lib/download-token";
 
 const EXCLUDE_DIRS = new Set([
   "node_modules",
@@ -71,14 +71,12 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Invalid or missing token" }, { status: 400 });
   }
 
-  const purchase = await findMarketingPurchaseByToken(token);
-
-  if (!purchase) {
+  const verified = verifyDownloadToken(token);
+  if (!verified.valid) {
+    if (verified.expired) {
+      return NextResponse.json({ error: "Download link has expired" }, { status: 410 });
+    }
     return NextResponse.json({ error: "Invalid or expired token" }, { status: 404 });
-  }
-
-  if (purchase.expiresAt < new Date()) {
-    return NextResponse.json({ error: "Download link has expired" }, { status: 410 });
   }
 
   const prebuiltPath = path.join(process.cwd(), "Batman.zip");
