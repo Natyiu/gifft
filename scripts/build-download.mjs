@@ -31,14 +31,14 @@ const EXCLUDE_DIRS = new Set([
 const EXCLUDE_FILES = new Set([".env", ".env.local"]);
 
 const MARKETING_PATHS = new Set([
-  "Batman/apps/web/src/app/marketing-page.tsx",
-  "Batman/apps/web/src/app/marketing-page.stub.tsx",
-  "Batman/apps/web/src/app/api/checkout",
-  "Batman/apps/web/src/app/api/webhooks/polar-marketing",
-  "Batman/apps/web/src/app/api/download",
-  "Batman/apps/web/src/lib/actions/marketing.ts",
-  "Batman/packages/db/prisma/schema/marketing.prisma",
-  "Batman/apps/marketing",
+  "apps/web/src/app/marketing-page.tsx",
+  "apps/web/src/app/marketing-page.stub.tsx",
+  "apps/web/src/app/api/checkout",
+  "apps/web/src/app/api/webhooks/polar-marketing",
+  "apps/web/src/app/api/download",
+  "apps/web/src/lib/actions/marketing.ts",
+  "packages/db/prisma/schema/marketing.prisma",
+  "apps/marketing",
 ]);
 
 const MARKETING_PAGE_STUB = `"use client";
@@ -56,18 +56,26 @@ function isMarketingPath(archivePath) {
   return false;
 }
 
-function shouldExclude(name) {
+const outArg = process.argv.find((a) => a.startsWith("--out="));
+const outPath = outArg
+  ? path.resolve(process.cwd(), outArg.slice(6))
+  : path.join(ROOT, "Batman.zip");
+
+function shouldExclude(name, fullPath) {
   if (EXCLUDE_DIRS.has(name)) return true;
   if (EXCLUDE_FILES.has(name)) return true;
   if (name.startsWith(".env")) return true;
+  // Prevent recursive/self-inclusion and stale local zip artifacts.
+  if (fullPath && path.resolve(fullPath) === outPath) return true;
+  if (name.endsWith(".zip")) return true;
   return false;
 }
 
 function addDir(archive, dirPath, archivePath) {
   const entries = fs.readdirSync(dirPath, { withFileTypes: true });
   for (const entry of entries) {
-    if (shouldExclude(entry.name)) continue;
     const fullPath = path.join(dirPath, entry.name);
+    if (shouldExclude(entry.name, fullPath)) continue;
     const relPath = path.join(archivePath, entry.name).replace(/\\/g, "/");
     if (isMarketingPath(relPath)) {
       if (relPath.endsWith("marketing-page.tsx")) {
@@ -83,15 +91,11 @@ function addDir(archive, dirPath, archivePath) {
   }
 }
 
-const outArg = process.argv.find((a) => a.startsWith("--out="));
-const outPath = outArg
-  ? path.resolve(process.cwd(), outArg.slice(6))
-  : path.join(ROOT, "Batman.zip");
 const out = fs.createWriteStream(outPath);
 const archive = archiver("zip", { zlib: { level: 6 } });
 
 archive.pipe(out);
-addDir(archive, ROOT, "Batman");
+addDir(archive, ROOT, "");
 await archive.finalize();
 
 await new Promise((resolve, reject) => {
@@ -100,4 +104,4 @@ await new Promise((resolve, reject) => {
 });
 
 console.log("Created", outPath);
-console.log("Contents: Batman/package.json, Batman/pnpm-workspace.yaml, Batman/apps/web, Batman/packages/*");
+console.log("Contents: package.json, pnpm-workspace.yaml, apps/web, packages/*");

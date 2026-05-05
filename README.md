@@ -55,7 +55,7 @@ git clone <your-repo-url>
 cd Batman
 ```
 
-> **Selling on Vibecoded or similar?** Run `pnpm run build:download` to generate `Batman.zip` with the correct structure (package.json, pnpm-workspace.yaml, apps/web, packages/* — no marketing app). Upload that zip to your distribution platform.
+> **Selling on Vibecoded or similar?** Run `pnpm run build:download` to generate `Batman.zip` with the correct structure (`package.json` at zip root, `pnpm-workspace.yaml`, `apps/web`, `packages/*` — no marketing app). Upload that zip to your distribution platform.
 
 ### 2. Install dependencies
 
