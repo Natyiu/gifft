@@ -86,15 +86,20 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Invalid or expired token" }, { status: 404 });
   }
 
-  const prebuiltPath = path.join(process.cwd(), "Batman.zip");
-  if (fs.existsSync(prebuiltPath)) {
+  const prebuiltCandidates = ["Batman-v6.zip", "Batman.zip"];
+  const prebuiltPath = prebuiltCandidates
+    .map((name) => path.join(process.cwd(), name))
+    .find((candidate) => fs.existsSync(candidate));
+
+  if (prebuiltPath) {
     const stat = fs.statSync(prebuiltPath);
     const stream = fs.createReadStream(prebuiltPath);
+    const fileName = path.basename(prebuiltPath);
     const webStream = Readable.toWeb(stream) as ReadableStream<Uint8Array>;
     return new Response(webStream, {
       headers: {
         "Content-Type": "application/zip",
-        "Content-Disposition": 'attachment; filename="Batman.zip"',
+        "Content-Disposition": `attachment; filename="${fileName}"`,
         "Content-Length": String(stat.size),
       },
     });
