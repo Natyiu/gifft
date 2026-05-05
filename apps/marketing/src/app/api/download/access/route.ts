@@ -65,6 +65,28 @@ function shouldExclude(name: string): boolean {
   return false;
 }
 
+function findPrebuiltZip(): string | undefined {
+  const cwd = process.cwd();
+  const candidateDirs = [
+    cwd,
+    path.resolve(cwd, ".."),
+    path.resolve(cwd, "..", ".."),
+    path.resolve(cwd, "..", "..", ".."),
+  ];
+  const fileNames = ["Batman-v6.zip", "Batman.zip"];
+
+  for (const dir of candidateDirs) {
+    for (const fileName of fileNames) {
+      const candidate = path.join(dir, fileName);
+      if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
+        return candidate;
+      }
+    }
+  }
+
+  return undefined;
+}
+
 function appendRootFileIfExists(archive: archiver.Archiver, root: string, fileName: string): boolean {
   const p = path.join(root, fileName);
   if (!fs.existsSync(p) || !fs.statSync(p).isFile()) return false;
@@ -86,10 +108,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Invalid or expired token" }, { status: 404 });
   }
 
-  const prebuiltCandidates = ["Batman-v6.zip", "Batman.zip"];
-  const prebuiltPath = prebuiltCandidates
-    .map((name) => path.join(process.cwd(), name))
-    .find((candidate) => fs.existsSync(candidate));
+  const prebuiltPath = findPrebuiltZip();
 
   if (prebuiltPath) {
     const stat = fs.statSync(prebuiltPath);
