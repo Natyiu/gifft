@@ -22,14 +22,14 @@ const EXCLUDE_FILES = new Set([".env", ".env.local"]);
 
 /** Paths excluded from customer download — marketing/seller-only. */
 const MARKETING_PATHS = new Set([
-  "Batman/apps/web/src/app/marketing-page.tsx",
-  "Batman/apps/web/src/app/marketing-page.stub.tsx",
-  "Batman/apps/web/src/app/api/checkout",
-  "Batman/apps/web/src/app/api/webhooks/polar-marketing",
-  "Batman/apps/web/src/app/api/download",
-  "Batman/apps/web/src/lib/actions/marketing.ts",
-  "Batman/packages/db/prisma/schema/marketing.prisma",
-  "Batman/apps/marketing",
+  "apps/web/src/app/marketing-page.tsx",
+  "apps/web/src/app/marketing-page.stub.tsx",
+  "apps/web/src/app/api/checkout",
+  "apps/web/src/app/api/webhooks/polar-marketing",
+  "apps/web/src/app/api/download",
+  "apps/web/src/lib/actions/marketing.ts",
+  "packages/db/prisma/schema/marketing.prisma",
+  "apps/marketing",
 ]);
 
 const MARKETING_PAGE_STUB = `"use client";
@@ -63,6 +63,13 @@ function shouldExclude(name: string): boolean {
   if (EXCLUDE_FILES.has(name)) return true;
   if (name.startsWith(".env")) return true;
   return false;
+}
+
+function appendRootFileIfExists(archive: archiver.Archiver, root: string, fileName: string): boolean {
+  const p = path.join(root, fileName);
+  if (!fs.existsSync(p) || !fs.statSync(p).isFile()) return false;
+  archive.file(p, { name: fileName });
+  return true;
 }
 
 export async function GET(req: NextRequest) {
@@ -127,7 +134,25 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  addDir(root, "Batman");
+  const hasRootPackageJson = appendRootFileIfExists(archive, root, "package.json");
+  appendRootFileIfExists(archive, root, "pnpm-workspace.yaml");
+  appendRootFileIfExists(archive, root, "pnpm-lock.yaml");
+  appendRootFileIfExists(archive, root, "turbo.json");
+  appendRootFileIfExists(archive, root, "tsconfig.json");
+  appendRootFileIfExists(archive, root, "README.md");
+
+  if (!hasRootPackageJson) {
+    console.error("[Download] Missing root package.json at:", root);
+    return NextResponse.json(
+      {
+        error:
+          "Download artifact is not available on this deployment. Upload a built Batman.zip and set MARKETING_DOWNLOAD_URL.",
+      },
+      { status: 500 }
+    );
+  }
+
+  addDir(root, "");
   archive.finalize();
 
   const webStream = Readable.toWeb(archive) as ReadableStream<Uint8Array>;

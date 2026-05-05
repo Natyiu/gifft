@@ -119,6 +119,7 @@ If you run the marketing app (`apps/marketing`) for selling the boilerplate:
 | `POLAR_MARKETING_WEBHOOK_SECRET` | Webhook secret for marketing orders | Polar → Webhooks |
 | `POLAR_MARKETING_SANDBOX` | `true` for test purchases | Set `false` for live |
 | `MARKETING_URL` | Marketing site URL (for download links in email) | e.g. `https://marketing.yourapp.com` |
+| `MARKETING_DOWNLOAD_URL` | Direct URL to your final downloadable `Batman.zip` (recommended) | Your CDN/product-hosted file URL |
 
 Create `.env` in `apps/marketing/` or reuse `apps/web/.env` (both are loaded).
 

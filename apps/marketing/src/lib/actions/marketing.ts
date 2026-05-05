@@ -35,7 +35,10 @@ export async function grantCodebaseAccess(params: {
     process.env.CORS_ORIGIN ||
     "http://localhost:3002";
   const root = baseUrl.replace(/\/$/, "");
-  const downloadUrl = `${root}/api/download/access?token=${encodeURIComponent(downloadToken)}`;
+  const directDownloadUrl = process.env.MARKETING_DOWNLOAD_URL?.trim();
+  const downloadUrl = directDownloadUrl
+    ? directDownloadUrl
+    : `${root}/api/download/access?token=${encodeURIComponent(downloadToken)}`;
 
   const html = `
     <p>Thanks for purchasing Batman!</p>
