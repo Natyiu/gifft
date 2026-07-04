@@ -25,6 +25,12 @@ export const env = createEnv({
     RESEND_FROM_EMAIL: z.string().optional(),
     GOOGLE_CLIENT_ID: z.string().optional(),
     GOOGLE_CLIENT_SECRET: z.string().optional(),
+    ANTHROPIC_API_KEY: z.string().optional(),
+    // GiftMind product agent — Gemini for ideas, Firecrawl for web product search/scrape
+    GOOGLE_GENERATIVE_AI_API_KEY: z.string().optional(),
+    FIRECRAWL_API_KEY: z.string().optional(),
+    // Amazon Associates tag appended to product links so purchases earn commission
+    AMAZON_ASSOCIATE_TAG: z.string().optional(),
   },
   runtimeEnv: process.env,
   emptyStringAsUndefined: true,

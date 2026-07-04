@@ -353,7 +353,7 @@ export function SetupWizard({ onComplete }: { onComplete: () => void }) {
           )}
 
           {errors._form && (
-            <SetupErrorDisplay message={errors._form} onDismiss={() => setErrors((e) => ({ ...e, _form: undefined }))} />
+            <SetupErrorDisplay message={errors._form} onDismiss={() => setErrors((e) => { const next = { ...e }; delete next._form; return next; })} />
           )}
 
           {/* Navigation */}

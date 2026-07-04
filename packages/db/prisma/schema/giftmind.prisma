@@ -1,0 +1,255 @@
+// GiftMind — AI gift recommendation engine
+// Plain `userId` scalars (indexed) reference the auth User by id without a
+// formal Prisma relation, so the auth schema stays untouched.
+
+model PersonProfile {
+  id           String   @id @default(cuid())
+  userId       String
+  name         String
+  relationship String? // partner, parent, sibling, friend, colleague, child, ...
+  gender       String?
+  ageYears     Int?
+  ageRange     String? // teens / 20s / 30s / ... — easier than an exact age
+  birthday     DateTime? @db.Date
+  avatarColor  String? // hex/oklch token used for the initials chip
+  interests    String[] @default([]) // concrete interest tags picked by the user
+
+  // Personality layer — phrased like describing them to a friend
+  freeSaturday        String? // outdoors / home projects / social / creative / relaxed / always busy
+  talksAbout          String? // free text
+  homeStyle           String? // minimalist / cozy / practical / aesthetic / collector
+  spendingStyle       String? // buys-freely / careful
+  tooMuchOf           String? // what they already have too much of
+  wantsButNeverBought String?
+  lovedPastGifts      String?
+
+  // Life context
+  lifeChanges         String? // new job, moved, new baby, retirement, divorce, health journey
+  hobbies             String? // detailed: "got into sourdough, watches Kenji on YouTube"
+  neverBuyThemselves  String? // would love but would never justify buying
+  aesthetic           String? // classic / modern / quirky / practical / luxurious
+
+  notes String?
+
+  lastEnrichedAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  occasions   Occasion[]
+  generations GenerationRun[]
+  giftIdeas   GiftIdea[]
+  vaultEntries GiftVaultEntry[]
+  wishlists   WishlistShare[]
+
+  @@index([userId])
+  @@map("gm_person_profile")
+}
+
+model Occasion {
+  id        String   @id @default(cuid())
+  userId    String
+  profileId String
+  type      String // birthday, christmas, anniversary, graduation, ...
+  date      DateTime @db.Date
+  recurring Boolean  @default(true)
+  budgetMin Int?
+  budgetMax Int?
+  notes     String?
+  // Annual planner / family coordination
+  plannedYear Int?
+  claimedBy   String? // family member name who claimed this occasion
+  done        Boolean  @default(false)
+  giftStatus  String   @default("idea") // idea | planned | purchased
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile PersonProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([profileId])
+  @@map("gm_occasion")
+}
+
+model GenerationRun {
+  id              String   @id @default(cuid())
+  userId          String
+  profileId       String
+  occasion        String
+  tone            String // practical / sentimental / fun / luxury / experience
+  budgetMin       Int
+  budgetMax       Int
+  neverBuyFilter  Boolean  @default(false)
+  model           String? // which model produced these
+  usedFallback    Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  profile PersonProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  ideas   GiftIdea[]
+
+  @@index([userId])
+  @@index([profileId])
+  @@map("gm_generation_run")
+}
+
+model GiftIdea {
+  id           String  @id @default(cuid())
+  runId        String
+  profileId    String
+  position     Int     @default(0)
+  name         String // the specific gift, never a category
+  reason       String // one sentence tied to who they are
+  about        String? // a richer paragraph about the product (detail page)
+  searchQuery  String? // precise product search string (image / Amazon / video links)
+  buyUrl       String?
+  imageUrl     String? // primary product image scraped from the merchant (= imageUrls[0])
+  imageUrls    String[] @default([]) // full product gallery scraped from the merchant (Firecrawl)
+  productSource String? // amazon | etsy | web — where the buyUrl was found
+  priceText    String? // "~$45"
+  estPrice     Int? // numeric estimate for filtering
+  type         String  @default("object") // object | experience
+  vibe         String  @default("practical") // practical | sentimental | fun | luxury
+  splurgeWorthy Boolean @default(false) // "they'd never buy this themselves"
+  cheaperAlt   String?
+  premiumAlt   String?
+  personalTouch String?
+
+  saved     Boolean @default(false)
+  purchased Boolean @default(false)
+  trackPrice Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  run     GenerationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  profile PersonProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([runId])
+  @@index([profileId])
+  @@map("gm_gift_idea")
+}
+
+model GiftVaultEntry {
+  id            String    @id @default(cuid())
+  userId        String
+  profileId     String
+  title         String
+  occasion      String?
+  year          Int?
+  givenDate     DateTime? @db.Date
+  direction     String    @default("given") // given | received
+  source        String? // who gave it (for received), so you avoid duplicates
+  reaction      String? // loved | landed | missed | unknown
+  priceText     String?
+  notes         String?
+  giftIdeaId    String? // set when auto-logged from a purchased GiftIdea (dedupe key)
+  imageUrl      String? // product image carried over from the gift idea
+  buyUrl        String? // where it was bought
+  createdAt     DateTime  @default(now())
+
+  profile PersonProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([profileId])
+  @@index([giftIdeaId])
+  @@map("gm_gift_vault_entry")
+}
+
+// A pooled / group gift for one occasion. Decoupled via `occasionKey` (which is
+// a real Occasion id or a synthetic "bday-<profileId>") so birthdays that don't
+// yet have an Occasion row can still have a group. Contributors live as JSON:
+// [{ name: string, amount: number, paid: boolean }].
+model GiftGroup {
+  id           String   @id @default(cuid())
+  userId       String
+  occasionKey  String // matches PlannerOccasion.id — "<occasionId>" or "bday-<profileId>"
+  profileId    String?
+  title        String
+  targetAmount Int?
+  ordered      Boolean  @default(false)
+  contributors Json     @default("[]")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+  @@index([occasionKey])
+  @@map("gm_gift_group")
+}
+
+// A user-authored gift plan / planned activity — created from the planner's
+// "Add plan" flow. Not tied to an auto-derived Occasion: it can target a saved
+// person (profileId) or a typed name, for any event or season, with a notify
+// date ("remind me to sort this by…"). If generated, `runId` links the ideas.
+model GiftPlan {
+  id            String    @id @default(cuid())
+  userId        String
+  profileId     String? // recipient, if a saved person
+  recipientName String // display name (saved person or typed)
+  occasion      String // event/season key (birthday, christmas, season-winter, …)
+  isGroup       Boolean   @default(false)
+  budgetMin     Int?
+  budgetMax     Int?
+  notes         String?
+  notifyDate    DateTime? @db.Date
+  status        String    @default("idea") // idea | planned | purchased
+  runId         String? // linked GenerationRun once ideas are generated
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("gm_gift_plan")
+}
+
+// A product a user adds to their own wishlist by pasting a link. We scrape the
+// page (title, image, price) via Firecrawl and store the result so it renders as
+// a real product card.
+model WishlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  url       String // the original link the user pasted
+  buyUrl    String? // affiliate-tagged link when possible
+  title     String
+  imageUrl  String?
+  priceText String?
+  source    String? // amazon | etsy | web
+  notes     String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("gm_wishlist_item")
+}
+
+model WishlistShare {
+  id            String    @id @default(cuid())
+  userId        String
+  profileId     String?
+  token         String    @unique @default(cuid())
+  title         String
+  message       String?
+  status        String    @default("open") // open | filled
+  responderName String?
+  responses     Json? // the self-described answers
+  createdAt     DateTime  @default(now())
+  filledAt      DateTime?
+
+  profile PersonProfile? @relation(fields: [profileId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@map("gm_wishlist_share")
+}
+
+// Cache of real, scraped product imagery for the Discover feed. Keyed by the
+// product's stable searchQuery so each Discover product is scraped once (via
+// Firecrawl / product-finder) and then served from the DB on every visit.
+model DiscoverMedia {
+  id          String   @id @default(cuid())
+  searchQuery String   @unique
+  imageUrl    String? // primary scraped product photo (null = scrape found nothing)
+  imageUrls   String[] @default([]) // full scraped gallery (for the detail page)
+  buyUrl      String? // real product page when we found one (else null → search link)
+  priceText   String?
+  source      String? // amazon | etsy | web | search
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("gm_discover_media")
+}

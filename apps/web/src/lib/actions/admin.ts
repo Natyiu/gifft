@@ -128,6 +128,7 @@ export async function getApiKeys() {
         polarOrganizationId: true,
         polarWebhookSecret: true,
         polarSandboxMode: true,
+        anthropicApiKey: true,
       },
     }),
     readEnvVars(),
@@ -149,6 +150,7 @@ export async function getApiKeys() {
   const polarWebhookSecret = settings?.polarWebhookSecret ?? env.POLAR_WEBHOOK_SECRET ?? "";
   const polarSandboxMode =
     settings?.polarSandboxMode ?? (env.POLAR_SANDBOX_MODE === "false" ? false : true);
+  const anthropicApiKey = settings?.anthropicApiKey ?? env.ANTHROPIC_API_KEY ?? "";
 
   return {
     supabaseUrl,
@@ -162,6 +164,7 @@ export async function getApiKeys() {
     polarOrganizationId,
     polarWebhookSecret: mask(polarWebhookSecret),
     polarSandboxMode,
+    anthropicApiKey: mask(anthropicApiKey),
   };
 }
 
@@ -177,6 +180,7 @@ export async function saveApiKeys(data: {
   polarOrganizationId?: string;
   polarWebhookSecret?: string;
   polarSandboxMode?: boolean;
+  anthropicApiKey?: string;
 }) {
   await requireAdmin();
 
@@ -189,6 +193,7 @@ export async function saveApiKeys(data: {
       googleClientSecret: true,
       polarAccessToken: true,
       polarWebhookSecret: true,
+      anthropicApiKey: true,
     },
   });
 
@@ -238,6 +243,11 @@ export async function saveApiKeys(data: {
   }
   if (data.polarSandboxMode !== undefined) {
     update.polarSandboxMode = data.polarSandboxMode;
+  }
+  if (data.anthropicApiKey !== undefined) {
+    update.anthropicApiKey = unmasked(data.anthropicApiKey)
+      ? data.anthropicApiKey || null
+      : current?.anthropicApiKey ?? null;
   }
 
   await prisma.appSettings.upsert({

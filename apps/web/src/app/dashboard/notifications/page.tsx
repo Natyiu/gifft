@@ -118,16 +118,16 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between">
+    <div className="mx-auto max-w-2xl space-y-6">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">
-            Notifications
+          <h1 className="flex items-center gap-2 font-serif text-2xl font-semibold tracking-tight">
+            <Bell className="h-6 w-6 text-primary" /> Notifications
           </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="mt-1 text-sm text-muted-foreground">
             {total} notification{total !== 1 ? "s" : ""}{" "}
             {unreadCount > 0 && (
-              <span className="text-primary font-medium">
+              <span className="font-medium text-primary">
                 — {unreadCount} unread
               </span>
             )}
@@ -137,26 +137,24 @@ export default function NotificationsPage() {
           <Button
             variant="outline"
             size="sm"
-            className="text-xs gap-1.5 h-7"
+            className="gap-1.5 rounded-full"
             onClick={handleMarkAllRead}
             disabled={isPending}
           >
-            <CheckCheck className="h-3 w-3" />
+            <CheckCheck className="h-4 w-4" />
             Mark all read
           </Button>
         )}
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-1.5">
-          <Filter className="h-3 w-3 text-muted-foreground" />
-          <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
-            Filter
-          </span>
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-1.5 text-muted-foreground">
+          <Filter className="h-4 w-4" />
+          <span className="text-xs font-semibold uppercase tracking-wide">Filter</span>
         </div>
         <Select value={tagFilter} onValueChange={setTagFilter}>
-          <SelectTrigger className="h-7 w-36 text-xs">
+          <SelectTrigger className="h-9 w-40 rounded-full text-sm">
             <SelectValue placeholder="All tags" />
           </SelectTrigger>
           <SelectContent>
@@ -171,82 +169,82 @@ export default function NotificationsPage() {
         <Button
           variant={unreadOnly ? "default" : "outline"}
           size="sm"
-          className="h-7 text-xs gap-1"
+          className="gap-1 rounded-full"
           onClick={() => setUnreadOnly(!unreadOnly)}
         >
-          <Bell className="h-3 w-3" />
+          <Bell className="h-4 w-4" />
           Unread only
         </Button>
       </div>
 
       {/* Notification list */}
       {notifications.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 border border-dashed border-border">
-          <Inbox className="h-10 w-10 text-muted-foreground/20 mb-4" />
-          <h3 className="text-sm font-medium">No notifications</h3>
-          <p className="text-xs text-muted-foreground mt-1">
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-16 text-center">
+          <Inbox className="mb-4 h-10 w-10 text-muted-foreground/30" />
+          <h3 className="text-base font-semibold">No notifications</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
             {unreadOnly
               ? "You've read all your notifications."
               : "You're all caught up. Nothing to see here."}
           </p>
         </div>
       ) : (
-        <div className="border border-border divide-y divide-border">
+        <div className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
           {notifications.map((n) => {
             const isExpanded = expandedId === n.id;
             return (
               <div
                 key={n.id}
-                className={`transition-colors ${!n.read ? "bg-primary/2" : ""}`}
+                className={`transition-colors ${!n.read ? "bg-primary/5" : ""}`}
               >
                 <button
                   onClick={() => {
                     toggleExpand(n.id);
                     if (!n.read) handleMarkRead(n.id);
                   }}
-                  className="w-full text-left p-4 hover:bg-muted/30 transition-colors"
+                  className="w-full p-4 text-left transition-colors hover:bg-muted/40"
                 >
                   <div className="flex items-start gap-3">
                     {/* Unread indicator */}
-                    <div className="pt-1 shrink-0">
+                    <div className="shrink-0 pt-1.5">
                       {!n.read ? (
-                        <div className="h-2 w-2 bg-primary" />
+                        <div className="h-2.5 w-2.5 rounded-full bg-primary" />
                       ) : (
-                        <div className="h-2 w-2" />
+                        <div className="h-2.5 w-2.5" />
                       )}
                     </div>
 
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-0.5 flex items-center gap-2">
                         <h3
-                          className={`text-xs truncate ${!n.read ? "font-semibold" : "font-medium text-muted-foreground"}`}
+                          className={`truncate text-sm ${!n.read ? "font-semibold" : "font-medium text-muted-foreground"}`}
                         >
                           {n.title}
                         </h3>
                         <span
-                          className={`text-[8px] font-bold uppercase tracking-wider px-1 py-px shrink-0 ${TAG_COLORS[n.tag] ?? TAG_COLORS.general}`}
+                          className={`shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${TAG_COLORS[n.tag] ?? TAG_COLORS.general}`}
                         >
                           {n.tag}
                         </span>
                         {n.attachmentUrl && (
-                          <Paperclip className="h-2.5 w-2.5 text-muted-foreground shrink-0" />
+                          <Paperclip className="h-3 w-3 shrink-0 text-muted-foreground" />
                         )}
                       </div>
-                      <p className="text-[11px] text-muted-foreground truncate">
+                      <p className="truncate text-[13px] text-muted-foreground">
                         {n.description}
                       </p>
                     </div>
 
-                    <span className="text-[10px] text-muted-foreground shrink-0">
+                    <span className="shrink-0 text-xs text-muted-foreground">
                       {timeAgo(n.createdAt)}
                     </span>
                   </div>
                 </button>
 
                 {isExpanded && (
-                  <div className="px-4 pb-4 pl-11 space-y-3">
+                  <div className="space-y-3 px-4 pb-4 pl-11">
                     <div className="border-l-2 border-border pl-3">
-                      <p className="text-xs text-foreground whitespace-pre-wrap leading-relaxed">
+                      <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
                         {n.description}
                       </p>
                     </div>
@@ -256,9 +254,9 @@ export default function NotificationsPage() {
                         href={n.attachmentUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 border border-border px-2.5 py-1.5 text-xs hover:bg-muted/30 transition-colors"
+                        className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-sm transition-colors hover:bg-muted/40"
                       >
-                        <Download className="h-3 w-3 text-muted-foreground" />
+                        <Download className="h-4 w-4 text-muted-foreground" />
                         <span>{n.attachmentName ?? "Download attachment"}</span>
                       </a>
                     )}
@@ -268,19 +266,19 @@ export default function NotificationsPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="h-6 text-[10px] gap-1"
+                          className="gap-1 rounded-full"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleMarkRead(n.id);
                           }}
                           disabled={isPending}
                         >
-                          <Check className="h-2.5 w-2.5" />
+                          <Check className="h-3.5 w-3.5" />
                           Mark as read
                         </Button>
                       ) : (
-                        <span className="text-[10px] text-muted-foreground flex items-center gap-1">
-                          <Check className="h-2.5 w-2.5" />
+                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Check className="h-3.5 w-3.5" />
                           Read
                         </span>
                       )}
@@ -296,27 +294,27 @@ export default function NotificationsPage() {
       {/* Pagination */}
       {pages > 1 && (
         <div className="flex items-center justify-between">
-          <p className="text-[10px] text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Page {currentPage} of {pages}
           </p>
-          <div className="flex gap-1">
+          <div className="flex gap-1.5">
             <Button
               variant="outline"
               size="icon"
-              className="h-6 w-6"
+              className="h-9 w-9 rounded-full"
               disabled={currentPage <= 1}
               onClick={() => load(currentPage - 1)}
             >
-              <ChevronLeft className="h-3 w-3" />
+              <ChevronLeft className="h-4 w-4" />
             </Button>
             <Button
               variant="outline"
               size="icon"
-              className="h-6 w-6"
+              className="h-9 w-9 rounded-full"
               disabled={currentPage >= pages}
               onClick={() => load(currentPage + 1)}
             >
-              <ChevronRight className="h-3 w-3" />
+              <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </div>

@@ -11,6 +11,8 @@ export function LoginPageContent({
 }) {
   const searchParams = useSearchParams();
   const message = searchParams.get("message");
+  const redirect = searchParams.get("redirect");
+  const signupHref = redirect ? `/signup?redirect=${encodeURIComponent(redirect)}` : "/signup";
 
   return (
     <div>
@@ -31,7 +33,7 @@ export function LoginPageContent({
       {signupsEnabled ? (
         <p className="mt-5 text-center text-[11px] text-muted-foreground">
           No account?{" "}
-          <Link href="/signup" className="text-foreground hover:underline font-medium">
+          <Link href={signupHref as never} className="text-foreground hover:underline font-medium">
             Sign up
           </Link>
         </p>

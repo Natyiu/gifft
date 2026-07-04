@@ -72,61 +72,51 @@ export default function AccountSettings() {
   }
 
   return (
-    <div className="max-w-md space-y-8">
+    <div className="space-y-5">
       {/* Change password */}
-      <section>
+      <section className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
         <SectionHeader title="Password" description="Update your password to keep your account secure." />
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="currentPassword" className="text-[11px]">
-              Current Password
-            </Label>
+            <Label htmlFor="currentPassword">Current Password</Label>
             <Input
               id="currentPassword"
               type="password"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
-              className="h-8 text-xs"
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="newPassword" className="text-[11px]">
-              New Password
-            </Label>
+            <Label htmlFor="newPassword">New Password</Label>
             <Input
               id="newPassword"
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               placeholder="Min 8 characters"
-              className="h-8 text-xs"
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="confirmPassword" className="text-[11px]">
-              Confirm New Password
-            </Label>
+            <Label htmlFor="confirmPassword">Confirm New Password</Label>
             <Input
               id="confirmPassword"
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="h-8 text-xs"
             />
           </div>
 
-          <div className="flex justify-end pt-2">
+          <div className="flex justify-end pt-1">
             <Button
               onClick={handleChangePassword}
               disabled={changingPassword || !currentPassword || !newPassword}
-              size="sm"
-              className="text-xs h-8 bg-foreground text-background hover:bg-foreground/90"
+              className="rounded-full"
             >
               {changingPassword ? (
                 <>
-                  <Loader2 className="h-3 w-3 animate-spin mr-1.5" />
+                  <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
                   Updating...
                 </>
               ) : (
@@ -138,45 +128,47 @@ export default function AccountSettings() {
       </section>
 
       {/* Active sessions */}
-      <section>
+      <section className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
         <SectionHeader title="Sessions" description="Manage your active sessions." />
-        <div className="flex items-center justify-between border border-border/40 px-3 py-2.5">
+        <div className="flex items-center justify-between rounded-xl border border-border bg-background/40 px-4 py-3">
           <div>
-            <p className="text-[11px] font-medium">Current Session</p>
-            <p className="text-[10px] text-muted-foreground/50">
+            <p className="text-sm font-medium">Current Session</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
               {session.session.ipAddress ?? "Unknown IP"} &middot;{" "}
               {session.session.userAgent?.split(" ")[0] ?? "Unknown device"}
             </p>
           </div>
-          <span className="text-[9px] font-medium text-green-500/80">Active</span>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-green-500/10 px-2.5 py-0.5 text-xs font-semibold text-green-600 dark:text-green-400">
+            <span className="h-1.5 w-1.5 rounded-full bg-green-500" /> Active
+          </span>
         </div>
       </section>
 
       {/* Danger zone */}
-      <section>
-        <div className="mb-3 pb-2 border-b border-red-400/20">
-          <h3 className="text-xs font-semibold text-red-400">Danger Zone</h3>
-          <p className="text-[10px] text-muted-foreground/50 mt-0.5">
+      <section className="rounded-2xl border border-destructive/30 bg-card p-5 shadow-sm sm:p-6">
+        <div className="mb-4">
+          <h2 className="font-serif text-lg font-semibold text-destructive">Danger Zone</h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">
             Irreversible actions. Proceed with caution.
           </p>
         </div>
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant="destructive" size="sm" className="text-xs h-8">
+            <Button variant="destructive" className="rounded-full">
               Delete Account
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-              <AlertDialogDescription className="text-xs">
+              <AlertDialogDescription>
                 This action cannot be undone. This will permanently delete
                 your account and remove all of your data.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel className="text-xs h-8">Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDeleteAccount} className="text-xs h-8">
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteAccount}>
                 Delete Account
               </AlertDialogAction>
             </AlertDialogFooter>
@@ -189,9 +181,9 @@ export default function AccountSettings() {
 
 function SectionHeader({ title, description }: { title: string; description: string }) {
   return (
-    <div className="mb-3 pb-2 border-b border-border/30">
-      <h3 className="text-xs font-semibold">{title}</h3>
-      <p className="text-[10px] text-muted-foreground/50 mt-0.5">{description}</p>
+    <div className="mb-4">
+      <h2 className="font-serif text-lg font-semibold">{title}</h2>
+      <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>
     </div>
   );
 }

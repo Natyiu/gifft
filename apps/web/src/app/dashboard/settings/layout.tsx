@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const settingsNav = [
@@ -18,15 +19,17 @@ export default function SettingsLayout({
   const pathname = usePathname();
 
   return (
-    <div>
+    <div className="mx-auto max-w-2xl">
       <div className="mb-6">
-        <h1 className="text-lg font-semibold tracking-tight">Settings</h1>
-        <p className="text-xs text-muted-foreground mt-0.5">
+        <h1 className="flex items-center gap-2 font-serif text-2xl font-semibold tracking-tight">
+          <Settings className="h-6 w-6 text-primary" /> Settings
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Manage your account settings and preferences.
         </p>
       </div>
 
-      <div className="flex gap-0.5 border-b border-border/40 mb-6">
+      <div className="mb-6 inline-flex rounded-full bg-muted p-1">
         {settingsNav.map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -34,10 +37,10 @@ export default function SettingsLayout({
               key={item.href}
               href={item.href as never}
               className={cn(
-                "px-3 py-2 text-[11px] font-medium transition-colors -mb-px",
+                "whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-semibold transition-colors sm:text-sm",
                 isActive
-                  ? "border-b-2 border-foreground text-foreground"
-                  : "text-muted-foreground/60 hover:text-foreground",
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
               )}
             >
               {item.name}

@@ -14,6 +14,12 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 
+function safeRedirect(): string | null {
+  if (typeof window === "undefined") return null;
+  const r = new URLSearchParams(window.location.search).get("redirect");
+  return r && r.startsWith("/") && !r.startsWith("//") ? r : null;
+}
+
 export function SignUpForm() {
   const router = useRouter();
   const { isPending } = authClient.useSession();
@@ -42,8 +48,13 @@ export function SignUpForm() {
         },
         {
           onSuccess: () => {
-            router.push("/verify-email");
-            toast.success("Check your email to verify your account");
+            const redirect = safeRedirect();
+            if (redirect) {
+              router.push(redirect as never);
+            } else {
+              router.push("/verify-email");
+              toast.success("Check your email to verify your account");
+            }
           },
           onError: (error) => {
             toast.error(error.error.message || error.error.statusText);
@@ -75,7 +86,7 @@ export function SignUpForm() {
     try {
       await authClient.signIn.social({
         provider,
-        callbackURL: "/dashboard",
+        callbackURL: safeRedirect() ?? "/dashboard",
       });
     } catch {
       toast.error(`Failed to sign in with ${provider}`);

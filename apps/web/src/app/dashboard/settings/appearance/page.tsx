@@ -17,15 +17,15 @@ export default function AppearanceSettings() {
   useEffect(() => setMounted(true), []);
 
   return (
-    <div className="max-w-md">
-      <div className="mb-3 pb-2 border-b border-border/30">
-        <h3 className="text-xs font-semibold">Theme</h3>
-        <p className="text-[10px] text-muted-foreground/50 mt-0.5">
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
+      <div className="mb-4">
+        <h2 className="font-serif text-lg font-semibold">Theme</h2>
+        <p className="mt-0.5 text-sm text-muted-foreground">
           Select your preferred color scheme.
         </p>
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-3">
         {themes.map((t) => {
           const isActive = mounted && theme === t.id;
           return (
@@ -33,22 +33,22 @@ export default function AppearanceSettings() {
               key={t.id}
               onClick={() => setTheme(t.id)}
               className={cn(
-                "flex flex-col items-center gap-2 border px-3 py-4 transition-colors cursor-pointer",
+                "flex cursor-pointer flex-col items-center gap-2 rounded-2xl border p-5 transition-colors",
                 isActive
-                  ? "border-foreground/30 bg-foreground/5"
-                  : "border-border/40 hover:border-border/70 hover:bg-muted/20",
+                  ? "border-primary/40 bg-primary/10"
+                  : "border-border hover:bg-secondary",
               )}
             >
               <t.icon
                 className={cn(
-                  "h-4 w-4",
-                  isActive ? "text-foreground" : "text-muted-foreground/40",
+                  "h-6 w-6",
+                  isActive ? "text-primary" : "text-muted-foreground",
                 )}
               />
               <span
                 className={cn(
-                  "text-[10px] font-medium",
-                  isActive ? "text-foreground" : "text-muted-foreground/50",
+                  "text-sm font-medium",
+                  isActive ? "text-foreground" : "text-muted-foreground",
                 )}
               >
                 {t.label}

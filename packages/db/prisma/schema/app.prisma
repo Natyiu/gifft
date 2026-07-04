@@ -36,6 +36,7 @@ model AppSettings {
   polarOrganizationId      String?
   polarWebhookSecret       String?
   polarSandboxMode         Boolean   @default(true)
+  anthropicApiKey          String?
   waitlistMode             Boolean   @default(false)
   waitlistTitle            String    @default("Join the waitlist")
   waitlistHeadline         String    @default("Be the first to know when we launch")

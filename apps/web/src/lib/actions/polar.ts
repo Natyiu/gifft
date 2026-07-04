@@ -251,7 +251,10 @@ export async function createCheckoutSession(
       process.env.CORS_ORIGIN ||
       "http://localhost:3001";
     const root = origin.replace(/\/$/, "");
-    const successUrl = `${root}/dashboard/pro?checkout=success`;
+    // After paying, resume the gift the user was setting up and drop them on the
+    // generated results (the reveal page reads their saved draft). With no draft
+    // pending it just forwards to the dashboard.
+    const successUrl = `${root}/start/reveal?checkout=success`;
     const returnUrl = `${root}/pricing`;
 
     const checkout = await client.polar.checkouts.create({

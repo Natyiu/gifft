@@ -1,13 +1,21 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Nunito, Fredoka, Geist_Mono } from "next/font/google";
 
 import "../index.css";
 import Providers from "@/components/providers";
 import { getAppSettings } from "@/lib/actions/user";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const nunito = Nunito({
+  variable: "--font-nunito",
   subsets: ["latin"],
+  display: "swap",
+});
+
+const fredoka = Fredoka({
+  variable: "--font-fredoka",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
@@ -15,9 +23,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const DEFAULT_TITLE = "Batman — The Dark Knight Boilerplate";
+const DEFAULT_TITLE = "GiftMind — the perfect gift for anyone in your life";
 const DEFAULT_DESCRIPTION =
-  "A production-ready full-stack boilerplate forged in the shadows of Gotham. Next.js, Prisma, Better Auth, and more.";
+  "GiftMind turns who someone actually is into specific, thoughtful gift ideas — with the reasoning behind each one. Describe the person, and get gifts that feel like they came from someone who really knows them.";
 
 export async function generateMetadata(): Promise<Metadata> {
   try {
@@ -68,7 +76,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${nunito.variable} ${geistMono.variable} ${fredoka.variable} antialiased`}>
         <Providers>
           {children}
         </Providers>

@@ -1,105 +1,150 @@
-import { auth } from "@Batman/auth";
-import { headers } from "next/headers";
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { CreditCard } from "lucide-react";
+import { Check, Sparkles } from "lucide-react";
 
-import { listProductsForPricing } from "@/lib/actions/polar";
-import { getSubscriptionStatus } from "@/lib/subscription";
+import { getSession } from "@/lib/session";
+import { listProductsForPricing, type PolarProduct } from "@/lib/actions/polar";
+import { parseProductDescription } from "@/lib/product-description";
 import { Button } from "@/components/ui/button";
-import { PricingCard } from "./pricing-card";
+import { GiftMindWordmark } from "@/components/giftmind/logo";
+import { cn } from "@/lib/utils";
+import { SubscribeButton } from "./subscribe-button";
+
+export const dynamic = "force-dynamic";
+
+function formatPrice(p: PolarProduct): { price: string; cadence: string | null } {
+  const pr = p.prices[0];
+  if (!pr) return { price: "—", cadence: null };
+  if (pr.amountType === "free") return { price: "Free", cadence: null };
+  if (pr.priceAmount == null) return { price: "—", cadence: null };
+  const amount = (pr.priceAmount / 100).toFixed(2).replace(/\.00$/, "");
+  const symbol = (pr.priceCurrency ?? "usd").toLowerCase() === "usd" ? "$" : `${(pr.priceCurrency ?? "").toUpperCase()} `;
+  const cadence = p.isRecurring ? (p.recurringInterval === "year" ? "/yr" : "/mo") : null;
+  return { price: `${symbol}${amount}`, cadence };
+}
 
 export default async function PricingPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
+  const isLoggedIn = Boolean(session?.user);
+  const isAdmin = session?.user?.role === "admin";
 
-  const { products, error } = await listProductsForPricing();
+  const { products } = await listProductsForPricing();
+  // Cheapest first; feature the least-expensive recurring subscription.
+  const sorted = [...products].sort(
+    (a, b) => (a.prices[0]?.priceAmount ?? 0) - (b.prices[0]?.priceAmount ?? 0),
+  );
+  const featuredId = sorted.find((p) => p.isRecurring)?.id;
 
-  const isSubscribed = session?.user
-    ? (await getSubscriptionStatus(session.user.id)).isSubscribed
-    : false;
-
-  if (isSubscribed) {
-    redirect("/dashboard/pro" as never);
-  }
+  const gridClass =
+    sorted.length >= 3
+      ? "sm:grid-cols-2 lg:grid-cols-3"
+      : sorted.length === 2
+        ? "mx-auto max-w-3xl sm:grid-cols-2"
+        : "mx-auto max-w-sm";
 
   return (
-    <div className="w-full max-w-xs mx-auto lg:mx-0 lg:max-w-md">
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="h-px w-6 bg-foreground" />
-          <span className="text-[9px] font-mono tracking-widest uppercase text-muted-foreground/50">
-            Plans
-          </span>
+    <div>
+      <header className="border-b border-border/50">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-5">
+          <GiftMindWordmark />
+          <Link
+            href={(isLoggedIn ? "/dashboard" : "/") as never}
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            {isLoggedIn ? "Dashboard" : "Back home"}
+          </Link>
         </div>
-        <h1 className="text-lg font-semibold tracking-tight">
-          Choose your plan
-        </h1>
-        <p className="text-xs text-muted-foreground mt-0.5">
-          Cancel anytime. No surprises.
-        </p>
-      </div>
+      </header>
 
-      {error && (
-        <div className="mb-6 p-4 border border-destructive/30 bg-destructive/5 text-center">
-          <p className="text-xs text-destructive">{error}</p>
-          <p className="text-[10px] text-muted-foreground mt-1">
-            Configure Polar in Admin → API Keys (Products → API Keys).
-          </p>
-        </div>
-      )}
-
-      {products.length === 0 && !error ? (
-        <div className="flex flex-col items-center justify-center py-12 border border-dashed border-border/60">
-          <CreditCard className="h-10 w-10 text-muted-foreground/30 mb-3" />
-          <p className="text-xs text-muted-foreground text-center">
-            No products configured yet.
-          </p>
-          <p className="text-[10px] text-muted-foreground/70 mt-1 text-center">
-            Create products in Admin → Products to display them here.
-          </p>
-          {session?.user && (
-            <Button asChild variant="outline" size="sm" className="mt-5 h-8 text-[11px]">
-              <Link href="/dashboard">Back to Dashboard</Link>
-            </Button>
-          )}
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {products.map((product) => (
-            <PricingCard
-              key={product.id}
-              product={product}
-              isLoggedIn={!!session?.user}
-            />
-          ))}
-        </div>
-      )}
-
-      {products.length > 0 && !session?.user && (
-        <div className="mt-8 pt-6 border-t border-border/40">
-          <p className="text-[11px] text-muted-foreground text-center mb-4">
-            Sign in to subscribe
-          </p>
-          <div className="flex gap-2">
-            <Button asChild className="flex-1 h-8 text-xs bg-foreground text-background hover:bg-foreground/90">
-              <Link href="/login?callbackUrl=/pricing">Sign in</Link>
-            </Button>
-            <Button asChild variant="outline" className="flex-1 h-8 text-[11px] border-border/40 hover:border-border/80">
-              <Link href="/signup?callbackUrl=/pricing">Sign up</Link>
-            </Button>
+      <main className="mx-auto max-w-6xl px-5 py-14">
+        <div className="mx-auto mb-12 max-w-2xl text-center">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
+            <Sparkles className="h-3.5 w-3.5 text-accent" /> Cancel anytime · no surprises
           </div>
+          <h1 className="font-serif text-4xl font-semibold tracking-tight">
+            Pricing for every kind of gift-giver
+          </h1>
+          <p className="mt-3 text-muted-foreground">
+            Pick the plan that fits, and reveal your personalized gift ideas.
+          </p>
         </div>
-      )}
 
-      {products.length > 0 && session?.user && (
-        <div className="mt-8 text-center">
-          <Button asChild variant="ghost" size="sm" className="h-8 text-[11px] text-muted-foreground hover:text-foreground">
-            <Link href="/dashboard">Back to Dashboard</Link>
-          </Button>
-        </div>
-      )}
+        {sorted.length === 0 ? (
+          <div className="mx-auto max-w-md rounded-2xl border border-border bg-card p-8 text-center shadow-sm">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+              <Sparkles className="h-6 w-6 text-primary" />
+            </div>
+            <h2 className="font-serif text-xl font-semibold">Plans are on the way</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Subscriptions aren&apos;t live just yet — check back shortly.
+            </p>
+            {isAdmin && (
+              <p className="mt-4 rounded-xl bg-muted/60 p-3 text-xs text-muted-foreground">
+                Admin: add your Polar access token in{" "}
+                <Link href={"/admin/api-keys" as never} className="font-medium text-primary hover:underline">
+                  API Keys
+                </Link>{" "}
+                and create products in{" "}
+                <Link href={"/admin/products" as never} className="font-medium text-primary hover:underline">
+                  Products
+                </Link>
+                .
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className={cn("grid gap-5", gridClass)}>
+            {sorted.map((product) => {
+              const { price, cadence } = formatPrice(product);
+              const { description, features } = parseProductDescription(product.description);
+              const featured = product.id === featuredId;
+              return (
+                <div
+                  key={product.id}
+                  className={cn(
+                    "relative flex flex-col rounded-2xl border bg-card p-6 shadow-sm",
+                    featured ? "border-primary ring-1 ring-primary/30" : "border-border",
+                  )}
+                >
+                  {featured && (
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-primary px-3 py-0.5 text-[11px] font-semibold text-primary-foreground">
+                      Most popular
+                    </span>
+                  )}
+                  <h2 className="font-serif text-xl font-semibold">{product.name}</h2>
+                  {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
+                  <div className="mt-4 flex items-end gap-1">
+                    <span className="font-serif text-3xl font-semibold">{price}</span>
+                    {cadence && <span className="mb-1 text-sm text-muted-foreground">{cadence}</span>}
+                  </div>
+
+                  <ul className="mt-5 flex-1 space-y-2.5">
+                    {features.map((f) => (
+                      <li key={f} className="flex items-start gap-2 text-sm">
+                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                        <span className="text-foreground">{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className="mt-6">
+                    <SubscribeButton
+                      productId={product.id}
+                      isLoggedIn={isLoggedIn}
+                      featured={featured}
+                      label={product.isRecurring ? `Choose ${product.name}` : "Buy now"}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <p className="mx-auto mt-10 max-w-xl text-center text-xs text-muted-foreground">
+          The quality of the ideas is the whole product — hyper-specific, genuinely thoughtful gifts with the
+          reasoning behind each one. Cancel anytime.
+        </p>
+      </main>
     </div>
   );
 }

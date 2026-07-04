@@ -25,6 +25,7 @@ type ApiKeysData = {
   polarOrganizationId: string;
   polarWebhookSecret: string;
   polarSandboxMode: boolean;
+  anthropicApiKey: string;
 };
 
 const emptyKeys: ApiKeysData = {
@@ -39,6 +40,7 @@ const emptyKeys: ApiKeysData = {
   polarOrganizationId: "",
   polarWebhookSecret: "",
   polarSandboxMode: true,
+  anthropicApiKey: "",
 };
 
 export default function AdminApiKeysPage() {
@@ -164,6 +166,35 @@ export default function AdminApiKeysPage() {
             value={form.resendFromEmail}
             onChange={(v) => update("resendFromEmail", v)}
             placeholder="noreply@yourdomain.com"
+          />
+        </section>
+
+        <Separator className="opacity-20" />
+
+        {/* Anthropic (GiftMind AI) */}
+        <section className="space-y-3">
+          <div>
+            <p className="text-xs font-semibold">Anthropic (GiftMind AI)</p>
+            <p className="text-[10px] text-muted-foreground">
+              Powers gift generation. Without it, GiftMind uses a personalized sample generator.{" "}
+              <a
+                href="https://console.anthropic.com/settings/keys"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline"
+              >
+                Get a key
+              </a>
+            </p>
+          </div>
+          <SecretInput
+            id="anthropicApiKey"
+            label="API Key"
+            value={form.anthropicApiKey}
+            onChange={(v) => update("anthropicApiKey", v)}
+            show={showSecrets.anthropicApiKey}
+            onToggleShow={() => toggleShow("anthropicApiKey")}
+            placeholder="sk-ant-xxxxxxxx"
           />
         </section>
 

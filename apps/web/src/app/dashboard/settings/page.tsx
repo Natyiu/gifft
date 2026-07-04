@@ -89,9 +89,9 @@ export default function ProfileSettings() {
   }
 
   return (
-    <div className="max-w-md space-y-8">
+    <div className="space-y-5">
       {/* Avatar */}
-      <section>
+      <section className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
         <SectionHeader title="Avatar" description="Click to upload a new profile picture." />
         <div className="flex items-center gap-4">
           <button
@@ -100,17 +100,17 @@ export default function ProfileSettings() {
             className="relative group cursor-pointer"
             disabled={uploading}
           >
-            <Avatar className="h-14 w-14">
+            <Avatar className="h-20 w-20">
               <AvatarImage src={avatarUrl} />
-              <AvatarFallback className="text-xs font-bold bg-muted text-foreground/60">
+              <AvatarFallback className="bg-primary/15 text-lg font-bold text-primary">
                 {initials}
               </AvatarFallback>
             </Avatar>
-            <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
               {uploading ? (
-                <Loader2 className="h-3 w-3 text-white animate-spin" />
+                <Loader2 className="h-5 w-5 animate-spin text-white" />
               ) : (
-                <span className="text-white text-[9px] font-medium">Edit</span>
+                <span className="text-xs font-medium text-white">Edit</span>
               )}
             </div>
           </button>
@@ -121,7 +121,7 @@ export default function ProfileSettings() {
             className="hidden"
             onChange={handleAvatarUpload}
           />
-          <div className="text-[10px] text-muted-foreground/50 space-y-0.5">
+          <div className="space-y-0.5 text-xs text-muted-foreground">
             <p>Square image, at least 200×200px.</p>
             <p>Max 5MB. JPG, PNG, or WebP.</p>
           </div>
@@ -129,55 +129,42 @@ export default function ProfileSettings() {
       </section>
 
       {/* Profile info */}
-      <section>
+      <section className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
         <SectionHeader title="Profile" description="Your name and bio visible to others." />
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="name" className="text-[11px]">Name</Label>
+            <Label htmlFor="name">Name</Label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Your name"
-              className="h-8 text-xs"
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="email" className="text-[11px]">Email</Label>
-            <Input
-              id="email"
-              value={session.user.email}
-              disabled
-              className="h-8 text-xs opacity-50"
-            />
-            <p className="text-[9px] text-muted-foreground/40">
-              Email cannot be changed here.
-            </p>
+            <Label htmlFor="email">Email</Label>
+            <Input id="email" value={session.user.email} disabled className="opacity-60" />
+            <p className="text-xs text-muted-foreground">Email cannot be changed here.</p>
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="bio" className="text-[11px]">Bio</Label>
+            <Label htmlFor="bio">Bio</Label>
             <Textarea
               id="bio"
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               placeholder="Tell us about yourself..."
               rows={3}
-              className="text-xs resize-none"
+              className="resize-none"
             />
           </div>
 
-          <div className="flex justify-end pt-2">
-            <Button
-              onClick={handleSave}
-              disabled={saving}
-              size="sm"
-              className="text-xs h-8 bg-foreground text-background hover:bg-foreground/90"
-            >
+          <div className="flex justify-end pt-1">
+            <Button onClick={handleSave} disabled={saving} className="rounded-full">
               {saving ? (
                 <>
-                  <Loader2 className="h-3 w-3 animate-spin mr-1.5" />
+                  <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
                   Saving...
                 </>
               ) : (
@@ -193,9 +180,9 @@ export default function ProfileSettings() {
 
 function SectionHeader({ title, description }: { title: string; description: string }) {
   return (
-    <div className="mb-3 pb-2 border-b border-border/30">
-      <h3 className="text-xs font-semibold">{title}</h3>
-      <p className="text-[10px] text-muted-foreground/50 mt-0.5">{description}</p>
+    <div className="mb-4">
+      <h2 className="font-serif text-lg font-semibold">{title}</h2>
+      <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>
     </div>
   );
 }

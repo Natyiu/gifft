@@ -13,6 +13,12 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 
+function safeRedirect(): string {
+  if (typeof window === "undefined") return "/dashboard";
+  const r = new URLSearchParams(window.location.search).get("redirect");
+  return r && r.startsWith("/") && !r.startsWith("//") ? r : "/dashboard";
+}
+
 export function SignInForm() {
   const router = useRouter();
   const { isPending } = authClient.useSession();
@@ -40,7 +46,7 @@ export function SignInForm() {
         },
         {
           onSuccess: () => {
-            router.push("/dashboard");
+            router.push(safeRedirect() as never);
             toast.success("Sign in successful");
           },
           onError: (error) => {
@@ -76,7 +82,7 @@ export function SignInForm() {
     try {
       await authClient.signIn.social({
         provider,
-        callbackURL: "/dashboard",
+        callbackURL: safeRedirect(),
       });
     } catch {
       toast.error(`Failed to sign in with ${provider}`);
