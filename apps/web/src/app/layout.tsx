@@ -1,21 +1,13 @@
 import type { Metadata } from "next";
-import { Nunito, Fredoka, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 
 import "../index.css";
 import Providers from "@/components/providers";
 import { getAppSettings } from "@/lib/actions/user";
 
-const nunito = Nunito({
-  variable: "--font-nunito",
+const geistSans = Geist({
+  variable: "--font-geist-sans",
   subsets: ["latin"],
-  display: "swap",
-});
-
-const fredoka = Fredoka({
-  variable: "--font-fredoka",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
 });
 
 const geistMono = Geist_Mono({
@@ -76,7 +68,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${nunito.variable} ${geistMono.variable} ${fredoka.variable} antialiased`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Providers>
           {children}
         </Providers>
