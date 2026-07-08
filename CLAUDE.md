@@ -28,6 +28,19 @@ a personal-touch suggestion).
   the result — run `pnpm db:push` after pulling this in.
 - **Server actions**: `apps/web/src/lib/actions/giftmind.ts` (profiles,
   occasions, generation, vault, wishlist sharing, plan entitlements).
+- **Payments & entitlements**: any number of Polar plans are supported. The
+  `/pricing` page renders all live Polar products dynamically. Access is granted
+  two ways, unified by `getEntitlements` (`actions/giftmind.ts`): an **active
+  recurring subscription** (`lib/subscription.ts` → `Subscription` table) gives
+  unlimited searches, while **one-time purchases** grant a consumable pool of
+  **search credits** (`lib/credits.ts` → `GiftCredit` table, keyed by unique
+  `polarOrderId`; a one-time order grants 1 credit, or `metadata.credits` for a
+  multi-search pack). `runGeneration` spends one credit per completed search for
+  credit-based users (never for subscribers) and only after a successful run.
+  The webhook (`app/api/webhooks/polar/route.ts`) handles `subscription.*`
+  (upsert subscription) and `order.*` (grant/revoke credits) events. Gating uses
+  a returned `{ paymentRequired: true }` value — never a thrown error, which
+  Vercel masks into an opaque 500. Run `pnpm db:push` after pulling this in.
 - **Data fetching / caching**: sidebar dashboard pages use **TanStack Query**
   for instant re-navigation. Each page's read logic lives in a loader server
   action in `apps/web/src/lib/loaders/*.ts` (`getPlannerData`, `getDiscoverData`,

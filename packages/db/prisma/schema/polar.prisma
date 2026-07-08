@@ -16,3 +16,22 @@ model Subscription {
   @@index([status])
   @@map("subscription")
 }
+
+/// A one-time purchase (e.g. the "One-Time Search" product) grants a number of
+/// consumable search credits. Recurring subscriptions grant unlimited access
+/// and don't use credits. `remaining` decrements each time a credit is spent on
+/// a generation; `polarOrderId` is unique so a webhook can never double-grant.
+model GiftCredit {
+  id           String   @id @default(cuid())
+  userId       String
+  polarOrderId String   @unique
+  productId    String?
+  granted      Int      @default(1)
+  remaining    Int      @default(1)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+  @@index([userId, remaining])
+  @@map("gift_credit")
+}

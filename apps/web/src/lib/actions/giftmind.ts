@@ -5,17 +5,32 @@ import { revalidatePath } from "next/cache";
 
 import { requireSession } from "@/lib/session";
 import { getSubscriptionStatus } from "@/lib/subscription";
+import { getCreditsRemaining, consumeCredit } from "@/lib/credits";
 import { generateGifts, type ProfileForGeneration } from "@/lib/giftmind/engine";
 import { findProducts, scrapeProductUrl } from "@/lib/giftmind/product-finder";
 
 // ── Entitlements ────────────────────────────────────────────────────
 export async function getEntitlements(userId: string) {
+  // Paid-only app: there's no free tier of results. Access is granted two ways,
+  // so the codebase supports any mix of plans:
+  //   • an active recurring subscription → unlimited searches, no credit spend
+  //   • one-time purchases → a consumable pool of search credits
+  // Everyone who's entitled gets the full 15 ideas per search.
   const { isSubscribed } = await getSubscriptionStatus(userId);
-  // Paid-only app: there's no free tier of results. Everyone who has paid gets
-  // the full 15 ideas per search; unpaid users are gated at "see results".
+  if (isSubscribed) {
+    return {
+      plan: "paid" as const,
+      access: "subscription" as const,
+      ideasPerSearch: 15,
+      creditsRemaining: null as number | null,
+    };
+  }
+  const creditsRemaining = await getCreditsRemaining(userId);
   return {
-    plan: isSubscribed ? ("paid" as const) : ("free" as const),
+    plan: creditsRemaining > 0 ? ("paid" as const) : ("free" as const),
+    access: creditsRemaining > 0 ? ("credit" as const) : ("none" as const),
     ideasPerSearch: 15,
+    creditsRemaining: creditsRemaining as number | null,
   };
 }
 
@@ -500,13 +515,18 @@ export async function runGeneration(input: {
   if (!profile) throw new Error("Profile not found.");
 
   const ent = await getEntitlements(userId);
-  // Paid-only: block the (expensive) generation entirely until they subscribe.
-  // Return a value (don't throw) — a thrown error crosses the server-action
-  // boundary and Vercel masks it into an opaque 500, so the client can't tell
-  // it apart from a real failure. The client turns this into a paywall redirect.
+  // Paid-only: block the (expensive) generation entirely until they've paid —
+  // via subscription OR a one-time search credit. Return a value (don't throw):
+  // a thrown error crosses the server-action boundary and Vercel masks it into
+  // an opaque 500, so the client can't tell it apart from a real failure. The
+  // client turns this into a paywall redirect.
   if (ent.plan !== "paid") {
     return { paymentRequired: true as const };
   }
+  // Credit-based access spends one credit per completed search; subscriptions
+  // are unlimited. We spend it AFTER a successful run so a failed generation
+  // never burns a paid credit.
+  const spendsCredit = ent.access === "credit";
 
   const budgetMin = Math.max(0, Math.min(input.budgetMin, input.budgetMax));
   const budgetMax = Math.max(input.budgetMin, input.budgetMax, budgetMin + 1);
@@ -593,6 +613,11 @@ export async function runGeneration(input: {
       },
     },
   });
+
+  // Spend one search credit for one-time buyers (no-op for subscribers).
+  if (spendsCredit) {
+    await consumeCredit(userId);
+  }
 
   // They've now used the core feature — no need to send them through the
   // onboarding guide afterward. Only writes when it isn't already set.
