@@ -7,13 +7,20 @@ import prisma from "@Batman/db";
  * reading, spending, granting, and revoking that balance.
  */
 
-/** Total unspent credits across all of a user's one-time purchases. */
+/** Total unspent credits across all of a user's one-time purchases.
+ *  Never throws: a read failure (e.g. the table isn't migrated yet) degrades to
+ *  "no credits" so the reveal falls back to the paywall instead of a 500. */
 export async function getCreditsRemaining(userId: string): Promise<number> {
-  const agg = await prisma.giftCredit.aggregate({
-    where: { userId, remaining: { gt: 0 } },
-    _sum: { remaining: true },
-  });
-  return agg._sum.remaining ?? 0;
+  try {
+    const agg = await prisma.giftCredit.aggregate({
+      where: { userId, remaining: { gt: 0 } },
+      _sum: { remaining: true },
+    });
+    return agg._sum.remaining ?? 0;
+  } catch (err) {
+    console.error("[credits] getCreditsRemaining failed — has `pnpm db:push` been run?", err);
+    return 0;
+  }
 }
 
 /**
@@ -23,19 +30,25 @@ export async function getCreditsRemaining(userId: string): Promise<number> {
  * below zero.
  */
 export async function consumeCredit(userId: string): Promise<boolean> {
-  return prisma.$transaction(async (tx) => {
-    const row = await tx.giftCredit.findFirst({
-      where: { userId, remaining: { gt: 0 } },
-      orderBy: { createdAt: "asc" },
-      select: { id: true },
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const row = await tx.giftCredit.findFirst({
+        where: { userId, remaining: { gt: 0 } },
+        orderBy: { createdAt: "asc" },
+        select: { id: true },
+      });
+      if (!row) return false;
+      const res = await tx.giftCredit.updateMany({
+        where: { id: row.id, remaining: { gt: 0 } },
+        data: { remaining: { decrement: 1 } },
+      });
+      return res.count === 1;
     });
-    if (!row) return false;
-    const res = await tx.giftCredit.updateMany({
-      where: { id: row.id, remaining: { gt: 0 } },
-      data: { remaining: { decrement: 1 } },
-    });
-    return res.count === 1;
-  });
+  } catch (err) {
+    // Credit bookkeeping must never fail an already-completed generation.
+    console.error("[credits] consumeCredit failed:", err);
+    return false;
+  }
 }
 
 /**

@@ -125,7 +125,7 @@ export default function RevealPage() {
         <div className="gift-think-pulse">
           <GiftMindMark className="h-12 w-12" />
         </div>
-        <p className="mt-5 font-serif text-xl font-semibold">GiftMind is thinking about {firstName}…</p>
+        <p className="mt-5 font-serif text-xl font-semibold">Gift is thinking about {firstName}…</p>
         <p className="mt-2 text-sm text-muted-foreground">Curating gifts that feel made for them.</p>
         <div className="mt-5 flex items-center gap-2 text-xs text-muted-foreground">
           <Loader2 className="h-3.5 w-3.5 animate-spin" /> This takes a few seconds
