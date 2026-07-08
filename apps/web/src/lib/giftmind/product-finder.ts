@@ -249,7 +249,7 @@ function amazonProductUrl(url: string): string | null {
  */
 export async function findProduct(
   query: string,
-  keys: { firecrawlKey?: string | null; amazonTag?: string | null },
+  keys: { firecrawlKey?: string | null; amazonTag?: string | null; skipImages?: boolean },
 ): Promise<FoundProduct> {
   const fallback: FoundProduct = {
     buyUrl: amazonSearchUrl(query, keys.amazonTag),
@@ -288,7 +288,7 @@ export async function findProduct(
 
     if (amzProduct) {
       const scraped = await withTimeout(firecrawlScrape(apiKey, amzProduct, true), 25_000);
-      const imageUrls = await buildGallery(scraped?.imageUrls ?? []);
+      const imageUrls = keys.skipImages ? [] : await buildGallery(scraped?.imageUrls ?? []);
       return {
         buyUrl: withAmazonTag(amzProduct, keys.amazonTag),
         imageUrl: imageUrls[0] ?? null,
@@ -306,7 +306,7 @@ export async function findProduct(
 
     const source = sourceFromHost(hostOf(webHit.url));
     const scraped = await withTimeout(firecrawlScrape(apiKey, webHit.url, false), 25_000);
-    const imageUrls = await buildGallery(scraped?.imageUrls ?? []);
+    const imageUrls = keys.skipImages ? [] : await buildGallery(scraped?.imageUrls ?? []);
     return {
       buyUrl: webHit.url,
       imageUrl: imageUrls[0] ?? null,
@@ -436,7 +436,7 @@ export async function scrapeProductUrl(
 /** Enrich many ideas in parallel with a small concurrency cap. */
 export async function findProducts(
   queries: string[],
-  keys: { firecrawlKey?: string | null; amazonTag?: string | null },
+  keys: { firecrawlKey?: string | null; amazonTag?: string | null; skipImages?: boolean },
   concurrency = 4,
 ): Promise<FoundProduct[]> {
   const results: FoundProduct[] = new Array(queries.length);

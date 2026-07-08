@@ -572,12 +572,12 @@ export async function runGeneration(input: {
   });
 
   // Agent step 2 — for each idea find a real, buyable product (Amazon first for
-  // commission, then other merchants), scrape its image + price, and attach the
-  // affiliate tag. Done up front so the results page shows complete cards (real
-  // photo + real price) with no placeholder.
+  // commission, then other merchants) and scrape its price + attach the
+  // affiliate buy link. Images are intentionally skipped (`skipImages`) — the
+  // cards are image-free — which also makes this step faster and cheaper.
   const found = await findProducts(
     result.gifts.map((g) => g.searchQuery),
-    { firecrawlKey: keys.firecrawlKey, amazonTag: keys.amazonTag },
+    { firecrawlKey: keys.firecrawlKey, amazonTag: keys.amazonTag, skipImages: true },
   );
 
   const run = await prisma.generationRun.create({

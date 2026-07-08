@@ -14,7 +14,6 @@ import {
   Wand2,
   ShoppingBag,
   ArrowRight,
-  ImageOff,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -57,14 +56,6 @@ export function GiftCard({ gift, index }: { gift: GiftCardData; index: number })
   const [purchased, setPurchased] = useState(gift.purchased);
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
-
-  // The product (image + price + buy link) is scraped up front at generation
-  // time, so we render the real photo directly. Keep a list of candidate photos
-  // so a single broken/hotlink-blocked url falls through to the next one before
-  // showing the placeholder.
-  const images = gift.imageUrls?.length ? gift.imageUrls : gift.imageUrl ? [gift.imageUrl] : [];
-  const [imgIdx, setImgIdx] = useState(0);
-  const currentImage = images[imgIdx] ?? null;
 
   function toggleSave() {
     const next = !saved;
@@ -115,36 +106,11 @@ export function GiftCard({ gift, index }: { gift: GiftCardData; index: number })
 
   return (
     <article
-      className="gift-card-in group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md"
+      className="gift-card-in group relative flex flex-col rounded-2xl border border-border bg-card p-4 shadow-sm transition-shadow hover:shadow-md"
       style={{ animationDelay: `${Math.min(index, 14) * 55}ms` }}
     >
-      {/* Product image — the real scraped photo */}
-      <Link href={`/dashboard/gift/${gift.id}` as never} className="relative block aspect-[4/3] overflow-hidden bg-muted">
-        {currentImage ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={currentImage}
-            alt={gift.name}
-            loading="lazy"
-            onError={() => setImgIdx((i) => i + 1)}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-          />
-        ) : (
-          <span className="flex h-full w-full items-center justify-center text-muted-foreground/50">
-            <ImageOff className="h-7 w-7" />
-          </span>
-        )}
-        <span className="absolute left-3 top-3 rounded-full bg-background/90 px-2 py-0.5 text-xs font-semibold text-primary shadow-sm backdrop-blur whitespace-nowrap">
-          {gift.priceText || (gift.estPrice ? `~$${gift.estPrice}` : "")}
-        </span>
-        {gift.splurgeWorthy && (
-          <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-[11px] font-semibold text-accent-foreground shadow-sm whitespace-nowrap">
-            <Sparkles className="h-3 w-3" /> Never buys this
-          </span>
-        )}
-      </Link>
-
-      <div className="flex flex-1 flex-col p-3">
+      {/* Header: type/vibe + price (image-free info card) */}
+      <div className="flex items-start justify-between gap-2">
         <div className="flex flex-wrap items-center gap-1">
           <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground whitespace-nowrap">
             {gift.type === "experience" ? "Experience" : "Object"}
@@ -153,14 +119,25 @@ export function GiftCard({ gift, index }: { gift: GiftCardData; index: number })
             {VIBE_LABEL[gift.vibe] ?? gift.vibe}
           </span>
         </div>
+        <span className="shrink-0 text-sm font-bold text-primary whitespace-nowrap">
+          {gift.priceText || (gift.estPrice ? `~$${gift.estPrice}` : "")}
+        </span>
+      </div>
 
-        <Link href={`/dashboard/gift/${gift.id}` as never} className="mt-1.5">
-          <h3 className="line-clamp-2 text-sm font-bold leading-snug text-foreground hover:text-primary">
+      {gift.splurgeWorthy && (
+        <span className="mt-2 inline-flex w-fit items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-[11px] font-semibold text-accent-foreground whitespace-nowrap">
+          <Sparkles className="h-3 w-3" /> Never buys this
+        </span>
+      )}
+
+      <div className="flex flex-1 flex-col">
+        <Link href={`/dashboard/gift/${gift.id}` as never} className="mt-2">
+          <h3 className="line-clamp-2 font-serif text-[15px] font-bold leading-snug text-foreground hover:text-primary">
             {gift.name}
           </h3>
         </Link>
 
-        <p className="mt-1 line-clamp-2 text-xs leading-snug text-muted-foreground">{gift.reason}</p>
+        <p className="mt-1 line-clamp-3 text-xs leading-snug text-muted-foreground">{gift.reason}</p>
 
         {(gift.cheaperAlt || gift.premiumAlt || gift.personalTouch) && (
           <button
@@ -205,7 +182,7 @@ export function GiftCard({ gift, index }: { gift: GiftCardData; index: number })
           </div>
         )}
 
-        <div className="mt-3 flex items-center gap-1 border-t border-border/60 pt-2.5">
+        <div className="mt-auto flex items-center gap-1 border-t border-border/60 pt-2.5">
           <Link
             href={`/dashboard/gift/${gift.id}` as never}
             className="inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-[11px] font-semibold text-primary-foreground transition-opacity hover:opacity-90 whitespace-nowrap"

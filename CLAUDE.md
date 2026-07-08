@@ -26,15 +26,18 @@ a personal-touch suggestion).
   Amazon links get the `AMAZON_ASSOCIATE_TAG`. Best-effort: any failure falls
   back to a tagged Amazon search link. `GiftIdea.imageUrl`/`productSource` store
   the result — run `pnpm db:push` after pulling this in.
-  - **When scraping happens**: `runGeneration` scrapes every product (image +
-    price + buy link) **up front** via `findProducts`, so the results page shows
-    complete cards with real photos and no placeholder. The `/start/reveal` page
-    covers that time with a ~5s 3D gift-launch animation (`index.css`
-    `gift-spiral`/`gift-jump`/`gift-spin`) and only routes to results once
-    generation resolves. `gift-card.tsx` renders `imageUrl`/`imageUrls` directly
-    with an `onError` fall-through across candidate photos. (A lazy per-card
-    `resolveGiftMedia` action still exists as a safety net for any idea whose
-    `productSource` is null — e.g. the gift detail page resolves on load.)
+  - **Gift cards are image-free.** To avoid the cost/unreliability of scraping
+    Amazon product photos, `runGeneration` calls `findProducts` with
+    `skipImages: true` — it scrapes **price + buy link only** (faster/cheaper,
+    no image-search step). `gift-card.tsx` and `gift-detail-view.tsx` render no
+    image box — just the AI text, price, and buy link. Scraping still happens
+    **up front** during generation, and `/start/reveal` covers that time with a
+    ~5s 3D gift-launch animation (`index.css` `gift-spiral`/`gift-jump`/
+    `gift-spin`), routing to results only once generation resolves. NOTE: the
+    Discover feed is unrelated and still shows real scraped photos via
+    `resolveDiscoverMedia` (no `skipImages`). `GiftIdea.imageUrl`/`imageUrls`
+    columns remain but are stored empty for the gift flow. To reinstate photos,
+    drop `skipImages` and restore the image box.
 - **Server actions**: `apps/web/src/lib/actions/giftmind.ts` (profiles,
   occasions, generation, vault, wishlist sharing, plan entitlements).
 - **Payments & entitlements**: any number of Polar plans are supported. The

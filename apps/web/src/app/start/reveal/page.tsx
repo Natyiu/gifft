@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Loader2, Gift, LogIn, UserPlus, ArrowLeft, Sparkles } from "lucide-react";
+import { Loader2, Gift, LogIn, UserPlus, ArrowLeft, Sparkles, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 import { authClient } from "@/lib/auth-client";
@@ -24,6 +24,7 @@ export default function RevealPage() {
   const [generating, setGenerating] = useState(false);
   const [needsPay, setNeedsPay] = useState(false);
   const [rechecking, setRechecking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const started = useRef(false);
   const startAt = useRef(0);
 
@@ -54,6 +55,7 @@ export default function RevealPage() {
       neverBuyFilter: draft.neverBuyFilter,
     };
     setNeedsPay(false);
+    setError(null);
     setGenerating(true);
     startAt.current = Date.now();
     try {
@@ -84,11 +86,26 @@ export default function RevealPage() {
         Math.max(0, MIN_LAUNCH_MS - elapsed),
       );
     } catch (e) {
+      // Network blips (ERR_NETWORK_CHANGED / "failed to fetch") and timeouts
+      // land here. Surface a recoverable error state with a retry instead of
+      // leaving the user stuck on the animation forever.
       started.current = false;
       setGenerating(false);
-      toast.error(e instanceof Error ? e.message : "Couldn't generate ideas.");
+      const msg = e instanceof Error ? e.message : "";
+      setError(
+        /fetch|network/i.test(msg)
+          ? "The connection dropped while we were building your gifts."
+          : "Something went wrong while building your gifts.",
+      );
     }
   }, [draft, router]);
+
+  // Retry after an error (network hiccup, timeout). Draft is still saved.
+  const retry = useCallback(() => {
+    setError(null);
+    started.current = true;
+    void generate();
+  }, [generate]);
 
   // Once we have a session AND a draft, generate exactly once.
   useEffect(() => {
@@ -168,6 +185,31 @@ export default function RevealPage() {
           </button>
         </div>
 
+        <Link href={"/start" as never} className="mt-6 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="h-3.5 w-3.5" /> Edit the details
+        </Link>
+      </div>
+    );
+  }
+
+  // Something interrupted generation (network change, timeout) → recoverable
+  // error with a retry. The draft is still saved, so retrying just re-runs it.
+  if (error && !generating) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background px-5 py-10 text-center">
+        <GiftMindWordmark className="mb-8 h-7 w-auto" />
+        <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-sm">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+            <RefreshCw className="h-7 w-7 text-primary" />
+          </div>
+          <h1 className="font-serif text-2xl font-semibold tracking-tight">Let&apos;s try that again</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {error} Your answers are saved — nothing was lost.
+          </p>
+          <Button onClick={retry} className="mt-6 w-full rounded-full" size="lg">
+            <RefreshCw className="mr-2 h-4 w-4" /> Try again
+          </Button>
+        </div>
         <Link href={"/start" as never} className="mt-6 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-3.5 w-3.5" /> Edit the details
         </Link>

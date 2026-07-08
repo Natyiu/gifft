@@ -13,7 +13,6 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { GiftDetailActions } from "@/components/giftmind/gift-detail-actions";
-import { GiftGallery } from "@/components/giftmind/gift-gallery";
 import type { GiftCardData } from "@/components/giftmind/gift-card";
 import { amazonSearchUrl, googleShoppingUrl, videoLinksFor } from "@/lib/giftmind/media";
 
@@ -41,12 +40,6 @@ export function GiftDetailView({
   const priceText = gift.priceText || (gift.estPrice ? `~$${gift.estPrice}` : "Price varies");
   const hasAlts = gift.cheaperAlt || gift.premiumAlt || gift.personalTouch;
 
-  // All scraped product photos, primary first, de-duped (falls back to the
-  // single imageUrl for ideas generated before galleries were stored).
-  const gallery = Array.from(
-    new Set([...(gift.imageUrls ?? []), ...(gift.imageUrl ? [gift.imageUrl] : [])].filter(Boolean)),
-  );
-
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-5">
       {/* Back */}
@@ -60,12 +53,8 @@ export function GiftDetailView({
         Back to ideas for {firstName}
       </Link>
 
-      {/* Product: gallery + info */}
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        {/* Gallery — all the real scraped product photos */}
-        <GiftGallery images={gallery} alt={gift.name} />
-
-        {/* Info */}
+      {/* Product info (image-free) */}
+      <div className="rounded-2xl bg-card p-5 shadow-sm">
         <div className="flex flex-col">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground whitespace-nowrap">
