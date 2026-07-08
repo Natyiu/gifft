@@ -162,6 +162,17 @@
   font-family: var(--font-geist-sans), "Geist", ui-sans-serif, system-ui, sans-serif;
 }
 
+/* GiftMind — gift box idle float (ribbon onboarding intro) */
+@keyframes giftbob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
 /* GiftMind — gift card entrance */
 @keyframes gift-card-in {
   0% {
@@ -177,6 +188,38 @@
 .gift-card-in {
   opacity: 0;
   animation: gift-card-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* GiftMind — a fresh onboarding page unfurling out of the ribbon sweep */
+@keyframes ribbon-unfurl {
+  0% {
+    opacity: 0;
+    transform: perspective(1200px) rotateX(-32deg) translateY(26px) scale(0.94);
+  }
+  100% {
+    opacity: 1;
+    transform: perspective(1200px) rotateX(0deg) translateY(0) scale(1);
+  }
+}
+
+.ribbon-unfurl {
+  transform-origin: center top;
+  animation: ribbon-unfurl 0.62s cubic-bezier(0.18, 0.9, 0.24, 1) both;
+}
+
+/* GiftMind — the resting ribbon breathes like living cloth */
+@keyframes ribbon-sway {
+  0%,
+  100% {
+    transform: rotate(-1.4deg);
+  }
+  50% {
+    transform: rotate(1.4deg);
+  }
+}
+
+.ribbon-sway {
+  animation: ribbon-sway 5.5s ease-in-out infinite;
 }
 
 /* GiftMind — "thinking about ..." soft pulse */
@@ -223,6 +266,12 @@
   }
   .gift-think-pulse,
   .gift-cue {
+    animation: none;
+  }
+  .ribbon-sway {
+    animation: none;
+  }
+  .ribbon-unfurl {
     animation: none;
   }
 }

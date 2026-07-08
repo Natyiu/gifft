@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { GiftMindWordmark } from "@/components/giftmind/logo";
-import { GuestFlow } from "@/components/giftmind/guest-flow";
+import { RibbonOnboarding } from "@/components/giftmind/ribbon-onboarding";
 
 export const metadata = {
   title: "Find a gift — GiftMind",
@@ -12,15 +12,13 @@ export default function StartPage() {
     <div className="min-h-screen bg-background">
       <header className="border-b border-border/60">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-5">
-          <Link href="/" className="flex items-center">
-            <GiftMindWordmark className="h-6 w-auto" />
-          </Link>
+          <GiftMindWordmark className="h-6 w-auto" />
           <Link href="/login" className="text-sm text-muted-foreground hover:text-foreground">
             Sign in
           </Link>
         </div>
       </header>
-      <GuestFlow />
+      <RibbonOnboarding />
     </div>
   );
 }

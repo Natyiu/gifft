@@ -83,9 +83,7 @@ export default function RevealPage() {
   if (needsPay) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background px-5 py-10 text-center">
-        <Link href="/" className="mb-8">
-          <GiftMindWordmark className="h-7 w-auto" />
-        </Link>
+        <GiftMindWordmark className="mb-8 h-7 w-auto" />
         <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-sm">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
             <Sparkles className="h-7 w-7 text-primary" />
@@ -138,9 +136,7 @@ export default function RevealPage() {
   // Not signed in → gate.
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-5 py-10 text-center">
-      <Link href="/" className="mb-8">
-        <GiftMindWordmark className="h-7 w-auto" />
-      </Link>
+      <GiftMindWordmark className="mb-8 h-7 w-auto" />
       <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-sm">
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
           <Gift className="h-7 w-7 text-primary" />
