@@ -38,9 +38,16 @@ a personal-touch suggestion).
   multi-search pack). `runGeneration` spends one credit per completed search for
   credit-based users (never for subscribers) and only after a successful run.
   The webhook (`app/api/webhooks/polar/route.ts`) handles `subscription.*`
-  (upsert subscription) and `order.*` (grant/revoke credits) events. Gating uses
-  a returned `{ paymentRequired: true }` value — never a thrown error, which
-  Vercel masks into an opaque 500. Run `pnpm db:push` after pulling this in.
+  (upsert subscription) and `order.*` (grant/revoke credits) events. Because the
+  webhook can be slow/misconfigured, `syncPolarEntitlement` (`actions/polar.ts`)
+  reconciles entitlement **directly against the Polar API** (matching the
+  customer by the `externalCustomerId` = user id set at checkout, or by email) and
+  writes it into the DB; the reveal page calls it and retries once before showing
+  the paywall (plus an "Already paid? Check again" button). Gating uses a returned
+  `{ paymentRequired: true }` value — never a thrown error, which Vercel masks into
+  an opaque 500. The credits layer (`lib/credits.ts`) degrades gracefully if its
+  table is missing. Run `pnpm db:push` after pulling this in (needed for the
+  one-time-credit path; subscriptions work without it).
 - **Data fetching / caching**: sidebar dashboard pages use **TanStack Query**
   for instant re-navigation. Each page's read logic lives in a loader server
   action in `apps/web/src/lib/loaders/*.ts` (`getPlannerData`, `getDiscoverData`,

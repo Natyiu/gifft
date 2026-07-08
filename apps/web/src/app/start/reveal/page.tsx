@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2, Gift, LogIn, UserPlus, ArrowLeft, Sparkles } from "lucide-react";
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { GiftMindMark, GiftMindWordmark } from "@/components/giftmind/logo";
 import { PersonAvatar } from "@/components/giftmind/person-avatar";
 import { generateFromDraft } from "@/lib/actions/giftmind";
+import { syncPolarEntitlement } from "@/lib/actions/polar";
 import { loadDraft, clearDraft, type GuestDraft } from "@/lib/giftmind/draft";
 
 const REDIRECT = "/start/reveal";
@@ -21,6 +22,7 @@ export default function RevealPage() {
   const [draft, setDraft] = useState<GuestDraft | null | undefined>(undefined);
   const [generating, setGenerating] = useState(false);
   const [needsPay, setNeedsPay] = useState(false);
+  const [rechecking, setRechecking] = useState(false);
   const started = useRef(false);
 
   // Load the saved draft once on mount.
@@ -36,38 +38,71 @@ export default function RevealPage() {
     router.replace((session?.user ? "/dashboard" : "/start") as never);
   }, [draft, isPending, session, router]);
 
+  // Run generation. If the gate says "not paid", the webhook may just be slow —
+  // reconcile the entitlement straight from Polar's API and try once more before
+  // falling back to the paywall.
+  const generate = useCallback(async () => {
+    if (!draft) return;
+    const payload = {
+      profile: draft.profile,
+      occasion: draft.occasion,
+      tone: draft.tone,
+      budgetMin: draft.budgetMin,
+      budgetMax: draft.budgetMax,
+      neverBuyFilter: draft.neverBuyFilter,
+    };
+    setNeedsPay(false);
+    setGenerating(true);
+    try {
+      let result = await generateFromDraft(payload);
+      if ("paymentRequired" in result) {
+        const sync = await syncPolarEntitlement();
+        if (sync.entitled) {
+          result = await generateFromDraft(payload);
+        }
+      }
+      if ("paymentRequired" in result) {
+        // Keep the draft saved (no profile was created) so that paying and
+        // returning to this page reveals the ideas straight away.
+        started.current = false;
+        setGenerating(false);
+        setNeedsPay(true);
+        return;
+      }
+      clearDraft();
+      router.replace(`/dashboard/results/${result.runId}` as never);
+    } catch (e) {
+      started.current = false;
+      setGenerating(false);
+      toast.error(e instanceof Error ? e.message : "Couldn't generate ideas.");
+    }
+  }, [draft, router]);
+
   // Once we have a session AND a draft, generate exactly once.
   useEffect(() => {
     if (isPending || !session?.user || !draft || started.current) return;
     started.current = true;
-    setGenerating(true);
-    (async () => {
-      try {
-        const result = await generateFromDraft({
-          profile: draft.profile,
-          occasion: draft.occasion,
-          tone: draft.tone,
-          budgetMin: draft.budgetMin,
-          budgetMax: draft.budgetMax,
-          neverBuyFilter: draft.neverBuyFilter,
-        });
-        if ("paymentRequired" in result) {
-          // Keep the draft saved (no profile was created) so that paying and
-          // returning to this page reveals the ideas straight away.
-          started.current = false;
-          setGenerating(false);
-          setNeedsPay(true);
-          return;
-        }
-        clearDraft();
-        router.replace(`/dashboard/results/${result.runId}` as never);
-      } catch (e) {
-        started.current = false;
-        setGenerating(false);
-        toast.error(e instanceof Error ? e.message : "Couldn't generate ideas.");
+    void generate();
+  }, [isPending, session, draft, generate]);
+
+  // Paywall escape hatch: the user says they've paid — reconcile with Polar and,
+  // if we now see the payment, generate immediately.
+  const recheck = useCallback(async () => {
+    setRechecking(true);
+    try {
+      const sync = await syncPolarEntitlement();
+      if (sync.entitled) {
+        started.current = true;
+        void generate();
+      } else {
+        toast("No completed payment found yet — give it a few seconds and try again.");
       }
-    })();
-  }, [isPending, session, draft, router]);
+    } catch {
+      toast.error("Couldn't check your payment. Try again in a moment.");
+    } finally {
+      setRechecking(false);
+    }
+  }, [generate]);
 
   if (draft === undefined || isPending) {
     return <Centered><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></Centered>;
@@ -106,9 +141,19 @@ export default function RevealPage() {
 
           <Link href={"/pricing" as never} className="mt-6 block">
             <Button className="w-full rounded-full" size="lg">
-              <Sparkles className="mr-2 h-4 w-4" /> Subscribe to reveal
+              <Sparkles className="mr-2 h-4 w-4" /> Unlock the results
             </Button>
           </Link>
+
+          <button
+            type="button"
+            onClick={recheck}
+            disabled={rechecking}
+            className="mt-3 inline-flex w-full items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-foreground disabled:opacity-60"
+          >
+            {rechecking ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+            {rechecking ? "Checking your payment…" : "Already paid? Check again"}
+          </button>
         </div>
 
         <Link href={"/start" as never} className="mt-6 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
