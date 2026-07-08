@@ -45,18 +45,15 @@ import {
   deleteGiftPlan,
   type Contributor,
 } from "@/lib/actions/giftmind";
-import { PAYMENT_REQUIRED } from "@/lib/giftmind/entitlements";
+/** Send an unpaid user to the paywall. */
+function goPaywall(router: ReturnType<typeof useRouter>) {
+  toast("Subscribe to reveal your gift ideas.");
+  router.push("/pricing" as never);
+}
 
-/** Turn a generation error into a paywall redirect, or a toast otherwise.
- *  Returns true if it was the paywall (caller should stop). */
-function handleGenerationError(e: unknown, router: ReturnType<typeof useRouter>): boolean {
-  if (e instanceof Error && e.message === PAYMENT_REQUIRED) {
-    toast("Subscribe to reveal your gift ideas.");
-    router.push("/pricing" as never);
-    return true;
-  }
+/** Toast a generation error. */
+function handleGenerationError(e: unknown) {
   toast.error(e instanceof Error ? e.message : "Couldn't generate ideas");
-  return true;
 }
 
 export type PlannerOccasion = {
@@ -504,19 +501,18 @@ function AddPlanForm({
         });
         onCreated(plan, group);
         if (generate) {
-          const { runId } = await generatePlanIdeas(plan.id);
+          const result = await generatePlanIdeas(plan.id);
+          if ("paymentRequired" in result) {
+            goPaywall(router);
+            return;
+          }
           toast.success("Plan saved with fresh ideas");
-          router.push(`/dashboard/results/${runId}` as never);
+          router.push(`/dashboard/results/${result.runId}` as never);
         } else {
           toast.success("Plan saved");
           onClose();
         }
       } catch (e) {
-        if (e instanceof Error && e.message === PAYMENT_REQUIRED) {
-          toast("Subscribe to reveal your gift ideas.");
-          router.push("/pricing" as never);
-          return;
-        }
         toast.error(e instanceof Error ? e.message : "Couldn't save the plan");
       }
     });
@@ -686,11 +682,15 @@ function PlanCard({
     if (!plan.profileId) return toast.error("Add this person to your people to generate ideas.");
     startGen(async () => {
       try {
-        const { runId } = await generatePlanIdeas(plan.id);
-        onPatch(plan.id, { runId, status: "planned" });
-        router.push(`/dashboard/results/${runId}` as never);
+        const result = await generatePlanIdeas(plan.id);
+        if ("paymentRequired" in result) {
+          goPaywall(router);
+          return;
+        }
+        onPatch(plan.id, { runId: result.runId, status: "planned" });
+        router.push(`/dashboard/results/${result.runId}` as never);
       } catch (e) {
-        handleGenerationError(e, router);
+        handleGenerationError(e);
       }
     });
   }
@@ -889,11 +889,15 @@ function OccasionCard({
   function generate() {
     startGen(async () => {
       try {
-        const { runId } = await generateIdeasFor({ profileId: occasion.profileId, occasion: occasion.type, budgetMin: min ? Number(min) : null, budgetMax: max ? Number(max) : null });
+        const result = await generateIdeasFor({ profileId: occasion.profileId, occasion: occasion.type, budgetMin: min ? Number(min) : null, budgetMax: max ? Number(max) : null });
+        if ("paymentRequired" in result) {
+          goPaywall(router);
+          return;
+        }
         toast.success("Fresh ideas ready");
-        router.push(`/dashboard/results/${runId}` as never);
+        router.push(`/dashboard/results/${result.runId}` as never);
       } catch (e) {
-        handleGenerationError(e, router);
+        handleGenerationError(e);
       }
     });
   }

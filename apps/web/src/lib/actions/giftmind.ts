@@ -7,7 +7,6 @@ import { requireSession } from "@/lib/session";
 import { getSubscriptionStatus } from "@/lib/subscription";
 import { generateGifts, type ProfileForGeneration } from "@/lib/giftmind/engine";
 import { findProducts, scrapeProductUrl } from "@/lib/giftmind/product-finder";
-import { PAYMENT_REQUIRED } from "@/lib/giftmind/entitlements";
 
 // ── Entitlements ────────────────────────────────────────────────────
 export async function getEntitlements(userId: string) {
@@ -415,22 +414,25 @@ export async function createGiftPlan(input: {
 }
 
 /** Generate fresh ideas for a saved plan and link the run to it. */
-export async function generatePlanIdeas(planId: string): Promise<{ runId: string }> {
+export async function generatePlanIdeas(
+  planId: string,
+): Promise<{ runId: string } | { paymentRequired: true }> {
   const session = await requireSession();
   const plan = await prisma.giftPlan.findFirst({ where: { id: planId, userId: session.user.id } });
   if (!plan) throw new Error("Plan not found.");
   if (!plan.profileId) throw new Error("Add this person to your people first to generate ideas.");
 
-  const { runId } = await generateIdeasFor({
+  const result = await generateIdeasFor({
     profileId: plan.profileId,
     occasion: plan.occasion,
     budgetMin: plan.budgetMin,
     budgetMax: plan.budgetMax,
   });
+  if ("paymentRequired" in result) return result;
 
-  await prisma.giftPlan.update({ where: { id: plan.id }, data: { runId, status: "planned" } });
+  await prisma.giftPlan.update({ where: { id: plan.id }, data: { runId: result.runId, status: "planned" } });
   revalidatePath("/dashboard/planner");
-  return { runId };
+  return { runId: result.runId };
 }
 
 export async function updateGiftPlan(
@@ -499,9 +501,11 @@ export async function runGeneration(input: {
 
   const ent = await getEntitlements(userId);
   // Paid-only: block the (expensive) generation entirely until they subscribe.
-  // The client turns this into a redirect to the paywall.
+  // Return a value (don't throw) — a thrown error crosses the server-action
+  // boundary and Vercel masks it into an opaque 500, so the client can't tell
+  // it apart from a real failure. The client turns this into a paywall redirect.
   if (ent.plan !== "paid") {
-    throw new Error(PAYMENT_REQUIRED);
+    return { paymentRequired: true as const };
   }
 
   const budgetMin = Math.max(0, Math.min(input.budgetMin, input.budgetMax));
@@ -615,10 +619,10 @@ export async function generateFromDraft(draft: {
   // returning here reveals the ideas without a duplicate.
   const session = await requireSession();
   const ent = await getEntitlements(session.user.id);
-  if (ent.plan !== "paid") throw new Error(PAYMENT_REQUIRED);
+  if (ent.plan !== "paid") return { paymentRequired: true as const };
 
   const { id } = await createProfile(draft.profile);
-  const { runId } = await runGeneration({
+  const result = await runGeneration({
     profileId: id,
     occasion: draft.occasion,
     tone: draft.tone,
@@ -626,7 +630,8 @@ export async function generateFromDraft(draft: {
     budgetMax: draft.budgetMax,
     neverBuyFilter: draft.neverBuyFilter,
   });
-  return { runId };
+  if ("paymentRequired" in result) return result;
+  return { runId: result.runId };
 }
 
 // ── Gift idea state ─────────────────────────────────────────────────

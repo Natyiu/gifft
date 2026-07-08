@@ -13,7 +13,6 @@ import { OptionGrid } from "@/components/giftmind/option-grid";
 import { GiftMindMark } from "@/components/giftmind/logo";
 import { OCCASIONS, TONES } from "@/lib/giftmind/constants";
 import { runGeneration } from "@/lib/actions/giftmind";
-import { PAYMENT_REQUIRED } from "@/lib/giftmind/entitlements";
 
 export function GeneratePanel({
   profileId,
@@ -45,7 +44,7 @@ export function GeneratePanel({
     const max = Number(budgetMax) || min + 50;
     start(async () => {
       try {
-        const { runId } = await runGeneration({
+        const result = await runGeneration({
           profileId,
           occasion,
           tone: tone ?? "practical",
@@ -53,13 +52,13 @@ export function GeneratePanel({
           budgetMax: max,
           neverBuyFilter: neverBuy,
         });
-        router.push(`/dashboard/results/${runId}`);
-      } catch (e) {
-        if (e instanceof Error && e.message === PAYMENT_REQUIRED) {
+        if ("paymentRequired" in result) {
           toast("Subscribe to reveal your gift ideas.");
           router.push("/pricing" as never);
           return;
         }
+        router.push(`/dashboard/results/${result.runId}`);
+      } catch (e) {
         toast.error(e instanceof Error ? e.message : "Generation failed.");
       }
     });

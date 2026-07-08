@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { GiftMindMark, GiftMindWordmark } from "@/components/giftmind/logo";
 import { PersonAvatar } from "@/components/giftmind/person-avatar";
 import { generateFromDraft } from "@/lib/actions/giftmind";
-import { PAYMENT_REQUIRED } from "@/lib/giftmind/entitlements";
 import { loadDraft, clearDraft, type GuestDraft } from "@/lib/giftmind/draft";
 
 const REDIRECT = "/start/reveal";
@@ -44,7 +43,7 @@ export default function RevealPage() {
     setGenerating(true);
     (async () => {
       try {
-        const { runId } = await generateFromDraft({
+        const result = await generateFromDraft({
           profile: draft.profile,
           occasion: draft.occasion,
           tone: draft.tone,
@@ -52,17 +51,19 @@ export default function RevealPage() {
           budgetMax: draft.budgetMax,
           neverBuyFilter: draft.neverBuyFilter,
         });
-        clearDraft();
-        router.replace(`/dashboard/results/${runId}` as never);
-      } catch (e) {
-        started.current = false;
-        setGenerating(false);
-        if (e instanceof Error && e.message === PAYMENT_REQUIRED) {
+        if ("paymentRequired" in result) {
           // Keep the draft saved (no profile was created) so that paying and
           // returning to this page reveals the ideas straight away.
+          started.current = false;
+          setGenerating(false);
           setNeedsPay(true);
           return;
         }
+        clearDraft();
+        router.replace(`/dashboard/results/${result.runId}` as never);
+      } catch (e) {
+        started.current = false;
+        setGenerating(false);
         toast.error(e instanceof Error ? e.message : "Couldn't generate ideas.");
       }
     })();
