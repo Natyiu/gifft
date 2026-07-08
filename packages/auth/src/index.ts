@@ -98,19 +98,26 @@ async function getGoogleCredentials() {
   return clientId && clientSecret ? { clientId, clientSecret } : null;
 }
 
-const googleCreds = env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
-  ? { clientId: env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_CLIENT_SECRET }
-  : { clientId: "placeholder", clientSecret: "placeholder" };
-
 let _requireEmailVerification = false;
 let _sessionExpiresIn = 60 * 60 * 24 * 7; // 7 days default
 let _sessionUpdateAge = 60 * 60 * 24; // 1 day
+// Google OAuth creds: prefer env vars, otherwise fall back to what the admin
+// saved in the panel (AppSettings). Only register the provider when we have a
+// real pair — registering a "placeholder" client made every Google sign-in
+// fail with invalid_client while the button still showed.
+let _googleCreds: { clientId: string; clientSecret: string } | null =
+  env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
+    ? { clientId: env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_CLIENT_SECRET }
+    : null;
 try {
   const s = await prisma.appSettings.findUnique({ where: { id: "default" } });
   _requireEmailVerification = s?.emailVerificationEnabled ?? false;
   const days = s?.sessionTimeout ?? 30;
   _sessionExpiresIn = Math.max(1, Math.min(365, days)) * 24 * 60 * 60;
   _sessionUpdateAge = Math.min(_sessionExpiresIn / 2, 60 * 60 * 24); // refresh at most every day
+  if (!_googleCreds && s?.googleClientId && s?.googleClientSecret) {
+    _googleCreds = { clientId: s.googleClientId, clientSecret: s.googleClientSecret };
+  }
 } catch {
   // DB not ready
 }
@@ -167,7 +174,7 @@ export const auth = betterAuth({
   },
 
   socialProviders: {
-    google: googleCreds,
+    ...(_googleCreds ? { google: _googleCreds } : {}),
   },
 
   user: {
