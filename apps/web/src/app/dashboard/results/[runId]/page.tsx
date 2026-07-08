@@ -37,6 +37,7 @@ export default async function ResultsPage({
     imageUrl: i.imageUrl,
     imageUrls: i.imageUrls,
     priceText: i.priceText,
+    productSource: i.productSource,
     estPrice: i.estPrice,
     type: i.type,
     vibe: i.vibe,

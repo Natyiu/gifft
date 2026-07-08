@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import {
   Heart,
@@ -15,11 +15,34 @@ import {
   ShoppingBag,
   ArrowRight,
   ImageOff,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
-import { setGiftSaved, setGiftTracked, markGiftPurchased, unmarkGiftPurchased } from "@/lib/actions/giftmind";
+import {
+  setGiftSaved,
+  setGiftTracked,
+  markGiftPurchased,
+  unmarkGiftPurchased,
+  resolveGiftMedia,
+} from "@/lib/actions/giftmind";
+
+// Throttle how many products we scrape at once across the whole results grid,
+// so ideas stream in a few at a time instead of firing 15 scrapes in one burst.
+const MAX_CONCURRENT = 3;
+let active = 0;
+const waiters: Array<() => void> = [];
+async function gate<T>(fn: () => Promise<T>): Promise<T> {
+  if (active >= MAX_CONCURRENT) await new Promise<void>((r) => waiters.push(r));
+  active++;
+  try {
+    return await fn();
+  } finally {
+    active--;
+    waiters.shift()?.();
+  }
+}
 
 export type GiftCardData = {
   id: string;
@@ -31,6 +54,7 @@ export type GiftCardData = {
   imageUrl: string | null;
   imageUrls: string[];
   priceText: string | null;
+  productSource: string | null; // null = product photo not yet scraped
   estPrice: number | null;
   type: string;
   vibe: string;
@@ -56,6 +80,38 @@ export function GiftCard({ gift, index }: { gift: GiftCardData; index: number })
   const [purchased, setPurchased] = useState(gift.purchased);
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
+
+  // Live product resolution: the idea is persisted without a scraped photo, so
+  // each card fetches its real product image + price when it scrolls into view.
+  // `productSource` is set once resolved, so re-renders/old runs don't re-scrape.
+  const [imageUrl, setImageUrl] = useState<string | null>(gift.imageUrl);
+  const [priceText, setPriceText] = useState<string | null>(gift.priceText);
+  const [resolved, setResolved] = useState(gift.productSource != null);
+  const cardRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (resolved) return;
+    const el = cardRef.current;
+    if (!el) return;
+    let done = false;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (done || !entries.some((e) => e.isIntersecting)) return;
+        done = true;
+        io.disconnect();
+        gate(() => resolveGiftMedia(gift.id))
+          .then((m) => {
+            setImageUrl(m.imageUrl);
+            if (m.priceText) setPriceText(m.priceText);
+          })
+          .catch(() => {})
+          .finally(() => setResolved(true));
+      },
+      { rootMargin: "300px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [resolved, gift.id]);
 
   function toggleSave() {
     const next = !saved;
@@ -106,26 +162,27 @@ export function GiftCard({ gift, index }: { gift: GiftCardData; index: number })
 
   return (
     <article
+      ref={cardRef}
       className="gift-card-in group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md"
       style={{ animationDelay: `${Math.min(index, 14) * 55}ms` }}
     >
-      {/* Product image */}
+      {/* Product image — streams in live once the card resolves its product */}
       <Link href={`/dashboard/gift/${gift.id}` as never} className="relative block aspect-[4/3] overflow-hidden bg-muted">
-        {gift.imageUrl ? (
+        {imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={gift.imageUrl}
+            src={imageUrl}
             alt={gift.name}
             loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+            className="gift-card-in h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
           />
         ) : (
           <span className="flex h-full w-full items-center justify-center text-muted-foreground/50">
-            <ImageOff className="h-7 w-7" />
+            {resolved ? <ImageOff className="h-7 w-7" /> : <Loader2 className="h-6 w-6 animate-spin opacity-60" />}
           </span>
         )}
         <span className="absolute left-3 top-3 rounded-full bg-background/90 px-2 py-0.5 text-xs font-semibold text-primary shadow-sm backdrop-blur whitespace-nowrap">
-          {gift.priceText || (gift.estPrice ? `~$${gift.estPrice}` : "")}
+          {priceText || (gift.estPrice ? `~$${gift.estPrice}` : "")}
         </span>
         {gift.splurgeWorthy && (
           <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-[11px] font-semibold text-accent-foreground shadow-sm whitespace-nowrap">

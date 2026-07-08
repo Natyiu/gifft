@@ -7,7 +7,7 @@ import { requireSession } from "@/lib/session";
 import { getSubscriptionStatus } from "@/lib/subscription";
 import { getCreditsRemaining, consumeCredit } from "@/lib/credits";
 import { generateGifts, type ProfileForGeneration } from "@/lib/giftmind/engine";
-import { findProducts, scrapeProductUrl } from "@/lib/giftmind/product-finder";
+import { findProduct, scrapeProductUrl } from "@/lib/giftmind/product-finder";
 
 // ── Entitlements ────────────────────────────────────────────────────
 export async function getEntitlements(userId: string) {
@@ -571,13 +571,11 @@ export async function runGeneration(input: {
     geminiKey: keys.geminiKey,
   });
 
-  // Agent step 2 — find a real, buyable product for each idea (Amazon first,
-  // then other merchants), scrape its image + price, and attach affiliate tags.
-  const found = await findProducts(
-    result.gifts.map((g) => g.searchQuery),
-    { firecrawlKey: keys.firecrawlKey, amazonTag: keys.amazonTag },
-  );
-
+  // Persist the ideas immediately with the AI's text + estimated price and a
+  // fallback buy link, so the results page can render right away. The real
+  // product photo + scraped price are resolved *lazily, per card* on the
+  // results page (see `resolveGiftMedia`) — that way the user watches gifts
+  // stream in live instead of waiting for every product to be scraped first.
   const run = await prisma.generationRun.create({
     data: {
       userId,
@@ -597,11 +595,11 @@ export async function runGeneration(input: {
           reason: g.reason,
           about: g.about,
           searchQuery: g.searchQuery,
-          buyUrl: found[i]?.buyUrl || g.buyUrl,
-          imageUrl: found[i]?.imageUrl ?? null,
-          imageUrls: found[i]?.imageUrls ?? [],
-          productSource: found[i]?.source ?? null,
-          priceText: found[i]?.priceText || g.priceText,
+          buyUrl: g.buyUrl,
+          imageUrl: null,
+          imageUrls: [],
+          productSource: null, // null = not yet scraped; set once resolveGiftMedia runs
+          priceText: g.priceText,
           estPrice: g.estPrice,
           type: g.type,
           vibe: g.vibe,
@@ -657,6 +655,77 @@ export async function generateFromDraft(draft: {
   });
   if ("paymentRequired" in result) return result;
   return { runId: result.runId };
+}
+
+// ── Live product resolution ─────────────────────────────────────────
+export type GiftMedia = {
+  imageUrl: string | null;
+  imageUrls: string[];
+  buyUrl: string | null;
+  priceText: string | null;
+};
+
+/**
+ * Scrape the real product photo + price for a single gift idea and store it on
+ * the idea. Called lazily by each results card so photos stream in one by one
+ * instead of blocking the whole page on every scrape. Idempotent: once
+ * `productSource` is set the stored values are served without re-scraping.
+ * Best-effort — any failure just leaves the AI's fallback link/price in place.
+ */
+export async function resolveGiftMedia(ideaId: string): Promise<GiftMedia> {
+  const session = await requireSession();
+  const idea = await prisma.giftIdea.findFirst({
+    where: { id: ideaId, run: { userId: session.user.id } },
+    select: {
+      id: true,
+      name: true,
+      searchQuery: true,
+      buyUrl: true,
+      imageUrl: true,
+      imageUrls: true,
+      priceText: true,
+      productSource: true,
+    },
+  });
+  if (!idea) throw new Error("Not found.");
+
+  // Already scraped once (productSource is the marker) → serve stored values.
+  if (idea.productSource) {
+    return {
+      imageUrl: idea.imageUrl,
+      imageUrls: idea.imageUrls,
+      buyUrl: idea.buyUrl,
+      priceText: idea.priceText,
+    };
+  }
+
+  const keys = resolveAgentKeys();
+  const found = await findProduct((idea.searchQuery || idea.name || "").trim(), {
+    firecrawlKey: keys.firecrawlKey,
+    amazonTag: keys.amazonTag,
+  });
+
+  const media: GiftMedia = {
+    imageUrl: found.imageUrl ?? null,
+    imageUrls: found.imageUrls ?? [],
+    buyUrl: found.buyUrl || idea.buyUrl,
+    priceText: found.priceText || idea.priceText,
+  };
+
+  await prisma.giftIdea
+    .update({
+      where: { id: idea.id },
+      data: {
+        imageUrl: media.imageUrl,
+        imageUrls: media.imageUrls,
+        buyUrl: media.buyUrl,
+        priceText: media.priceText,
+        productSource: found.source || "search", // non-null → marks it resolved
+      },
+    })
+    .catch(() => {});
+
+  return media;
 }
 
 // ── Gift idea state ─────────────────────────────────────────────────
