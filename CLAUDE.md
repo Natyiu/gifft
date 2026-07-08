@@ -26,17 +26,15 @@ a personal-touch suggestion).
   Amazon links get the `AMAZON_ASSOCIATE_TAG`. Best-effort: any failure falls
   back to a tagged Amazon search link. `GiftIdea.imageUrl`/`productSource` store
   the result — run `pnpm db:push` after pulling this in.
-  - **Live/streamed results**: `runGeneration` no longer scrapes products up
-    front — it persists the AI ideas immediately (text + estimated price + a
-    fallback buy link, `productSource: null`) and returns fast. Each results
-    card then resolves its real product photo + scraped price *lazily* when it
-    scrolls into view via `resolveGiftMedia(ideaId)` (`actions/giftmind.ts`),
-    which scrapes once, writes it onto the `GiftIdea` (setting `productSource`
-    as the "resolved" marker), and is idempotent thereafter — mirroring the
-    Discover `resolveDiscoverMedia` pattern. `gift-card.tsx` shows a spinner →
-    photo, throttled to a few concurrent scrapes so ideas stream in one by one.
-    The gift detail page resolves on load if a card was opened before it
-    finished streaming.
+  - **When scraping happens**: `runGeneration` scrapes every product (image +
+    price + buy link) **up front** via `findProducts`, so the results page shows
+    complete cards with real photos and no placeholder. The `/start/reveal` page
+    covers that time with a ~5s 3D gift-launch animation (`index.css`
+    `gift-spiral`/`gift-jump`/`gift-spin`) and only routes to results once
+    generation resolves. `gift-card.tsx` renders `imageUrl`/`imageUrls` directly
+    with an `onError` fall-through across candidate photos. (A lazy per-card
+    `resolveGiftMedia` action still exists as a safety net for any idea whose
+    `productSource` is null — e.g. the gift detail page resolves on load.)
 - **Server actions**: `apps/web/src/lib/actions/giftmind.ts` (profiles,
   occasions, generation, vault, wishlist sharing, plan entitlements).
 - **Payments & entitlements**: any number of Polar plans are supported. The

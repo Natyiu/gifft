@@ -7,7 +7,7 @@ import { requireSession } from "@/lib/session";
 import { getSubscriptionStatus } from "@/lib/subscription";
 import { getCreditsRemaining, consumeCredit } from "@/lib/credits";
 import { generateGifts, type ProfileForGeneration } from "@/lib/giftmind/engine";
-import { findProduct, scrapeProductUrl } from "@/lib/giftmind/product-finder";
+import { findProduct, findProducts, scrapeProductUrl } from "@/lib/giftmind/product-finder";
 
 // ── Entitlements ────────────────────────────────────────────────────
 export async function getEntitlements(userId: string) {
@@ -571,11 +571,15 @@ export async function runGeneration(input: {
     geminiKey: keys.geminiKey,
   });
 
-  // Persist the ideas immediately with the AI's text + estimated price and a
-  // fallback buy link, so the results page can render right away. The real
-  // product photo + scraped price are resolved *lazily, per card* on the
-  // results page (see `resolveGiftMedia`) — that way the user watches gifts
-  // stream in live instead of waiting for every product to be scraped first.
+  // Agent step 2 — for each idea find a real, buyable product (Amazon first for
+  // commission, then other merchants), scrape its image + price, and attach the
+  // affiliate tag. Done up front so the results page shows complete cards (real
+  // photo + real price) with no placeholder.
+  const found = await findProducts(
+    result.gifts.map((g) => g.searchQuery),
+    { firecrawlKey: keys.firecrawlKey, amazonTag: keys.amazonTag },
+  );
+
   const run = await prisma.generationRun.create({
     data: {
       userId,
@@ -595,11 +599,11 @@ export async function runGeneration(input: {
           reason: g.reason,
           about: g.about,
           searchQuery: g.searchQuery,
-          buyUrl: g.buyUrl,
-          imageUrl: null,
-          imageUrls: [],
-          productSource: null, // null = not yet scraped; set once resolveGiftMedia runs
-          priceText: g.priceText,
+          buyUrl: found[i]?.buyUrl || g.buyUrl,
+          imageUrl: found[i]?.imageUrl ?? null,
+          imageUrls: found[i]?.imageUrls ?? [],
+          productSource: found[i]?.source ?? null,
+          priceText: found[i]?.priceText || g.priceText,
           estPrice: g.estPrice,
           type: g.type,
           vibe: g.vibe,

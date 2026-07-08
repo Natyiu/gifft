@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import {
   Heart,
@@ -19,29 +19,7 @@ import {
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
-import {
-  setGiftSaved,
-  setGiftTracked,
-  markGiftPurchased,
-  unmarkGiftPurchased,
-  resolveGiftMedia,
-} from "@/lib/actions/giftmind";
-
-// Throttle how many products we scrape at once across the whole results grid,
-// so ideas stream in a few at a time instead of firing 15 scrapes in one burst.
-const MAX_CONCURRENT = 3;
-let active = 0;
-const waiters: Array<() => void> = [];
-async function gate<T>(fn: () => Promise<T>): Promise<T> {
-  if (active >= MAX_CONCURRENT) await new Promise<void>((r) => waiters.push(r));
-  active++;
-  try {
-    return await fn();
-  } finally {
-    active--;
-    waiters.shift()?.();
-  }
-}
+import { setGiftSaved, setGiftTracked, markGiftPurchased, unmarkGiftPurchased } from "@/lib/actions/giftmind";
 
 export type GiftCardData = {
   id: string;
@@ -80,45 +58,13 @@ export function GiftCard({ gift, index }: { gift: GiftCardData; index: number })
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
 
-  // Live product resolution: the idea is persisted without a scraped photo, so
-  // each card fetches its real product image + price when it scrolls into view.
-  // `productSource` is set once resolved, so re-renders/old runs don't re-scrape.
-  const [images, setImages] = useState<string[]>(
-    gift.imageUrls?.length ? gift.imageUrls : gift.imageUrl ? [gift.imageUrl] : [],
-  );
+  // The product (image + price + buy link) is scraped up front at generation
+  // time, so we render the real photo directly. Keep a list of candidate photos
+  // so a single broken/hotlink-blocked url falls through to the next one before
+  // showing the placeholder.
+  const images = gift.imageUrls?.length ? gift.imageUrls : gift.imageUrl ? [gift.imageUrl] : [];
   const [imgIdx, setImgIdx] = useState(0);
-  const [priceText, setPriceText] = useState<string | null>(gift.priceText);
-  const [resolved, setResolved] = useState(gift.productSource != null);
-  const cardRef = useRef<HTMLElement>(null);
-  // Show the next candidate photo if one fails to load (hotlink-blocked etc.),
-  // falling back to the placeholder only once every candidate is exhausted.
   const currentImage = images[imgIdx] ?? null;
-
-  useEffect(() => {
-    if (resolved) return;
-    const el = cardRef.current;
-    if (!el) return;
-    let done = false;
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (done || !entries.some((e) => e.isIntersecting)) return;
-        done = true;
-        io.disconnect();
-        gate(() => resolveGiftMedia(gift.id))
-          .then((m) => {
-            const list = m.imageUrls?.length ? m.imageUrls : m.imageUrl ? [m.imageUrl] : [];
-            setImages(list);
-            setImgIdx(0);
-            if (m.priceText) setPriceText(m.priceText);
-          })
-          .catch(() => {})
-          .finally(() => setResolved(true));
-      },
-      { rootMargin: "300px" },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [resolved, gift.id]);
 
   function toggleSave() {
     const next = !saved;
@@ -169,11 +115,10 @@ export function GiftCard({ gift, index }: { gift: GiftCardData; index: number })
 
   return (
     <article
-      ref={cardRef}
       className="gift-card-in group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md"
       style={{ animationDelay: `${Math.min(index, 14) * 55}ms` }}
     >
-      {/* Product image — streams in live once the card resolves its product */}
+      {/* Product image — the real scraped photo */}
       <Link href={`/dashboard/gift/${gift.id}` as never} className="relative block aspect-[4/3] overflow-hidden bg-muted">
         {currentImage ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -182,21 +127,17 @@ export function GiftCard({ gift, index }: { gift: GiftCardData; index: number })
             alt={gift.name}
             loading="lazy"
             onError={() => setImgIdx((i) => i + 1)}
-            className="gift-card-in h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
           />
-        ) : resolved ? (
+        ) : (
           <span className="flex h-full w-full items-center justify-center text-muted-foreground/50">
             <ImageOff className="h-7 w-7" />
           </span>
-        ) : (
-          <span className="skeleton-shimmer absolute inset-0 block" aria-hidden />
         )}
-        {resolved && (
-          <span className="absolute left-3 top-3 rounded-full bg-background/90 px-2 py-0.5 text-xs font-semibold text-primary shadow-sm backdrop-blur whitespace-nowrap">
-            {priceText || (gift.estPrice ? `~$${gift.estPrice}` : "")}
-          </span>
-        )}
-        {resolved && gift.splurgeWorthy && (
+        <span className="absolute left-3 top-3 rounded-full bg-background/90 px-2 py-0.5 text-xs font-semibold text-primary shadow-sm backdrop-blur whitespace-nowrap">
+          {gift.priceText || (gift.estPrice ? `~$${gift.estPrice}` : "")}
+        </span>
+        {gift.splurgeWorthy && (
           <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-[11px] font-semibold text-accent-foreground shadow-sm whitespace-nowrap">
             <Sparkles className="h-3 w-3" /> Never buys this
           </span>
