@@ -8,13 +8,14 @@ import { toast } from "sonner";
 
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
-import { GiftMindMark, GiftMindWordmark } from "@/components/giftmind/logo";
+import { GiftMindWordmark } from "@/components/giftmind/logo";
 import { PersonAvatar } from "@/components/giftmind/person-avatar";
 import { generateFromDraft } from "@/lib/actions/giftmind";
 import { syncPolarEntitlement } from "@/lib/actions/polar";
 import { loadDraft, clearDraft, type GuestDraft } from "@/lib/giftmind/draft";
 
 const REDIRECT = "/start/reveal";
+const MIN_LAUNCH_MS = 5000; // minimum time the gift-launch animation plays before results
 
 export default function RevealPage() {
   const router = useRouter();
@@ -24,6 +25,7 @@ export default function RevealPage() {
   const [needsPay, setNeedsPay] = useState(false);
   const [rechecking, setRechecking] = useState(false);
   const started = useRef(false);
+  const startAt = useRef(0);
 
   // Load the saved draft once on mount.
   useEffect(() => {
@@ -53,6 +55,7 @@ export default function RevealPage() {
     };
     setNeedsPay(false);
     setGenerating(true);
+    startAt.current = Date.now();
     try {
       let result = await generateFromDraft(payload);
       if ("paymentRequired" in result) {
@@ -69,8 +72,17 @@ export default function RevealPage() {
         setNeedsPay(true);
         return;
       }
-      clearDraft();
-      router.replace(`/dashboard/results/${result.runId}` as never);
+      // Let the gift-launch animation play out (~5s) before jumping to the
+      // results, even when generation finishes sooner.
+      const runId = result.runId;
+      const elapsed = Date.now() - startAt.current;
+      window.setTimeout(
+        () => {
+          clearDraft();
+          router.replace(`/dashboard/results/${runId}` as never);
+        },
+        Math.max(0, MIN_LAUNCH_MS - elapsed),
+      );
     } catch (e) {
       started.current = false;
       setGenerating(false);
@@ -163,19 +175,21 @@ export default function RevealPage() {
     );
   }
 
-  // Signed in → thinking + generating.
+  // Signed in → the gift-launch animation while we build the results.
   if (session?.user || generating) {
     return (
-      <Centered>
-        <div className="gift-think-pulse">
-          <GiftMindMark className="h-12 w-12" />
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background px-5 text-center">
+        <div className="gift-launch relative flex h-44 w-44 flex-col items-center justify-center">
+          <div className="gift-spiral">
+            <div className="gift-jump">
+              <div className="gift-spin text-[5rem] leading-none drop-shadow-lg">🎁</div>
+            </div>
+          </div>
+          <div className="gift-shadow mt-3 h-2.5 w-16 rounded-[50%] bg-foreground/25 blur-[1px]" />
         </div>
-        <p className="mt-5 font-serif text-xl font-semibold">Gift is thinking about {firstName}…</p>
+        <p className="mt-6 font-serif text-xl font-semibold">Wrapping {firstName}&apos;s gifts…</p>
         <p className="mt-2 text-sm text-muted-foreground">Curating gifts that feel made for them.</p>
-        <div className="mt-5 flex items-center gap-2 text-xs text-muted-foreground">
-          <Loader2 className="h-3.5 w-3.5 animate-spin" /> This takes a few seconds
-        </div>
-      </Centered>
+      </div>
     );
   }
 

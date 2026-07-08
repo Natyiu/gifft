@@ -259,13 +259,97 @@
   animation: gift-cue-rise 3.2s ease-in-out infinite;
 }
 
+/* Reveal "launch" — a wrapped gift spiralling, jumping, and spinning in 3D
+   while the results are built. Each nested element owns exactly one transform
+   so they compose instead of clobbering each other. */
+@keyframes gift-spiral {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(44px, -12px); }
+  50% { transform: translate(0, 6px); }
+  75% { transform: translate(-44px, -12px); }
+  100% { transform: translate(0, 0); }
+}
+@keyframes gift-jump {
+  0%,
+  100% {
+    transform: translateY(0);
+    animation-timing-function: cubic-bezier(0.3, 0, 0.3, 1);
+  }
+  50% {
+    transform: translateY(-40px);
+    animation-timing-function: cubic-bezier(0.35, 0.7, 0.4, 1);
+  }
+}
+@keyframes gift-spin {
+  0% {
+    transform: rotateY(0deg) rotateZ(-8deg);
+  }
+  100% {
+    transform: rotateY(360deg) rotateZ(8deg);
+  }
+}
+@keyframes gift-shadow {
+  0%,
+  100% {
+    transform: scaleX(1);
+    opacity: 0.26;
+  }
+  50% {
+    transform: scaleX(0.55);
+    opacity: 0.1;
+  }
+}
+.gift-launch {
+  perspective: 700px;
+}
+.gift-spiral {
+  animation: gift-spiral 2.4s ease-in-out infinite;
+}
+.gift-jump {
+  animation: gift-jump 0.85s infinite;
+}
+.gift-spin {
+  animation: gift-spin 1.5s linear infinite;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.gift-shadow {
+  animation: gift-shadow 0.85s ease-in-out infinite;
+  transform-origin: center;
+}
+
+/* Shimmer used for results-card skeletons while their product is scraping. */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 180% 0;
+  }
+  100% {
+    background-position: -180% 0;
+  }
+}
+.skeleton-shimmer {
+  background-image: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--muted) 92%, transparent) 0%,
+    color-mix(in oklab, var(--foreground) 9%, var(--muted)) 50%,
+    color-mix(in oklab, var(--muted) 92%, transparent) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.3s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .gift-card-in {
     opacity: 1;
     animation: none;
   }
   .gift-think-pulse,
-  .gift-cue {
+  .gift-cue,
+  .gift-spiral,
+  .gift-jump,
+  .gift-spin,
+  .gift-shadow,
+  .skeleton-shimmer {
     animation: none;
   }
   .ribbon-sway {

@@ -15,7 +15,6 @@ import {
   ShoppingBag,
   ArrowRight,
   ImageOff,
-  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -84,10 +83,16 @@ export function GiftCard({ gift, index }: { gift: GiftCardData; index: number })
   // Live product resolution: the idea is persisted without a scraped photo, so
   // each card fetches its real product image + price when it scrolls into view.
   // `productSource` is set once resolved, so re-renders/old runs don't re-scrape.
-  const [imageUrl, setImageUrl] = useState<string | null>(gift.imageUrl);
+  const [images, setImages] = useState<string[]>(
+    gift.imageUrls?.length ? gift.imageUrls : gift.imageUrl ? [gift.imageUrl] : [],
+  );
+  const [imgIdx, setImgIdx] = useState(0);
   const [priceText, setPriceText] = useState<string | null>(gift.priceText);
   const [resolved, setResolved] = useState(gift.productSource != null);
   const cardRef = useRef<HTMLElement>(null);
+  // Show the next candidate photo if one fails to load (hotlink-blocked etc.),
+  // falling back to the placeholder only once every candidate is exhausted.
+  const currentImage = images[imgIdx] ?? null;
 
   useEffect(() => {
     if (resolved) return;
@@ -101,7 +106,9 @@ export function GiftCard({ gift, index }: { gift: GiftCardData; index: number })
         io.disconnect();
         gate(() => resolveGiftMedia(gift.id))
           .then((m) => {
-            setImageUrl(m.imageUrl);
+            const list = m.imageUrls?.length ? m.imageUrls : m.imageUrl ? [m.imageUrl] : [];
+            setImages(list);
+            setImgIdx(0);
             if (m.priceText) setPriceText(m.priceText);
           })
           .catch(() => {})
@@ -168,23 +175,28 @@ export function GiftCard({ gift, index }: { gift: GiftCardData; index: number })
     >
       {/* Product image — streams in live once the card resolves its product */}
       <Link href={`/dashboard/gift/${gift.id}` as never} className="relative block aspect-[4/3] overflow-hidden bg-muted">
-        {imageUrl ? (
+        {currentImage ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={imageUrl}
+            src={currentImage}
             alt={gift.name}
             loading="lazy"
+            onError={() => setImgIdx((i) => i + 1)}
             className="gift-card-in h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
           />
-        ) : (
+        ) : resolved ? (
           <span className="flex h-full w-full items-center justify-center text-muted-foreground/50">
-            {resolved ? <ImageOff className="h-7 w-7" /> : <Loader2 className="h-6 w-6 animate-spin opacity-60" />}
+            <ImageOff className="h-7 w-7" />
+          </span>
+        ) : (
+          <span className="skeleton-shimmer absolute inset-0 block" aria-hidden />
+        )}
+        {resolved && (
+          <span className="absolute left-3 top-3 rounded-full bg-background/90 px-2 py-0.5 text-xs font-semibold text-primary shadow-sm backdrop-blur whitespace-nowrap">
+            {priceText || (gift.estPrice ? `~$${gift.estPrice}` : "")}
           </span>
         )}
-        <span className="absolute left-3 top-3 rounded-full bg-background/90 px-2 py-0.5 text-xs font-semibold text-primary shadow-sm backdrop-blur whitespace-nowrap">
-          {priceText || (gift.estPrice ? `~$${gift.estPrice}` : "")}
-        </span>
-        {gift.splurgeWorthy && (
+        {resolved && gift.splurgeWorthy && (
           <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-[11px] font-semibold text-accent-foreground shadow-sm whitespace-nowrap">
             <Sparkles className="h-3 w-3" /> Never buys this
           </span>
